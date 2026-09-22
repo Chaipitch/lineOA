@@ -1,0 +1,197 @@
+<template>
+  <div class="slds-var-p-around_small">
+    <template lwc:if={isLoading}>
+      <lightning-spinner
+        alternative-text={labels.title}
+        size="small"
+      ></lightning-spinner>
+    </template>
+
+    <template lwc:if={errorMessage}>
+      <div class="slds-text-color_error slds-var-m-bottom_small" role="alert">
+        {errorMessage}
+      </div>
+    </template>
+
+    <!-- Settings -->
+    <lightning-card title={labels.settings} icon-name="utility:settings">
+      <div class="slds-var-p-horizontal_medium slds-var-p-bottom_small">
+        <lightning-input
+          label={labels.siteBaseUrl}
+          data-field="siteBaseUrl"
+          value={settings.siteBaseUrl}
+          field-level-help={labels.siteBaseUrlHelp}
+          onchange={handleSettingChange}
+        ></lightning-input>
+
+        <template lwc:if={settings.webhookUrl}>
+          <lightning-input
+            label={labels.webhookUrl}
+            value={settings.webhookUrl}
+            read-only
+            class="slds-var-m-top_x-small"
+          ></lightning-input>
+        </template>
+
+        <lightning-record-picker
+          label={labels.fallbackOwner}
+          object-api-name="User"
+          value={settings.fallbackOwnerId}
+          onchange={handleFallbackOwnerChange}
+          class="slds-var-m-top_x-small"
+        ></lightning-record-picker>
+
+        <div class="slds-grid slds-gutters slds-wrap slds-var-m-top_x-small">
+          <div class="slds-col slds-size_1-of-2">
+            <lightning-input
+              type="number"
+              label="Poll interval (seconds)"
+              data-field="pollIntervalSeconds"
+              value={settings.pollIntervalSeconds}
+              onchange={handleSettingChange}
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_1-of-2">
+            <lightning-input
+              type="number"
+              label="Invite code expiry (days)"
+              data-field="inviteCodeExpiryDays"
+              value={settings.inviteCodeExpiryDays}
+              onchange={handleSettingChange}
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_1-of-2">
+            <lightning-input
+              type="number"
+              label="Public link expiry (days)"
+              data-field="publicLinkExpiryDays"
+              value={settings.publicLinkExpiryDays}
+              onchange={handleSettingChange}
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_1-of-2">
+            <lightning-input
+              type="number"
+              label="Message retention (months, 0 = keep forever)"
+              data-field="messageRetentionMonths"
+              value={settings.messageRetentionMonths}
+              onchange={handleSettingChange}
+            ></lightning-input>
+          </div>
+        </div>
+
+        <lightning-input
+          type="checkbox"
+          label="Daily activity sync enabled"
+          data-field="dailySyncEnabled"
+          checked={settings.dailySyncEnabled}
+          onchange={handleSettingChange}
+          class="slds-var-m-top_x-small"
+        ></lightning-input>
+        <lightning-input
+          type="checkbox"
+          label="Update Contact owner when an OA is reassigned"
+          data-field="updateContactOwnerOnReassign"
+          checked={settings.updateContactOwnerOnReassign}
+          onchange={handleSettingChange}
+        ></lightning-input>
+
+        <div class="slds-var-m-top_small">
+          <lightning-button
+            variant="brand"
+            label={labels.save}
+            disabled={isSaving}
+            onclick={handleSave}
+          ></lightning-button>
+        </div>
+      </div>
+    </lightning-card>
+
+    <!-- Registered OAs -->
+    <lightning-card
+      title={labels.oas}
+      icon-name="standard:messaging_user"
+      class="slds-var-m-top_small"
+    >
+      <div class="slds-var-p-horizontal_medium slds-var-p-bottom_small">
+        <template lwc:if={showNoOAs}>
+          <p class="slds-text-color_weak">{labels.noOas}</p>
+        </template>
+
+        <template lwc:if={hasOAs}>
+          <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+            <thead>
+              <tr class="slds-line-height_reset">
+                <th scope="col">{labels.oas}</th>
+                <th scope="col">{labels.channelId}</th>
+                <th scope="col">{labels.assignedRep}</th>
+                <th scope="col">Webhook</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template for:each={oaRows} for:item="oa">
+                <tr key={oa.id}>
+                  <td>
+                    {oa.name}
+                    <span class="slds-text-body_small slds-text-color_weak">
+                      {oa.basicId}
+                    </span>
+                    <lightning-badge
+                      label={oa.statusLabel}
+                      variant={oa.statusVariant}
+                    ></lightning-badge>
+                  </td>
+                  <td>{oa.channelId}</td>
+                  <td>{oa.assignedRepName}</td>
+                  <td>{oa.webhookStatus}</td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </template>
+      </div>
+    </lightning-card>
+
+    <!-- Register a new OA -->
+    <lightning-card
+      title={labels.register}
+      icon-name="utility:add"
+      class="slds-var-m-top_small"
+    >
+      <div class="slds-var-p-horizontal_medium slds-var-p-bottom_small">
+        <p class="slds-text-color_weak slds-var-m-bottom_x-small">
+          {labels.registerHelp}
+        </p>
+        <lightning-input
+          label={labels.channelId}
+          value={channelId}
+          onchange={handleChannelIdChange}
+        ></lightning-input>
+        <!-- type=password: the secret is write-only, sent straight to Apex and never read back -->
+        <lightning-input
+          type="password"
+          label={labels.channelSecret}
+          value={channelSecret}
+          field-level-help={labels.channelSecretHelp}
+          onchange={handleChannelSecretChange}
+          class="slds-var-m-top_x-small"
+        ></lightning-input>
+        <lightning-record-picker
+          label={labels.assignedRep}
+          object-api-name="User"
+          value={repId}
+          onchange={handleRepChange}
+          class="slds-var-m-top_x-small"
+        ></lightning-record-picker>
+        <div class="slds-var-m-top_small">
+          <lightning-button
+            variant="brand"
+            label={labels.register}
+            disabled={isRegisterDisabled}
+            onclick={handleRegister}
+          ></lightning-button>
+        </div>
+      </div>
+    </lightning-card>
+  </div>
+</template>

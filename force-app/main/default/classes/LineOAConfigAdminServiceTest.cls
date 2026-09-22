@@ -4,7 +4,8 @@ private class LineOAConfigAdminServiceTest {
 
   @TestSetup
   static void setup() {
-    insert new LINE_Settings__c(
+    LineTestFactory.ensurePackageAccess();
+    insert as system new LINE_Settings__c(
       SetupOwnerId = UserInfo.getOrganizationId(),
       Site_Base_Url__c = SITE
     );
@@ -12,6 +13,7 @@ private class LineOAConfigAdminServiceTest {
 
   @IsTest
   static void registerFillsBotFieldsSetsWebhookAndStoresSecret() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     Test.setMock(HttpCalloutMock.class, mock);
 
@@ -34,6 +36,7 @@ private class LineOAConfigAdminServiceTest {
         Is_Active__c,
         Webhook_Status__c
       FROM LINE_OA_Configuration__c
+      WITH SYSTEM_MODE
     ];
     Assert.areEqual('OA A', oa.Name);
     Assert.areEqual(
@@ -67,6 +70,7 @@ private class LineOAConfigAdminServiceTest {
 
   @IsTest
   static void resultNeverContainsTheSecret() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     Test.startTest();
     LineOAConfigAdminService.RegistrationResult result = LineOAConfigAdminService.registerOA(
@@ -83,6 +87,7 @@ private class LineOAConfigAdminServiceTest {
 
   @IsTest
   static void reRegisteringUpdatesTheSameRecord() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     LineTestFactory.createOA(
       LineTestFactory.CHANNEL_A,
@@ -99,10 +104,22 @@ private class LineOAConfigAdminServiceTest {
     );
     Test.stopTest();
 
-    Assert.areEqual(1, [SELECT COUNT() FROM LINE_OA_Configuration__c]);
+    Assert.areEqual(
+      1,
+      [
+        SELECT COUNT()
+        FROM LINE_OA_Configuration__c
+        WITH SYSTEM_MODE
+      ]
+    );
     Assert.areEqual(
       'Ubot_a',
-      [SELECT Bot_User_Id__c FROM LINE_OA_Configuration__c].Bot_User_Id__c
+      [
+        SELECT Bot_User_Id__c
+        FROM LINE_OA_Configuration__c
+        WITH SYSTEM_MODE
+      ]
+      .Bot_User_Id__c
     );
     Assert.areEqual(
       LineTestFactory.SECRET_A,
@@ -112,6 +129,7 @@ private class LineOAConfigAdminServiceTest {
 
   @IsTest
   static void badCredentialsSaveNothing() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     mock.stub(
       'POST',
@@ -135,14 +153,26 @@ private class LineOAConfigAdminServiceTest {
     }
     Test.stopTest();
 
-    Assert.areEqual(0, [SELECT COUNT() FROM LINE_OA_Configuration__c]);
+    Assert.areEqual(
+      0,
+      [
+        SELECT COUNT()
+        FROM LINE_OA_Configuration__c
+        WITH SYSTEM_MODE
+      ]
+    );
     Assert.isNull(LineCredentialStore.getSecret(LineTestFactory.CHANNEL_A));
     Assert.areEqual(0, mock.requestsTo('/webhook/endpoint').size());
   }
 
   @IsTest
   static void missingSiteUrlIsRefusedBeforeAnyCallout() {
-    delete [SELECT Id FROM LINE_Settings__c];
+    LineTestFactory.ensurePackageAccess();
+    delete as system [
+      SELECT Id
+      FROM LINE_Settings__c
+      WITH SYSTEM_MODE
+    ];
     LineSettings.reset();
     LineHttpMock mock = new LineHttpMock();
     Test.setMock(HttpCalloutMock.class, mock);
@@ -162,6 +192,7 @@ private class LineOAConfigAdminServiceTest {
 
   @IsTest
   static void inactiveOrMissingRepIsRefused() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     try {
       LineOAConfigAdminService.registerOA(
@@ -173,6 +204,13 @@ private class LineOAConfigAdminServiceTest {
     } catch (LineOAConfigAdminService.AdminException e) {
       Assert.areEqual(System.Label.LINE_Error_Rep_Inactive, e.getMessage());
     }
-    Assert.areEqual(0, [SELECT COUNT() FROM LINE_OA_Configuration__c]);
+    Assert.areEqual(
+      0,
+      [
+        SELECT COUNT()
+        FROM LINE_OA_Configuration__c
+        WITH SYSTEM_MODE
+      ]
+    );
   }
 }

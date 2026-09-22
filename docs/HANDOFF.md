@@ -90,6 +90,15 @@ Both are Beta 1 checks in the QA org.
 - **Graph-engine (sfge) findings attach to the *primary* location**, which for the webhook is the query in
   `LineOAConfigSelector`, not the entry point. Suppression markers must sit there (DEC-18).
 - **Thai translations need Translation Workbench**, which `config/project-scratch-def.json` now switches on.
+- **`sf package create` rewrites `sfdx-project.json`**: it set `"default": false` on the package directory (so the next build
+  refused to start) and renamed `versionName` to "ver 0.1". Check the file after running it.
+- **The package build org is created from a default scratch definition**, so it lacks Translation Workbench and the Thai
+  translation fails with `th: Not available for deploy for this organization`. Fixed by `"definitionFile":
+  "config/project-scratch-def.json"` on the package directory.
+- **Tests in the package build org run as a user with none of the package permission sets**, so package objects and fields are
+  invisible: inserts fail with "fields being inaccessible" and queries with "No such column …", even though the same tests pass
+  in a scratch org. Every test method calls `LineTestFactory.ensurePackageAccess()` first, which assigns `LINE_Admin` to the
+  running user (DEC-24).
 - **Salesforce's docs site refuses automated fetches (403).** Use LINE's OpenAPI specs at `github.com/line/line-openapi`, and
   verify Salesforce behaviour by trying it in a scratch org.
 

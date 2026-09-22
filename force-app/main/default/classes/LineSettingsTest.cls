@@ -2,6 +2,7 @@
 private class LineSettingsTest {
   @IsTest
   static void defaultsWhenNoRecord() {
+    LineTestFactory.ensurePackageAccess();
     Assert.isNull(LineSettings.siteBaseUrl());
     Assert.isNull(LineSettings.webhookUrl());
     Assert.isNull(LineSettings.fallbackOwnerId());
@@ -16,7 +17,8 @@ private class LineSettingsTest {
 
   @IsTest
   static void valuesFromOrgRecord() {
-    insert new LINE_Settings__c(
+    LineTestFactory.ensurePackageAccess();
+    insert as system new LINE_Settings__c(
       SetupOwnerId = UserInfo.getOrganizationId(),
       Site_Base_Url__c = ' https://acme.my.salesforce-sites.com/linewebhook/ ',
       Fallback_Owner_Id__c = UserInfo.getUserId(),
@@ -51,7 +53,8 @@ private class LineSettingsTest {
 
   @IsTest
   static void invalidValuesFallBackToSafeValues() {
-    insert new LINE_Settings__c(
+    LineTestFactory.ensurePackageAccess();
+    insert as system new LINE_Settings__c(
       SetupOwnerId = UserInfo.getOrganizationId(),
       Fallback_Owner_Id__c = 'not-an-id',
       Poll_Interval_Seconds__c = 1,
@@ -80,8 +83,9 @@ private class LineSettingsTest {
 
   @IsTest
   static void fallbackOwnerMustBeUserOrQueue() {
+    LineTestFactory.ensurePackageAccess();
     // A valid Id that is neither a user nor a queue; no DML on subscriber objects needed.
-    insert new LINE_Settings__c(
+    insert as system new LINE_Settings__c(
       SetupOwnerId = UserInfo.getOrganizationId(),
       Fallback_Owner_Id__c = UserInfo.getOrganizationId()
     );

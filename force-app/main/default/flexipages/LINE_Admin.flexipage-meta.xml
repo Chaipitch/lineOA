@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <FlexiPage xmlns="http://soap.sforce.com/2006/04/metadata">
     <description
-  >LINE Admin app page. The lineAdmin component is added in M8.</description>
+  >LINE Admin app page: settings and LINE OA registration.</description>
     <flexiPageRegions>
+        <itemInstances>
+            <componentInstance>
+                <componentName>lineAdmin</componentName>
+                <identifier>lineAdminComponent</identifier>
+            </componentInstance>
+        </itemInstances>
         <name>main</name>
         <type>Region</type>
     </flexiPageRegions>

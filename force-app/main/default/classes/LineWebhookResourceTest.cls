@@ -2,6 +2,7 @@
 private class LineWebhookResourceTest {
   @TestSetup
   static void setup() {
+    LineTestFactory.ensurePackageAccess();
     LineTestFactory.createOA(
       LineTestFactory.CHANNEL_A,
       LineTestFactory.BOT_A,
@@ -20,11 +21,16 @@ private class LineWebhookResourceTest {
   }
 
   private static Integer storedMessages() {
-    return [SELECT COUNT() FROM LINE_Message__c];
+    return [
+      SELECT COUNT()
+      FROM LINE_Message__c
+      WITH SYSTEM_MODE
+    ];
   }
 
   @IsTest
   static void validSignaturePublishesAndStores() {
+    LineTestFactory.ensurePackageAccess();
     Integer status = LineTestFactory.callWebhook(
       body(),
       LineTestFactory.SECRET_A
@@ -37,6 +43,7 @@ private class LineWebhookResourceTest {
 
   @IsTest
   static void wrongSignatureIs401AndStoresNothing() {
+    LineTestFactory.ensurePackageAccess();
     Integer status = LineTestFactory.callWebhook(
       body(),
       LineTestFactory.SECRET_B
@@ -45,11 +52,19 @@ private class LineWebhookResourceTest {
 
     Assert.areEqual(401, status);
     Assert.areEqual(0, storedMessages());
-    Assert.areEqual(0, [SELECT COUNT() FROM LINE_Conversation__c]);
+    Assert.areEqual(
+      0,
+      [
+        SELECT COUNT()
+        FROM LINE_Conversation__c
+        WITH SYSTEM_MODE
+      ]
+    );
   }
 
   @IsTest
   static void missingSignatureIs401() {
+    LineTestFactory.ensurePackageAccess();
     Integer status = LineTestFactory.callWebhook(body(), null);
     Test.getEventBus().deliver();
 
@@ -59,6 +74,7 @@ private class LineWebhookResourceTest {
 
   @IsTest
   static void lowercaseHeaderNameIsAccepted() {
+    LineTestFactory.ensurePackageAccess();
     String raw = body();
     RestRequest req = new RestRequest();
     req.httpMethod = 'POST';
@@ -79,6 +95,7 @@ private class LineWebhookResourceTest {
 
   @IsTest
   static void unknownDestinationIs403() {
+    LineTestFactory.ensurePackageAccess();
     String raw = LineTestFactory.webhookBody(
       'Uunknown',
       new List<String>{
@@ -93,6 +110,7 @@ private class LineWebhookResourceTest {
 
   @IsTest
   static void emptyEventsIs200() {
+    LineTestFactory.ensurePackageAccess();
     String raw = LineTestFactory.webhookBody(
       LineTestFactory.BOT_A,
       new List<String>()
@@ -105,6 +123,7 @@ private class LineWebhookResourceTest {
 
   @IsTest
   static void malformedOrMissingDestinationIs400() {
+    LineTestFactory.ensurePackageAccess();
     Assert.areEqual(
       400,
       LineTestFactory.callWebhook('not json', LineTestFactory.SECRET_A)
@@ -132,6 +151,7 @@ private class LineWebhookResourceTest {
 
   @IsTest
   static void destinationAfterNestedObjectsIsFound() {
+    LineTestFactory.ensurePackageAccess();
     Assert.areEqual(
       'Ubot_a',
       LineWebhookResource.readDestination(
@@ -142,6 +162,7 @@ private class LineWebhookResourceTest {
 
   @IsTest
   static void manyEventsInOneBody() {
+    LineTestFactory.ensurePackageAccess();
     List<String> events = new List<String>();
     for (Integer i = 0; i < 5; i++) {
       events.add(
@@ -156,11 +177,19 @@ private class LineWebhookResourceTest {
 
     Assert.areEqual(200, status);
     Assert.areEqual(5, storedMessages());
-    Assert.areEqual(5, [SELECT COUNT() FROM LINE_Conversation__c]);
+    Assert.areEqual(
+      5,
+      [
+        SELECT COUNT()
+        FROM LINE_Conversation__c
+        WITH SYSTEM_MODE
+      ]
+    );
   }
 
   @IsTest
   static void missingRequestIs400() {
+    LineTestFactory.ensurePackageAccess();
     RestContext.request = null;
     RestContext.response = new RestResponse();
     LineWebhookResource.handlePost();

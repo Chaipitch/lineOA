@@ -2,6 +2,7 @@
 private class LineCredentialStoreTest {
   @IsTest
   static void putThenGetReturnsSecret() {
+    LineTestFactory.ensurePackageAccess();
     LineCredentialStore.putSecret(
       LineTestFactory.CHANNEL_A,
       LineTestFactory.SECRET_A
@@ -23,6 +24,7 @@ private class LineCredentialStoreTest {
 
   @IsTest
   static void putReplacesExistingSecret() {
+    LineTestFactory.ensurePackageAccess();
     LineCredentialStore.putSecret(LineTestFactory.CHANNEL_A, 'old_fake_secret');
     LineCredentialStore.putSecret(LineTestFactory.CHANNEL_A, 'new_fake_secret');
 
@@ -36,12 +38,14 @@ private class LineCredentialStoreTest {
         SELECT COUNT()
         FROM LINE_OA_Credential__c
         WHERE Name = :LineTestFactory.CHANNEL_A
+        WITH SYSTEM_MODE
       ]
     );
   }
 
   @IsTest
   static void secretsAreKeptPerChannel() {
+    LineTestFactory.ensurePackageAccess();
     LineTestFactory.putTestSecrets();
     Assert.areEqual(
       LineTestFactory.SECRET_A,
@@ -55,6 +59,7 @@ private class LineCredentialStoreTest {
 
   @IsTest
   static void unknownOrInvalidChannelReturnsNull() {
+    LineTestFactory.ensurePackageAccess();
     Assert.isNull(LineCredentialStore.getSecret('1999999999'));
     Assert.isNull(LineCredentialStore.getSecret(null));
     Assert.isNull(LineCredentialStore.getSecret('not-a-channel'));
@@ -62,6 +67,7 @@ private class LineCredentialStoreTest {
 
   @IsTest
   static void removeDeletesSecret() {
+    LineTestFactory.ensurePackageAccess();
     LineCredentialStore.putSecret(
       LineTestFactory.CHANNEL_A,
       LineTestFactory.SECRET_A
@@ -70,11 +76,19 @@ private class LineCredentialStoreTest {
     LineCredentialStore.remove('not-a-channel');
 
     Assert.isNull(LineCredentialStore.getSecret(LineTestFactory.CHANNEL_A));
-    Assert.areEqual(0, [SELECT COUNT() FROM LINE_OA_Credential__c]);
+    Assert.areEqual(
+      0,
+      [
+        SELECT COUNT()
+        FROM LINE_OA_Credential__c
+        WITH SYSTEM_MODE
+      ]
+    );
   }
 
   @IsTest
   static void invalidInputIsRejectedWithoutEchoingSecret() {
+    LineTestFactory.ensurePackageAccess();
     for (
       String channelId : new List<String>{ null, '', 'abc', '1'.repeat(39) }
     ) {
@@ -93,6 +107,13 @@ private class LineCredentialStoreTest {
         Assert.areEqual('Invalid channel secret.', e.getMessage());
       }
     }
-    Assert.areEqual(0, [SELECT COUNT() FROM LINE_OA_Credential__c]);
+    Assert.areEqual(
+      0,
+      [
+        SELECT COUNT()
+        FROM LINE_OA_Credential__c
+        WITH SYSTEM_MODE
+      ]
+    );
   }
 }

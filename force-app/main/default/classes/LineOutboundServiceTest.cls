@@ -2,13 +2,14 @@
 private class LineOutboundServiceTest {
   @TestSetup
   static void setup() {
+    LineTestFactory.ensurePackageAccess();
     LINE_OA_Configuration__c oa = LineTestFactory.createOA(
       LineTestFactory.CHANNEL_A,
       LineTestFactory.BOT_A,
       LineTestFactory.SECRET_A,
       UserInfo.getUserId()
     );
-    insert new LINE_Conversation__c(
+    insert as system new LINE_Conversation__c(
       Name = 'Somchai',
       LINE_OA_Configuration__c = oa.Id,
       LINE_User_Id__c = 'Ucustomer1',
@@ -18,7 +19,7 @@ private class LineOutboundServiceTest {
   }
 
   private static Id conversationId() {
-    return [SELECT Id FROM LINE_Conversation__c LIMIT 1].Id;
+    return [SELECT Id FROM LINE_Conversation__c WITH SYSTEM_MODE LIMIT 1].Id;
   }
 
   private static LINE_Message__c storedMessage() {
@@ -33,11 +34,13 @@ private class LineOutboundServiceTest {
         Line_Message_Id__c,
         Sent_At__c
       FROM LINE_Message__c
+      WITH SYSTEM_MODE
     ];
   }
 
   @IsTest
   static void sendStoresSentMessageAndUpdatesConversation() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     Test.setMock(HttpCalloutMock.class, mock);
 
@@ -61,6 +64,7 @@ private class LineOutboundServiceTest {
     LINE_Conversation__c c = [
       SELECT Last_Message_At__c, Last_Message_Preview__c, Unread_Count__c
       FROM LINE_Conversation__c
+      WITH SYSTEM_MODE
     ];
     Assert.areEqual(m.Sent_At__c, c.Last_Message_At__c);
     Assert.areEqual('สวัสดีครับ', c.Last_Message_Preview__c);
@@ -82,6 +86,7 @@ private class LineOutboundServiceTest {
 
   @IsTest
   static void monthlyLimitStoresFailedMessageWithReadableError() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     mock.stub(
       'POST',
@@ -106,7 +111,8 @@ private class LineOutboundServiceTest {
     Assert.areEqual('over quota', m.Text__c);
 
     Assert.isNull(
-      [SELECT Last_Message_At__c FROM LINE_Conversation__c].Last_Message_At__c,
+      [SELECT Last_Message_At__c FROM LINE_Conversation__c WITH SYSTEM_MODE]
+      .Last_Message_At__c,
       'A failed send does not move the conversation'
     );
     Assert.areEqual(
@@ -115,12 +121,14 @@ private class LineOutboundServiceTest {
         SELECT COUNT()
         FROM LINE_Error_Log__c
         WHERE Source__c = 'LineOutboundService.sendText'
+        WITH SYSTEM_MODE
       ]
     );
   }
 
   @IsTest
   static void retryKeyConflictCountsAsSent() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     mock.stub(
       'POST',
@@ -141,6 +149,7 @@ private class LineOutboundServiceTest {
 
   @IsTest
   static void badCredentialsStoreFailedMessage() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     mock.stub(
       'POST',
@@ -167,6 +176,7 @@ private class LineOutboundServiceTest {
 
   @IsTest
   static void textIsValidatedBeforeAnyCallout() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     Test.setMock(HttpCalloutMock.class, mock);
     Id conversationId = conversationId();
@@ -190,11 +200,12 @@ private class LineOutboundServiceTest {
     }
 
     Assert.areEqual(0, mock.requests.size(), 'No callout for invalid input');
-    Assert.areEqual(0, [SELECT COUNT() FROM LINE_Message__c]);
+    Assert.areEqual(0, [SELECT COUNT() FROM LINE_Message__c WITH SYSTEM_MODE]);
   }
 
   @IsTest
   static void maximumLengthTextIsAccepted() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     Test.startTest();
     LineOutboundService.sendText(
@@ -208,9 +219,10 @@ private class LineOutboundServiceTest {
 
   @IsTest
   static void missingConversationIsRejected() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     Id conversationId = conversationId();
-    delete [SELECT Id FROM LINE_Conversation__c];
+    delete as system [SELECT Id FROM LINE_Conversation__c WITH SYSTEM_MODE];
 
     try {
       LineOutboundService.sendText(conversationId, 'gone');

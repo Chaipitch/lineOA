@@ -2,13 +2,18 @@
 private class LineLoggerTest {
   @IsTest
   static void bufferedUntilFlush() {
+    LineTestFactory.ensurePackageAccess();
     LineLogger.error('LineLoggerTest.one', new DmlException('boom'));
     LineLogger.error('LineLoggerTest.two', 'plain message', null, null);
 
     Assert.areEqual(2, LineLogger.pendingCount());
     Assert.areEqual(
       0,
-      [SELECT COUNT() FROM LINE_Error_Log__c],
+      [
+        SELECT COUNT()
+        FROM LINE_Error_Log__c
+        WITH SYSTEM_MODE
+      ],
       'Nothing written before flush'
     );
 
@@ -18,6 +23,7 @@ private class LineLoggerTest {
     List<LINE_Error_Log__c> logs = [
       SELECT Source__c, Message__c
       FROM LINE_Error_Log__c
+      WITH SYSTEM_MODE
       ORDER BY Source__c
     ];
     Assert.areEqual(2, logs.size());
@@ -28,12 +34,13 @@ private class LineLoggerTest {
 
   @IsTest
   static void recordsHttpStatusAndContext() {
+    LineTestFactory.ensurePackageAccess();
     LINE_OA_Configuration__c oa = LineTestFactory.newOAConfig(
       '1000000001',
       'Ubot_a',
       UserInfo.getUserId()
     );
-    insert oa;
+    insert as system oa;
 
     LineLogger.error(
       'LineApiClient.push',
@@ -55,6 +62,7 @@ private class LineLoggerTest {
         Related_Record_Id__c,
         Stack_Trace__c
       FROM LINE_Error_Log__c
+      WITH SYSTEM_MODE
     ];
     Assert.areEqual(429, log.Http_Status__c);
     Assert.areEqual(oa.Id, log.LINE_OA_Configuration__c);
@@ -63,12 +71,14 @@ private class LineLoggerTest {
 
   @IsTest
   static void truncatesLongValues() {
+    LineTestFactory.ensurePackageAccess();
     LineLogger.error('S'.repeat(150), 'M'.repeat(40000), null, null);
     LineLogger.flush();
 
     LINE_Error_Log__c log = [
       SELECT Source__c, Message__c
       FROM LINE_Error_Log__c
+      WITH SYSTEM_MODE
     ];
     Assert.areEqual(100, log.Source__c.length());
     Assert.areEqual(32000, log.Message__c.length());
@@ -76,6 +86,7 @@ private class LineLoggerTest {
 
   @IsTest
   static void masksAnythingLookingLikeASecret() {
+    LineTestFactory.ensurePackageAccess();
     String scrubbed = LineLogger.scrub(
       'Authorization: Bearer abc.def-123 body client_secret=s3cr3t&x=1 {"access_token":"tok123","channelSecret":"zzz"}'
     );
@@ -88,6 +99,7 @@ private class LineLoggerTest {
 
   @IsTest
   static void logsPartialSaveFailures() {
+    LineTestFactory.ensurePackageAccess();
     // Missing LastName always fails, whatever the subscriber's own rules are.
     List<Contact> contacts = new List<Contact>{ new Contact() };
     List<Database.SaveResult> results = Database.insert(contacts, false);
@@ -98,6 +110,7 @@ private class LineLoggerTest {
     LINE_Error_Log__c log = [
       SELECT Message__c, Source__c
       FROM LINE_Error_Log__c
+      WITH SYSTEM_MODE
     ];
     Assert.areEqual('LineLoggerTest.save', log.Source__c);
     Assert.isTrue(
@@ -108,6 +121,7 @@ private class LineLoggerTest {
 
   @IsTest
   static void bufferIsBounded() {
+    LineTestFactory.ensurePackageAccess();
     for (Integer i = 0; i < LineLogger.MAX_BUFFERED + 10; i++) {
       LineLogger.error('LineLoggerTest.bounded', 'entry ' + i, null, null);
     }
@@ -116,24 +130,34 @@ private class LineLoggerTest {
 
   @IsTest
   static void flushNeverThrows() {
+    LineTestFactory.ensurePackageAccess();
     LineLogger.error('LineLoggerTest.fail', 'will not be saved', null, null);
     LineLogger.forceFlushFailure = true;
 
     LineLogger.flush();
 
     Assert.areEqual(0, LineLogger.pendingCount());
-    Assert.areEqual(0, [SELECT COUNT() FROM LINE_Error_Log__c]);
+    Assert.areEqual(
+      0,
+      [
+        SELECT COUNT()
+        FROM LINE_Error_Log__c
+        WITH SYSTEM_MODE
+      ]
+    );
     LineLogger.flush();
   }
 
   @IsTest
   static void nullExceptionIsSafe() {
+    LineTestFactory.ensurePackageAccess();
     LineLogger.error('LineLoggerTest.null', (Exception) null);
     Assert.areEqual(1, LineLogger.pendingCount());
   }
 
   @IsTest
   static void repWithoutLogAccessCanStillLog() {
+    LineTestFactory.ensurePackageAccess();
     User rep = LineTestFactory.createUser(new List<String>{ 'LINE_Chat_User' });
 
     System.runAs(rep) {
@@ -151,6 +175,7 @@ private class LineLoggerTest {
         SELECT COUNT()
         FROM LINE_Error_Log__c
         WHERE Source__c = 'LineLoggerTest.rep'
+        WITH SYSTEM_MODE
       ]
     );
   }

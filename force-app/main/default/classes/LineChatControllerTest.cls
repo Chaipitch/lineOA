@@ -2,6 +2,7 @@
 private class LineChatControllerTest {
   @TestSetup
   static void setup() {
+    LineTestFactory.ensurePackageAccess();
     User repA = LineTestFactory.createUser(
       new List<String>{ 'LINE_Chat_User' }
     );
@@ -14,7 +15,7 @@ private class LineChatControllerTest {
       LineTestFactory.SECRET_A,
       repA.Id
     );
-    insert new LINE_Conversation__c(
+    insert as system new LINE_Conversation__c(
       Name = 'Somchai',
       LINE_OA_Configuration__c = oa.Id,
       LINE_User_Id__c = 'Ucustomer1',
@@ -30,6 +31,7 @@ private class LineChatControllerTest {
       SELECT Id
       FROM User
       WHERE Id IN (SELECT Assigned_Rep__c FROM LINE_OA_Configuration__c)
+      WITH SYSTEM_MODE
       LIMIT 1
     ];
   }
@@ -41,12 +43,13 @@ private class LineChatControllerTest {
       WHERE
         Username LIKE 'line.test.%'
         AND Id NOT IN (SELECT Assigned_Rep__c FROM LINE_OA_Configuration__c)
+      WITH SYSTEM_MODE
       LIMIT 1
     ];
   }
 
   private static Id conversationId() {
-    return [SELECT Id FROM LINE_Conversation__c LIMIT 1].Id;
+    return [SELECT Id FROM LINE_Conversation__c WITH SYSTEM_MODE LIMIT 1].Id;
   }
 
   // Links the conversation to a Contact and gives the Contact a primary OA, as linking does in M6.
@@ -54,15 +57,16 @@ private class LineChatControllerTest {
     LINE_Conversation__c c = [
       SELECT Id, Contact__c, LINE_OA_Configuration__c
       FROM LINE_Conversation__c
+      WITH SYSTEM_MODE
     ];
     // Owned by the rep: the panel only opens on a Contact the rep can already see.
     Contact contact = new Contact(LastName = 'Somchai', OwnerId = repA().Id);
     if (withPrimaryOa) {
       contact.LINE_OA_Configuration__c = c.LINE_OA_Configuration__c;
     }
-    insert contact;
+    insert as system contact;
     c.Contact__c = contact.Id;
-    update c;
+    update as system c;
     return contact;
   }
 
@@ -85,7 +89,7 @@ private class LineChatControllerTest {
         )
       );
     }
-    insert messages;
+    insert as system messages;
     return messages;
   }
 
@@ -93,6 +97,7 @@ private class LineChatControllerTest {
 
   @IsTest
   static void conversationsOfAContactAreReturnedToItsRep() {
+    LineTestFactory.ensurePackageAccess();
     Contact contact = linkContact(true);
 
     Test.startTest();
@@ -118,10 +123,12 @@ private class LineChatControllerTest {
 
   @IsTest
   static void primaryOaConversationComesFirst() {
+    LineTestFactory.ensurePackageAccess();
     Contact contact = linkContact(false);
     LINE_Conversation__c first = [
       SELECT Id, LINE_OA_Configuration__c
       FROM LINE_Conversation__c
+      WITH SYSTEM_MODE
     ];
     // A second OA, whose conversation is newer, but is the Contact's primary one.
     LINE_OA_Configuration__c oaB = LineTestFactory.createOA(
@@ -130,7 +137,7 @@ private class LineChatControllerTest {
       LineTestFactory.SECRET_B,
       repA().Id
     );
-    insert new LINE_Conversation__c(
+    insert as system new LINE_Conversation__c(
       Name = 'Somchai via B',
       LINE_OA_Configuration__c = oaB.Id,
       LINE_User_Id__c = 'Ucustomer1',
@@ -139,7 +146,7 @@ private class LineChatControllerTest {
       OwnerId = repA().Id,
       Last_Message_At__c = Datetime.now()
     );
-    update new Contact(
+    update as system new Contact(
       Id = contact.Id,
       LINE_OA_Configuration__c = first.LINE_OA_Configuration__c
     );
@@ -158,6 +165,7 @@ private class LineChatControllerTest {
 
   @IsTest
   static void otherRepSeesNoConversations() {
+    LineTestFactory.ensurePackageAccess();
     Contact contact = linkContact(true);
 
     Test.startTest();
@@ -172,6 +180,7 @@ private class LineChatControllerTest {
 
   @IsTest
   static void nullContactReturnsEmptyList() {
+    LineTestFactory.ensurePackageAccess();
     System.runAs(repA()) {
       Assert.isTrue(LineChatController.getConversations(null).isEmpty());
     }
@@ -181,6 +190,7 @@ private class LineChatControllerTest {
 
   @IsTest
   static void messagesComeBackOldestFirstWithPaging() {
+    LineTestFactory.ensurePackageAccess();
     Id conversationId = conversationId();
     insertMessages(conversationId, 5);
 
@@ -215,6 +225,7 @@ private class LineChatControllerTest {
 
   @IsTest
   static void pageSizeIsCapped() {
+    LineTestFactory.ensurePackageAccess();
     Id conversationId = conversationId();
     insertMessages(conversationId, 3);
 
@@ -234,8 +245,9 @@ private class LineChatControllerTest {
 
   @IsTest
   static void messageViewCarriesDisplayFields() {
+    LineTestFactory.ensurePackageAccess();
     Id conversationId = conversationId();
-    insert new LINE_Message__c(
+    insert as system new LINE_Message__c(
       LINE_Conversation__c = conversationId,
       Direction__c = 'Inbound',
       Message_Type__c = 'file',
@@ -259,6 +271,7 @@ private class LineChatControllerTest {
 
   @IsTest
   static void otherRepCannotReadMessages() {
+    LineTestFactory.ensurePackageAccess();
     Id conversationId = conversationId();
     insertMessages(conversationId, 2);
 
@@ -276,12 +289,14 @@ private class LineChatControllerTest {
 
   @IsTest
   static void pollReturnsOnlyNewerMessages() {
+    LineTestFactory.ensurePackageAccess();
     Id conversationId = conversationId();
     List<LINE_Message__c> all = insertMessages(conversationId, 4);
     LINE_Message__c third = [
       SELECT Id, Sent_At__c
       FROM LINE_Message__c
       WHERE Webhook_Event_Id__c = 'evt2'
+      WITH SYSTEM_MODE
     ];
 
     Test.startTest();
@@ -309,6 +324,7 @@ private class LineChatControllerTest {
 
   @IsTest
   static void pollOnAnotherRepConversationIsRefused() {
+    LineTestFactory.ensurePackageAccess();
     Id conversationId = conversationId();
     System.runAs(repB()) {
       try {
@@ -324,12 +340,14 @@ private class LineChatControllerTest {
 
   @IsTest
   static void markReadClearsUnreadCount() {
+    LineTestFactory.ensurePackageAccess();
     LINE_Conversation__c c = [
       SELECT Id, Unread_Count__c
       FROM LINE_Conversation__c
+      WITH SYSTEM_MODE
     ];
     c.Unread_Count__c = 4;
-    update c;
+    update as system c;
 
     Test.startTest();
     System.runAs(repA()) {
@@ -339,12 +357,14 @@ private class LineChatControllerTest {
 
     Assert.areEqual(
       0,
-      [SELECT Unread_Count__c FROM LINE_Conversation__c].Unread_Count__c
+      [SELECT Unread_Count__c FROM LINE_Conversation__c WITH SYSTEM_MODE]
+      .Unread_Count__c
     );
   }
 
   @IsTest
   static void markReadOnAnotherRepConversationIsRefused() {
+    LineTestFactory.ensurePackageAccess();
     Id conversationId = conversationId();
     System.runAs(repB()) {
       try {
@@ -356,16 +376,18 @@ private class LineChatControllerTest {
     }
     Assert.areEqual(
       0,
-      [SELECT Unread_Count__c FROM LINE_Conversation__c].Unread_Count__c
+      [SELECT Unread_Count__c FROM LINE_Conversation__c WITH SYSTEM_MODE]
+      .Unread_Count__c
     );
   }
 
   @IsTest
   static void pollIntervalComesFromSettings() {
+    LineTestFactory.ensurePackageAccess();
     System.runAs(repA()) {
       Assert.areEqual(5, LineChatController.getPollIntervalSeconds());
     }
-    insert new LINE_Settings__c(
+    insert as system new LINE_Settings__c(
       SetupOwnerId = UserInfo.getOrganizationId(),
       Poll_Interval_Seconds__c = 9
     );
@@ -377,6 +399,7 @@ private class LineChatControllerTest {
 
   @IsTest
   static void ownerCanSendAndGetsMessageBack() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     Id conversationId = conversationId();
 
@@ -397,11 +420,12 @@ private class LineChatControllerTest {
     Assert.areEqual(repA().Id, view.senderId);
     Assert.isNotNull(view.id);
     Assert.isNull(view.errorMessage);
-    Assert.areEqual(1, [SELECT COUNT() FROM LINE_Message__c]);
+    Assert.areEqual(1, [SELECT COUNT() FROM LINE_Message__c WITH SYSTEM_MODE]);
   }
 
   @IsTest
   static void otherRepCannotSend() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     Id conversationId = conversationId();
 
@@ -418,13 +442,14 @@ private class LineChatControllerTest {
 
     Assert.areEqual(
       0,
-      [SELECT COUNT() FROM LINE_Message__c],
+      [SELECT COUNT() FROM LINE_Message__c WITH SYSTEM_MODE],
       'Nothing sent or stored'
     );
   }
 
   @IsTest
   static void nullConversationIsRefused() {
+    LineTestFactory.ensurePackageAccess();
     System.runAs(repA()) {
       try {
         LineChatController.sendText(null, 'nowhere');
@@ -437,11 +462,16 @@ private class LineChatControllerTest {
 
   @IsTest
   static void unfollowedConversationIsRefusedBeforeSending() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     Test.setMock(HttpCalloutMock.class, mock);
-    LINE_Conversation__c c = [SELECT Id, Status__c FROM LINE_Conversation__c];
+    LINE_Conversation__c c = [
+      SELECT Id, Status__c
+      FROM LINE_Conversation__c
+      WITH SYSTEM_MODE
+    ];
     c.Status__c = 'Unfollowed';
-    update c;
+    update as system c;
 
     System.runAs(repA()) {
       try {
@@ -459,6 +489,7 @@ private class LineChatControllerTest {
 
   @IsTest
   static void invalidTextIsRefusedWithLabel() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     Id conversationId = conversationId();
 
@@ -474,6 +505,7 @@ private class LineChatControllerTest {
 
   @IsTest
   static void lineErrorReachesTheRepReadably() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     mock.stub(
       'POST',
@@ -497,13 +529,14 @@ private class LineChatControllerTest {
 
     Assert.areEqual(
       'Failed',
-      [SELECT Status__c FROM LINE_Message__c].Status__c,
+      [SELECT Status__c FROM LINE_Message__c WITH SYSTEM_MODE].Status__c,
       'The failed attempt is visible to the rep'
     );
   }
 
   @IsTest
   static void viewCarriesNoSecrets() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     Id conversationId = conversationId();
 

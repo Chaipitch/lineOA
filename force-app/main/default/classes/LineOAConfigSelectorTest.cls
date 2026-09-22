@@ -2,6 +2,7 @@
 private class LineOAConfigSelectorTest {
   @TestSetup
   static void setup() {
+    LineTestFactory.ensurePackageAccess();
     LINE_OA_Configuration__c active = LineTestFactory.newOAConfig(
       LineTestFactory.CHANNEL_A,
       LineTestFactory.BOT_A,
@@ -13,11 +14,12 @@ private class LineOAConfigSelectorTest {
       UserInfo.getUserId()
     );
     inactive.Is_Active__c = false;
-    insert new List<LINE_OA_Configuration__c>{ active, inactive };
+    insert as system new List<LINE_OA_Configuration__c>{ active, inactive };
   }
 
   @IsTest
   static void findsByBotUserIdChannelIdAndId() {
+    LineTestFactory.ensurePackageAccess();
     Map<String, LINE_OA_Configuration__c> byBot = LineOAConfigSelector.byBotUserIds(
       new Set<String>{ LineTestFactory.BOT_A, 'Unknown' }
     );
@@ -40,6 +42,7 @@ private class LineOAConfigSelectorTest {
 
   @IsTest
   static void activeForUserSkipsInactiveOAs() {
+    LineTestFactory.ensurePackageAccess();
     List<LINE_OA_Configuration__c> result = LineOAConfigSelector.activeForUser(
       UserInfo.getUserId()
     );

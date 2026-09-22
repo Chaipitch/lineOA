@@ -11,6 +11,7 @@ private class LineWebhookEventTriggerHandlerTest {
 
   @IsTest
   static void transientErrorIsRetried() {
+    LineTestFactory.ensurePackageAccess();
     LineWebhookEventTriggerHandler.testException = LineApiException.create(
       503,
       'Unavailable',
@@ -27,6 +28,7 @@ private class LineWebhookEventTriggerHandlerTest {
 
   @IsTest
   static void transientErrorAfterMaxRetriesIsLogged() {
+    LineTestFactory.ensurePackageAccess();
     LineWebhookEventTriggerHandler.testException = new DmlException(
       'UNABLE_TO_LOCK_ROW, unable to obtain exclusive access'
     );
@@ -38,20 +40,30 @@ private class LineWebhookEventTriggerHandlerTest {
         SELECT COUNT()
         FROM LINE_Error_Log__c
         WHERE Source__c = 'LineWebhookEventTriggerHandler.afterInsert'
+        WITH SYSTEM_MODE
       ]
     );
   }
 
   @IsTest
   static void permanentErrorIsLoggedNotRetried() {
+    LineTestFactory.ensurePackageAccess();
     LineWebhookEventTriggerHandler.testException = new NullPointerException();
     handler(0).run();
 
-    Assert.areEqual(1, [SELECT COUNT() FROM LINE_Error_Log__c]);
+    Assert.areEqual(
+      1,
+      [
+        SELECT COUNT()
+        FROM LINE_Error_Log__c
+        WITH SYSTEM_MODE
+      ]
+    );
   }
 
   @IsTest
   static void transientClassification() {
+    LineTestFactory.ensurePackageAccess();
     Assert.isTrue(
       LineWebhookEventTriggerHandler.isTransient(
         LineApiException.create(429, 'Too many', null, false)
@@ -76,7 +88,15 @@ private class LineWebhookEventTriggerHandlerTest {
 
   @IsTest
   static void emptyBatchDoesNothing() {
+    LineTestFactory.ensurePackageAccess();
     handler(0).run();
-    Assert.areEqual(0, [SELECT COUNT() FROM LINE_Error_Log__c]);
+    Assert.areEqual(
+      0,
+      [
+        SELECT COUNT()
+        FROM LINE_Error_Log__c
+        WITH SYSTEM_MODE
+      ]
+    );
   }
 }

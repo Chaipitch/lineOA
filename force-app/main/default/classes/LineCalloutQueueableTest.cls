@@ -2,13 +2,14 @@
 private class LineCalloutQueueableTest {
   @TestSetup
   static void setup() {
+    LineTestFactory.ensurePackageAccess();
     LINE_OA_Configuration__c oa = LineTestFactory.createOA(
       LineTestFactory.CHANNEL_A,
       LineTestFactory.BOT_A,
       LineTestFactory.SECRET_A,
       UserInfo.getUserId()
     );
-    insert new List<LINE_Conversation__c>{
+    insert as system new List<LINE_Conversation__c>{
       new LINE_Conversation__c(
         Name = 'Ucustomer1',
         LINE_OA_Configuration__c = oa.Id,
@@ -28,6 +29,7 @@ private class LineCalloutQueueableTest {
     return [
       SELECT Id, Channel_Id__c, Webhook_Status__c, Last_Verified_At__c
       FROM LINE_OA_Configuration__c
+      WITH SYSTEM_MODE
     ];
   }
 
@@ -36,6 +38,7 @@ private class LineCalloutQueueableTest {
       SELECT Id, LINE_OA_Configuration__c
       FROM LINE_Conversation__c
       WHERE LINE_User_Id__c = :userId
+      WITH SYSTEM_MODE
     ];
     return LineCalloutQueueable.profileItem(
       c.Id,
@@ -47,6 +50,7 @@ private class LineCalloutQueueableTest {
 
   @IsTest
   static void profileUpdatesNameAndPicture() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     Test.setMock(HttpCalloutMock.class, mock);
 
@@ -60,6 +64,7 @@ private class LineCalloutQueueableTest {
       SELECT Name, Picture_Url__c
       FROM LINE_Conversation__c
       WHERE LINE_User_Id__c = 'Ucustomer1'
+      WITH SYSTEM_MODE
     ];
     Assert.areEqual('Somchai', c.Name);
     Assert.areEqual('https://example.com/u.png', c.Picture_Url__c);
@@ -68,6 +73,7 @@ private class LineCalloutQueueableTest {
 
   @IsTest
   static void profileFailureIsLoggedAndNameKept() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     mock.stub('GET', '/v2/bot/profile/', 404, '{"message":"Not found"}');
     Test.setMock(HttpCalloutMock.class, mock);
@@ -84,12 +90,14 @@ private class LineCalloutQueueableTest {
         SELECT Name
         FROM LINE_Conversation__c
         WHERE LINE_User_Id__c = 'Ucustomer1'
+        WITH SYSTEM_MODE
       ]
       .Name
     );
     LINE_Error_Log__c log = [
       SELECT Source__c, Http_Status__c, Related_Record_Id__c
       FROM LINE_Error_Log__c
+      WITH SYSTEM_MODE
     ];
     Assert.areEqual('LineCalloutQueueable.PROFILE', log.Source__c);
     Assert.areEqual(404, log.Http_Status__c);
@@ -97,6 +105,7 @@ private class LineCalloutQueueableTest {
 
   @IsTest
   static void webhookTestRecordsResult() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     LINE_OA_Configuration__c before = oa();
 
@@ -115,6 +124,7 @@ private class LineCalloutQueueableTest {
 
   @IsTest
   static void webhookTestFailureIsRecorded() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     mock.stub(
       'POST',
@@ -138,6 +148,7 @@ private class LineCalloutQueueableTest {
 
   @IsTest
   static void webhookTestApiErrorIsRecorded() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = new LineHttpMock();
     mock.stub(
       'POST',
@@ -164,6 +175,7 @@ private class LineCalloutQueueableTest {
 
   @IsTest
   static void remainderIsChained() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     LineCalloutQueueable.itemsPerExecution = 1;
 
@@ -188,6 +200,7 @@ private class LineCalloutQueueableTest {
         SELECT Name
         FROM LINE_Conversation__c
         WHERE LINE_User_Id__c = 'Ucustomer1'
+        WITH SYSTEM_MODE
       ]
       .Name
     );
@@ -195,6 +208,7 @@ private class LineCalloutQueueableTest {
 
   @IsTest
   static void unknownItemTypeIsLogged() {
+    LineTestFactory.ensurePackageAccess();
     LineCalloutQueueable.WorkItem item = new LineCalloutQueueable.WorkItem();
     item.type = 'NOPE';
 
@@ -207,12 +221,14 @@ private class LineCalloutQueueableTest {
         SELECT COUNT()
         FROM LINE_Error_Log__c
         WHERE Source__c = 'LineCalloutQueueable.run'
+        WITH SYSTEM_MODE
       ]
     );
   }
 
   @IsTest
   static void enqueueIgnoresEmptyWork() {
+    LineTestFactory.ensurePackageAccess();
     Assert.isNull(LineCalloutQueueable.enqueue(null));
     Assert.isNull(
       LineCalloutQueueable.enqueue(new List<LineCalloutQueueable.WorkItem>())

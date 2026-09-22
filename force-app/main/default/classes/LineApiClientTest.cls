@@ -32,6 +32,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void issueTokenPostsFormEncodedCredentials() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     String token = LineApiClient.withCredentials('1000000001', 'se&cret=x')
@@ -55,6 +56,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void tokenIsCachedPerChannel() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiClient c = client();
@@ -78,6 +80,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void clearTokenCacheIssuesNewToken() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     client().issueToken();
@@ -89,6 +92,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void rejectedTokenIsCredentialErrorWithoutSecret() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     mock.stub(
       'POST',
@@ -124,6 +128,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void tokenErrorWithOnlyErrorCodeUsesIt() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     mock.stub('POST', '/oauth2/v3/token', 400, '{"error":"invalid_request"}');
     Test.startTest();
@@ -138,6 +143,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void tokenResponseWithoutAccessTokenFails() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     mock.stub('POST', '/oauth2/v3/token', 200, '{"token_type":"Bearer"}');
     Test.startTest();
@@ -152,6 +158,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void forChannelUsesStoredSecret() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     LineCredentialStore.putSecret(
       LineTestFactory.CHANNEL_B,
@@ -169,6 +176,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void forChannelWithoutSecretIsCredentialError() {
+    LineTestFactory.ensurePackageAccess();
     mockHttp();
     Test.startTest();
     try {
@@ -182,6 +190,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void withCredentialsRequiresBothValues() {
+    LineTestFactory.ensurePackageAccess();
     try {
       LineApiClient.withCredentials(LineTestFactory.CHANNEL_A, ' ');
       Assert.fail('Expected LineApiException');
@@ -194,6 +203,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void getBotInfoParsesResponse() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiModels.BotInfo info = client().getBotInfo();
@@ -211,6 +221,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void setWebhookEndpointSendsPut() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     client()
@@ -233,6 +244,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void testWebhookEndpointReturnsResult() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiModels.WebhookTestResult result = client().testWebhookEndpoint(null);
@@ -250,6 +262,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void getProfileEncodesUserId() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiModels.Profile profile = client().getProfile('Ucustomer1');
@@ -265,6 +278,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void pushSendsRetryKeyAndMessages() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiModels.PushResult result = client()
@@ -311,6 +325,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void pushReusesGivenRetryKey() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     String key = '123e4567-e89b-12d3-a456-426614174000';
     Test.startTest();
@@ -329,6 +344,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void push409IsTreatedAsAccepted() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     mock.stub(
       'POST',
@@ -351,6 +367,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void push429MonthlyLimitIsReadable() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     mock.stub(
       'POST',
@@ -377,6 +394,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void replySendsTokenAndMessages() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     client()
@@ -396,6 +414,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void getContentUsesDataHost() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiModels.Content content = client().getContent('4680000000000');
@@ -413,6 +432,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void getContentTranscodingStatus() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     mock.stub('GET', '/content/transcoding', 200, '{"status":"processing"}');
     Test.startTest();
@@ -428,6 +448,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void getQuotaAndConsumption() {
+    LineTestFactory.ensurePackageAccess();
     mockHttp();
     Test.startTest();
     LineApiClient c = client();
@@ -444,6 +465,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void error400ShowsLineMessageAndDetails() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiException e = expectError(
@@ -468,6 +490,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void error401IsCredentialError() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiException e = expectError(
@@ -487,6 +510,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void error403IsGeneric() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiException e = expectError(
@@ -508,6 +532,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void error409OutsidePushIsAlreadyAccepted() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiException e = expectError(mock, 409, '{"message":"Conflict"}');
@@ -517,6 +542,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void error429RateLimitIsRetryable() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiException e = expectError(
@@ -533,6 +559,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void error5xxIsRetryable() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     Test.startTest();
     LineApiException e = expectError(
@@ -553,6 +580,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void calloutExceptionIsRetryableStatusZero() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     mock.stubCalloutException('GET', '/v2/bot/info');
     Test.startTest();
@@ -568,6 +596,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void malformedSuccessBodyThrows() {
+    LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();
     mock.stub('GET', '/v2/bot/info', 200, 'not json');
     Test.startTest();
@@ -582,6 +611,7 @@ private class LineApiClientTest {
 
   @IsTest
   static void mediaMessageFactories() {
+    LineTestFactory.ensurePackageAccess();
     LineApiModels.Message video = LineApiModels.videoMessage(
       'https://e.com/v.mp4',
       'https://e.com/v.jpg'

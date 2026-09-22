@@ -13,6 +13,47 @@ public class LineTestFactory {
 
   private static Integer userCounter = 0;
   private static List<Id> cachedProfileIds;
+  private static Boolean packageAccessChecked = false;
+
+  /**
+   * Gives the running user the `LINE_Admin` permission set, unless they already have access.
+   *
+   * Every test that touches package records must call this first. In a **package build org** (during
+   * `sf package version create`) the user running the tests has none of the package's permission sets, so the objects
+   * and fields are invisible and tests fail with "fields being inaccessible" or "No such column …" — even though the
+   * same tests pass in a scratch org, where the admin who deployed the source can see everything.
+   */
+  public static void ensurePackageAccess() {
+    if (packageAccessChecked) {
+      return;
+    }
+    packageAccessChecked = true;
+    // Field level, not object level: in the build org the object is visible while its fields are not.
+    if (
+      Schema.SObjectType.LINE_OA_Configuration__c.fields.Bot_User_Id__c.isCreateable()
+    ) {
+      return;
+    }
+    List<PermissionSet> admin = [
+      SELECT Id
+      FROM PermissionSet
+      WHERE Name = 'LINE_Admin'
+      LIMIT 1
+    ];
+    if (admin.isEmpty()) {
+      return;
+    }
+    // runAs isolates this setup-object DML from any business DML in the same test.
+    System.runAs(new User(Id = UserInfo.getUserId())) {
+      Database.insert(
+        new PermissionSetAssignment(
+          AssigneeId = UserInfo.getUserId(),
+          PermissionSetId = admin[0].Id
+        ),
+        false
+      );
+    }
+  }
 
   /**
    * Creates an active user with a standard (non-admin) profile that can edit Contacts, and assigns the given
@@ -22,6 +63,7 @@ public class LineTestFactory {
    * @return the inserted user
    */
   public static User createUser(List<String> permissionSetNames) {
+    ensurePackageAccess();
     userCounter++;
     String unique =
       String.valueOf(Crypto.getRandomInteger()).remove('-') + userCounter;
@@ -80,7 +122,7 @@ public class LineTestFactory {
         )
       );
     }
-    insert psas;
+    insert as system psas;
   }
 
   /**
@@ -131,8 +173,9 @@ public class LineTestFactory {
     String secret,
     Id repId
   ) {
+    ensurePackageAccess();
     LINE_OA_Configuration__c oa = newOAConfig(channelId, botUserId, repId);
-    insert oa;
+    insert as system oa;
     LineCredentialStore.putSecret(channelId, secret);
     return oa;
   }
@@ -226,6 +269,7 @@ public class LineTestFactory {
    * Stores the fake secrets of channels A and B.
    */
   public static void putTestSecrets() {
+    ensurePackageAccess();
     LineCredentialStore.putSecret(CHANNEL_A, SECRET_A);
     LineCredentialStore.putSecret(CHANNEL_B, SECRET_B);
   }

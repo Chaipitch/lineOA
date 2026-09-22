@@ -145,4 +145,79 @@
         <label>ลูกค้ารายนี้บล็อกหรือลบบัญชี LINE แล้ว</label>
         <name>LINE_Chat_Unfollowed</name>
     </customLabels>
+    <customLabels>
+        <label>การจัดการ LINE Connect</label>
+        <name>LINE_Admin_Title</name>
+    </customLabels>
+    <customLabels>
+        <label>การตั้งค่า</label>
+        <name>LINE_Admin_Settings</name>
+    </customLabels>
+    <customLabels>
+        <label>Site base URL</label>
+        <name>LINE_Admin_Site_Base_Url</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >URL ของ Site สาธารณะที่รับ webhook จาก LINE เช่น https://example.my.salesforce-sites.com/linewebhook</label>
+        <name>LINE_Admin_Site_Base_Url_Help</name>
+    </customLabels>
+    <customLabels>
+        <label>Webhook URL สำหรับ LINE</label>
+        <name>LINE_Admin_Webhook_Url</name>
+    </customLabels>
+    <customLabels>
+        <label>ผู้รับผิดชอบสำรอง</label>
+        <name>LINE_Admin_Fallback_Owner</name>
+    </customLabels>
+    <customLabels>
+        <label>บันทึกการตั้งค่า</label>
+        <name>LINE_Admin_Save</name>
+    </customLabels>
+    <customLabels>
+        <label>บันทึกการตั้งค่าแล้ว</label>
+        <name>LINE_Admin_Saved</name>
+    </customLabels>
+    <customLabels>
+        <label>บัญชีทางการ LINE</label>
+        <name>LINE_Admin_OAs</name>
+    </customLabels>
+    <customLabels>
+        <label>ยังไม่มีการลงทะเบียน LINE OA</label>
+        <name>LINE_Admin_No_OAs</name>
+    </customLabels>
+    <customLabels>
+        <label>ลงทะเบียน OA</label>
+        <name>LINE_Admin_Register</name>
+    </customLabels>
+    <customLabels>
+        <label>Channel ID</label>
+        <name>LINE_Admin_Channel_Id</name>
+    </customLabels>
+    <customLabels>
+        <label>Channel secret</label>
+        <name>LINE_Admin_Channel_Secret</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >จาก LINE Developers Console ระบบจะเก็บอย่างปลอดภัยและไม่แสดงอีก</label>
+        <name>LINE_Admin_Channel_Secret_Help</name>
+    </customLabels>
+    <customLabels>
+        <label>พนักงานขายที่รับผิดชอบ</label>
+        <name>LINE_Admin_Assigned_Rep</name>
+    </customLabels>
+    <customLabels>
+        <label>ลงทะเบียน LINE OA แล้ว: {0}</label>
+        <name>LINE_Admin_Registered</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >การลงทะเบียนจะตรวจสอบข้อมูลกับ LINE อ่านรายละเอียด OA และตั้งค่า webhook มาที่องค์กรนี้</label>
+        <name>LINE_Admin_Register_Help</name>
+    </customLabels>
+    <customLabels>
+        <label>เฉพาะผู้ดูแล LINE เท่านั้นที่เปิดหน้านี้ได้</label>
+        <name>LINE_Error_Admin_Only</name>
+    </customLabels>
 </Translations>

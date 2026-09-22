@@ -304,4 +304,152 @@
     >Banner when the conversation is Unfollowed</shortDescription>
         <value>This customer has blocked or removed the LINE account.</value>
     </labels>
+    <labels>
+        <fullName>LINE_Admin_Title</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Admin page title</shortDescription>
+        <value>LINE Connect Administration</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Settings</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Settings card title</shortDescription>
+        <value>Settings</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Site_Base_Url</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Site base URL field</shortDescription>
+        <value>Site base URL</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Site_Base_Url_Help</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Help text for the Site URL</shortDescription>
+        <value
+    >The public Site that receives LINE webhooks, e.g. https://example.my.salesforce-sites.com/linewebhook</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Webhook_Url</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Read-only computed webhook URL</shortDescription>
+        <value>Webhook URL for LINE</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Fallback_Owner</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Fallback owner field</shortDescription>
+        <value>Fallback owner</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Save</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Save button</shortDescription>
+        <value>Save settings</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Saved</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Toast after saving</shortDescription>
+        <value>Settings saved</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_OAs</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>OA list card title</shortDescription>
+        <value>LINE Official Accounts</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_No_OAs</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Empty OA list</shortDescription>
+        <value>No LINE OA registered yet.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Register</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Register button</shortDescription>
+        <value>Register OA</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Channel_Id</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Channel ID field</shortDescription>
+        <value>Channel ID</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Channel_Secret</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Channel secret field</shortDescription>
+        <value>Channel secret</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Channel_Secret_Help</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Help text for the secret</shortDescription>
+        <value
+    >From the LINE Developers Console. It is stored encrypted and never shown again.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Assigned_Rep</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Assigned rep field</shortDescription>
+        <value>Assigned rep</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Registered</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Toast after registering. {0} = OA name</shortDescription>
+        <value>LINE OA registered: {0}</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Register_Help</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Help text above the register form</shortDescription>
+        <value
+    >Registering checks the credentials with LINE, reads the OA details and points its webhook at this org.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Error_Admin_Only</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Non-admin opening the admin page</shortDescription>
+        <value>Only LINE admins can open this page.</value>
+    </labels>
 </CustomLabels>

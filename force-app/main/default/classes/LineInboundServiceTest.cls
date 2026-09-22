@@ -4,6 +4,7 @@ private class LineInboundServiceTest {
 
   @TestSetup
   static void setup() {
+    LineTestFactory.ensurePackageAccess();
     User repA = LineTestFactory.createUser(
       new List<String>{ 'LINE_Chat_User' }
     );
@@ -29,6 +30,7 @@ private class LineInboundServiceTest {
       SELECT Id, Assigned_Rep__c, Is_Active__c
       FROM LINE_OA_Configuration__c
       WHERE Channel_Id__c = :channelId
+      WITH SYSTEM_MODE
     ];
   }
 
@@ -58,6 +60,7 @@ private class LineInboundServiceTest {
         Last_Message_Preview__c
       FROM LINE_Conversation__c
       WHERE Unique_Key__c = :key
+      WITH SYSTEM_MODE
     ];
   }
 
@@ -65,6 +68,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void textMessageCreatesConversationOwnedByRepAndStoresMessage() {
+    LineTestFactory.ensurePackageAccess();
     LINE_OA_Configuration__c oaA = oa(LineTestFactory.CHANNEL_A);
 
     sendToA(
@@ -97,6 +101,7 @@ private class LineInboundServiceTest {
         Sent_At__c
       FROM LINE_Message__c
       WHERE LINE_Conversation__c = :c.Id
+      WITH SYSTEM_MODE
     ];
     Assert.areEqual('Inbound', m.Direction__c);
     Assert.areEqual('text', m.Message_Type__c);
@@ -110,6 +115,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void eventsRouteToTheReceivingOA() {
+    LineTestFactory.ensurePackageAccess();
     sendToA(
       new List<String>{ LineTestFactory.textEvent(CUSTOMER, 'to A', 'evtA') }
     );
@@ -132,12 +138,20 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void redeliveryDoesNotDuplicateOrRecount() {
+    LineTestFactory.ensurePackageAccess();
     String event = LineTestFactory.textEvent(CUSTOMER, 'once', 'evt1');
     sendToA(new List<String>{ event });
     sendToA(new List<String>{ event });
     sendToA(new List<String>{ event, event });
 
-    Assert.areEqual(1, [SELECT COUNT() FROM LINE_Message__c]);
+    Assert.areEqual(
+      1,
+      [
+        SELECT COUNT()
+        FROM LINE_Message__c
+        WITH SYSTEM_MODE
+      ]
+    );
     Assert.areEqual(
       1,
       conversation(LineTestFactory.CHANNEL_A, CUSTOMER).Unread_Count__c
@@ -146,6 +160,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void unreadCountAccumulates() {
+    LineTestFactory.ensurePackageAccess();
     sendToA(
       new List<String>{ LineTestFactory.textEvent(CUSTOMER, 'one', 'evt1') }
     );
@@ -163,6 +178,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void groupRoomAndStandbyEventsAreIgnored() {
+    LineTestFactory.ensurePackageAccess();
     sendToA(
       new List<String>{
         LineTestFactory.withSourceType(
@@ -178,12 +194,27 @@ private class LineInboundServiceTest {
         '{"type":"postback","mode":"active","webhookEventId":"evtP","source":{"type":"user","userId":"U1"}}'
       }
     );
-    Assert.areEqual(0, [SELECT COUNT() FROM LINE_Conversation__c]);
-    Assert.areEqual(0, [SELECT COUNT() FROM LINE_Message__c]);
+    Assert.areEqual(
+      0,
+      [
+        SELECT COUNT()
+        FROM LINE_Conversation__c
+        WITH SYSTEM_MODE
+      ]
+    );
+    Assert.areEqual(
+      0,
+      [
+        SELECT COUNT()
+        FROM LINE_Message__c
+        WITH SYSTEM_MODE
+      ]
+    );
   }
 
   @IsTest
   static void nonTextMessagesAreStoredAsPlaceholders() {
+    LineTestFactory.ensurePackageAccess();
     sendToA(
       new List<String>{
         LineTestFactory.rawMessageEvent(
@@ -221,6 +252,7 @@ private class LineInboundServiceTest {
         Sticker_Id__c,
         Location__c
       FROM LINE_Message__c
+      WITH SYSTEM_MODE
     ]) {
       byEvent.put(m.Webhook_Event_Id__c, m);
     }
@@ -242,6 +274,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void previewsUseLabels() {
+    LineTestFactory.ensurePackageAccess();
     LineWebhookModels.Message m = new LineWebhookModels.Message();
     for (
       String type : new List<String>{
@@ -274,6 +307,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void followCreatesConversationAndQueuesProfile() {
+    LineTestFactory.ensurePackageAccess();
     Test.setMock(HttpCalloutMock.class, new LineHttpMock());
     Test.startTest();
     sendToA(new List<String>{ LineTestFactory.followEvent(CUSTOMER, 'evtF') });
@@ -288,6 +322,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void unfollowThenRefollow() {
+    LineTestFactory.ensurePackageAccess();
     sendToA(new List<String>{ LineTestFactory.followEvent(CUSTOMER, 'evt1') });
     sendToA(
       new List<String>{ LineTestFactory.unfollowEvent(CUSTOMER, 'evt2') }
@@ -304,13 +339,14 @@ private class LineInboundServiceTest {
     );
     Assert.areEqual(
       1,
-      [SELECT COUNT() FROM LINE_Conversation__c],
+      [SELECT COUNT() FROM LINE_Conversation__c WITH SYSTEM_MODE],
       'Same conversation throughout'
     );
   }
 
   @IsTest
   static void existingConversationMessageQueuesNoProfile() {
+    LineTestFactory.ensurePackageAccess();
     sendToA(
       new List<String>{ LineTestFactory.textEvent(CUSTOMER, 'first', 'evt1') }
     );
@@ -334,6 +370,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void notificationGoesToUserOwner() {
+    LineTestFactory.ensurePackageAccess();
     sendToA(
       new List<String>{ LineTestFactory.textEvent(CUSTOMER, 'hi', 'evt1') }
     );
@@ -349,10 +386,11 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void inactiveOAUsesFallbackUser() {
+    LineTestFactory.ensurePackageAccess();
     LINE_OA_Configuration__c oaA = oa(LineTestFactory.CHANNEL_A);
     oaA.Is_Active__c = false;
-    update oaA;
-    insert new LINE_Settings__c(
+    update as system oaA;
+    insert as system new LINE_Settings__c(
       SetupOwnerId = UserInfo.getOrganizationId(),
       Fallback_Owner_Id__c = UserInfo.getUserId()
     );
@@ -369,18 +407,19 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void inactiveOAWithQueueFallbackSendsNoNotification() {
+    LineTestFactory.ensurePackageAccess();
     Group queue = new Group(Name = 'LINE Fallback Test', Type = 'Queue');
     System.runAs(new User(Id = UserInfo.getUserId())) {
-      insert queue;
-      insert new QueueSobject(
+      insert as system queue;
+      insert as system new QueueSobject(
         QueueId = queue.Id,
         SobjectType = LineNamespace.apiPrefix() + 'LINE_Conversation__c'
       );
     }
     LINE_OA_Configuration__c oaA = oa(LineTestFactory.CHANNEL_A);
     oaA.Is_Active__c = false;
-    update oaA;
-    insert new LINE_Settings__c(
+    update as system oaA;
+    insert as system new LINE_Settings__c(
       SetupOwnerId = UserInfo.getOrganizationId(),
       Fallback_Owner_Id__c = queue.Id
     );
@@ -400,16 +439,17 @@ private class LineInboundServiceTest {
     );
     Assert.areEqual(
       1,
-      [SELECT COUNT() FROM LINE_Message__c],
+      [SELECT COUNT() FROM LINE_Message__c WITH SYSTEM_MODE],
       'Message still stored'
     );
   }
 
   @IsTest
   static void inactiveOAWithoutFallbackKeepsRep() {
+    LineTestFactory.ensurePackageAccess();
     LINE_OA_Configuration__c oaA = oa(LineTestFactory.CHANNEL_A);
     oaA.Is_Active__c = false;
-    update oaA;
+    update as system oaA;
 
     sendToA(
       new List<String>{ LineTestFactory.textEvent(CUSTOMER, 'hi', 'evt1') }
@@ -425,6 +465,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void repBCannotSeeRepAConversations() {
+    LineTestFactory.ensurePackageAccess();
     sendToA(
       new List<String>{
         LineTestFactory.textEvent(CUSTOMER, 'private to A', 'evt1')
@@ -453,6 +494,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void twoHundredEventsInOneBatch() {
+    LineTestFactory.ensurePackageAccess();
     List<String> events = new List<String>();
     for (Integer i = 0; i < 200; i++) {
       events.add(
@@ -466,8 +508,14 @@ private class LineInboundServiceTest {
     Test.stopTest();
 
     Assert.areEqual(200, status);
-    Assert.areEqual(200, [SELECT COUNT() FROM LINE_Conversation__c]);
-    Assert.areEqual(200, [SELECT COUNT() FROM LINE_Message__c]);
+    Assert.areEqual(
+      200,
+      [SELECT COUNT() FROM LINE_Conversation__c WITH SYSTEM_MODE]
+    );
+    Assert.areEqual(
+      200,
+      [SELECT COUNT() FROM LINE_Message__c WITH SYSTEM_MODE]
+    );
     Assert.areEqual(
       LineInboundService.MAX_NOTIFICATIONS_PER_BATCH,
       LineInboundService.lastResult.notificationsSent
@@ -476,6 +524,7 @@ private class LineInboundServiceTest {
 
   @IsTest
   static void unparsableEventIsLoggedAndSkipped() {
+    LineTestFactory.ensurePackageAccess();
     LINE_OA_Configuration__c oaA = oa(LineTestFactory.CHANNEL_A);
     LineInboundService.Result result = LineInboundService.process(
       new List<LINE_Webhook_Event__e>{
@@ -500,6 +549,7 @@ private class LineInboundServiceTest {
         SELECT COUNT()
         FROM LINE_Error_Log__c
         WHERE Source__c = 'LineInboundService.parse'
+        WITH SYSTEM_MODE
       ]
     );
   }

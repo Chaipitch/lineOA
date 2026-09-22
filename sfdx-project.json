@@ -6,7 +6,8 @@
       "package": "LINE Connect",
       "versionName": "MVP",
       "versionNumber": "0.1.0.NEXT",
-      "versionDescription": "Connects LINE Official Accounts to Salesforce: per-rep OA chat from the Contact page."
+      "versionDescription": "Connects LINE Official Accounts to Salesforce: per-rep OA chat from the Contact page.",
+      "definitionFile": "config/project-scratch-def.json"
     },
     {
       "path": "unpackaged",
@@ -18,6 +19,7 @@
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "67.0",
   "packageAliases": {
-    "LINE Connect": "0HogL0000004bNZSAY"
+    "LINE Connect": "0HogL0000004bNZSAY",
+    "LINE Connect@0.1.0-1": "04tgL000000VDgvQAG"
   }
 }
