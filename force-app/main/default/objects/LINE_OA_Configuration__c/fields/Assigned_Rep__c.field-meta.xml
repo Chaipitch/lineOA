@@ -10,5 +10,6 @@
     <relationshipLabel>LINE OA Configurations</relationshipLabel>
     <relationshipName>LINE_OA_Configurations</relationshipName>
     <required>false</required>
+    <trackHistory>true</trackHistory>
     <type>Lookup</type>
 </CustomField>

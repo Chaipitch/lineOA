@@ -56,6 +56,10 @@ OWD: **Public Read Only** (reps need the OA name in the UI). Owner: the admin wh
 
 Validation: `Is_Active__c && ISBLANK(Assigned_Rep__c)` → error.
 
+Field history tracking: **on**, for `Assigned_Rep__c`, `Is_Active__c` and `Webhook_Status__c` (DECISIONS DEC-22).
+Reassignment and deactivation move every conversation of the OA, so 01 §5 "admin actions on OAs are logged" needs a record
+of who changed what. Subscribers see it in the record's History related list.
+
 ### Contact (new fields)
 
 | Field | Type | Notes |

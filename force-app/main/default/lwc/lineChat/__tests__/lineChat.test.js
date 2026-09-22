@@ -289,6 +289,57 @@ describe("c-line-chat", () => {
     });
   });
 
+  it("loads older messages when the list is scrolled to the top", async () => {
+    getMessages.mockResolvedValueOnce({
+      messages: [inboundMessage("m5", "newest page")],
+      hasMore: true
+    });
+    const element = createComponent();
+    await flush();
+
+    getMessages.mockResolvedValueOnce({
+      messages: [
+        inboundMessage("m4", "older page", "2026-09-22T02:00:00.000Z")
+      ],
+      hasMore: false
+    });
+    const list = element.shadowRoot.querySelector(".line-messages");
+    list.scrollTop = 0;
+    list.dispatchEvent(new CustomEvent("scroll"));
+    await flush();
+
+    expect(getMessages).toHaveBeenCalledTimes(2);
+    expect(element.shadowRoot.querySelectorAll(".line-bubble").length).toBe(2);
+  });
+
+  it("does not load older messages while scrolled away from the top", async () => {
+    getMessages.mockResolvedValueOnce({
+      messages: [inboundMessage("m5", "newest page")],
+      hasMore: true
+    });
+    const element = createComponent();
+    await flush();
+
+    const list = element.shadowRoot.querySelector(".line-messages");
+    list.scrollTop = 500;
+    list.dispatchEvent(new CustomEvent("scroll"));
+    await flush();
+
+    expect(getMessages).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not ask for older messages when there are none", async () => {
+    const element = createComponent();
+    await flush();
+
+    const list = element.shadowRoot.querySelector(".line-messages");
+    list.scrollTop = 0;
+    list.dispatchEvent(new CustomEvent("scroll"));
+    await flush();
+
+    expect(getMessages).toHaveBeenCalledTimes(1);
+  });
+
   it("shows an error when the conversation cannot be read", async () => {
     getConversations.mockRejectedValue({ body: { message: "No access" } });
     const element = createComponent();

@@ -64,7 +64,7 @@
           </div>
         </template>
 
-        <div class="line-messages slds-scrollable_y">
+        <div class="line-messages slds-scrollable_y" onscroll={handleScroll}>
           <template lwc:if={hasMore}>
             <div class="slds-align_absolute-center slds-var-m-bottom_x-small">
               <lightning-button

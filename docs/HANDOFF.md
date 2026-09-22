@@ -7,18 +7,18 @@ This file says where the work stands, what's open, and which traps already cost 
 
 | Milestone | State |
 |---|---|
-| M0 Packaging foundation | **Partly done.** Scripts, scratch definition, Code Analyzer script and docs exist. Dev Hub, namespace, `sf package create` and the "empty beta installs" proof are **not** done (see §4). |
+| M0 Packaging foundation | **Done except the beta install.** Namespace `tsthlineoa` linked, `sf package create` done (package `0HogL0000004bNZSAY`, Dev Hub `sf-line-dev`), scripts and docs in place. Beta 1 build + install into the QA org is the last step. |
 | M1 Data model & security metadata | **Done.** Deployed to the scratch org. Six approval items are still open (§4). |
 | M2 Core services | **Done.** Logger, settings, credential store, namespace, trigger base, API client, DTOs, test factory and HTTP mock. |
-| M3 Registration + inbound | **Code done and proven live with a real LINE OA** in a scratch org. **Beta 1 and the QA-org run are blocked** on the namespace (§4). |
+| M3 Registration + inbound | **Code done and proven live with a real LINE OA.** Beta 1 and the QA-org end-to-end run are the remaining part. |
 | M4 Outbound text | **Done**, verified live: a reply sent from Salesforce reached a real phone. |
-| M5 Chat panel (`lineChat`) | **Code done**: 146 Apex tests + 10 Jest tests pass. Visual check on a Contact record page still pending; one open question in DEC-21 (load-older button vs scroll-up). |
-| M6 Linking + inbox | **Next**, unless the namespace lands first, in which case packaging (Beta 1) comes before it. |
+| M5 Chat panel (`lineChat`) | **Done**: 146 Apex + 13 Jest tests pass. Loads older messages both by scrolling to the top and by a button (DEC-21). Visual check on a Contact record page still pending. |
+| M6 Linking + inbox | **Next**, after the Beta 1 install and QA run. |
 
-**Order change:** M1–M3 were built before the Dev Hub and namespace existed, with the user's approval (DECISIONS DEC-08).
-Development runs in **non-namespaced** scratch orgs created from `sf-line-dev` until the namespace is linked. Everything must be
-re-tested in a namespaced org at Beta 1: the REST URL, the CustomNotificationType lookup and the protected custom setting all
-behave differently with a namespace.
+**Order change:** M1–M5 were built before the namespace existed (DECISIONS DEC-08). Since 2026-09-22 the namespace `tsthlineoa`
+is set in `sfdx-project.json` and development happens in the **namespaced** org `line-ns`, where all 146 tests pass and the
+runtime prefix, webhook URL and CustomNotificationType lookup were confirmed. Only the protected custom setting still behaves
+differently in an installed package, which the Beta 1 install checks.
 
 Checks at the end of M5: **146/146 Apex tests** and **10/10 Jest tests** pass, LINE classes **94.2%** coverage
 (lowest class 90%), Code Analyzer **0 Critical/High**, prettier and ESLint clean.
@@ -32,8 +32,8 @@ The scratch org holds live test data: one registered LINE OA, a conversation wit
 |---|---|---|
 | `line-dev` | Development scratch org, **non-namespaced** | Rebuilt 2026-09-22 with `DAYS=30`, so it **expires 2026-10-22**. Recreate with `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh`. The LINE OA is **not** registered in it yet (the secret must be re-entered through Setup). |
 | `sf-line-dev` | Developer Edition. Spec calls it the **QA org**; it is currently also the only enabled **Dev Hub** | Never `sf project deploy` here: installed package versions only. It also holds ~2,700 unrelated SDO demo components. |
-| `line-devhub` | The intended Dev Hub alias | **Doesn't exist yet.** |
-| namespace org | A new Developer Edition the user created for the namespace | Namespace registered; **linking to the Dev Hub fails** (§4). |
+| `line-ns` | **Namespaced** scratch org (`tsthlineoa`), created 2026-09-22, expires 2026-10-22 | Where namespaced development and testing happen from now on. No LINE OA registered in it. |
+| namespace org | Developer Edition holding the namespace `tsthlineoa` | Linked to the Dev Hub 2026-09-22. Keep the org alive and its credentials safe: the namespace is permanent. |
 
 The scratch org has a Site (`LineWebhook`) whose URL ends in `/linewebhook`, two test reps (Rep A English, Rep B Thai),
 permission sets assigned, and `LINE_Settings__c` seeded. `setup-scratch.sh` does all of that and is safe to re-run.
@@ -55,22 +55,16 @@ codes (M6) are free. When the scratch org is recreated, re-register the OA, whic
 - The profile callout and custom notification both run **as Automated Process**, with no subscriber-side config (D3 verified).
 - Fake signature → 401, unknown OA → 403, junk → 400, and nothing is stored (acceptance criterion 3).
 
-Not proven yet: anything namespaced, the protected-setting behaviour in an installed package, and whether
-CustomNotificationType survives packaging. All three are Beta 1 checks.
+Namespaced org (2026-09-22): runtime prefix `tsthlineoa`, webhook path `/services/apexrest/tsthlineoa/line/webhook`, and the
+CustomNotificationType resolved by DeveloperName + NamespacePrefix. 146/146 tests pass there.
+
+Not proven yet: that the protected custom setting is hidden from subscriber admins, and that everything survives packaging.
+Both are Beta 1 checks in the QA org.
 
 ## 4. Open items, in the order they block work
 
-0. **A new namespace is being registered by the BA.** The first one (`tsth_lineoa_sf`, linked to `sf-line-dev` on 2026-09-21) was
-   judged too long and too agency-specific for a product that may be listed on AppExchange. Once the new one is linked: set it in
-   `sfdx-project.json`, create a **namespaced** scratch org, redeploy, rerun the tests, then `sf package create` and Beta 1.
-   Dev Hub stays `sf-line-dev`.
-1. **Namespace link fails** with `error=invalid_request&error_description=missing required code challenge` when clicking
-   **Link Namespace** in the Dev Hub. Salesforce's own pop-up doesn't send PKCE. Tried: nothing yet on the user's side beyond
-   retrying. To try: turn off "Require PKCE" in Setup → OAuth and OpenID Connect Settings (namespace org, then Dev Hub); untick
-   PKCE on the related connected app; another browser; then a Salesforce Support case or Partner Support. **Blocks M3's Beta 1
-   and everything downstream.**
-2. **Dev Hub choice.** A PBO is recommended; `sf-line-dev` being both Dev Hub and QA org is a known compromise (08).
-3. **Package name** ("LINE Connect" is a placeholder in `sfdx-project.json`).
+1. **Dev Hub is `sf-line-dev`**, which is also the QA org: a known compromise (08). The package is now permanently owned by it.
+2. **Scratch org limit is 3 active** on this Dev Hub. Check with `sf data query --target-org sf-line-dev --query "SELECT SignupUsername, ExpirationDate FROM ActiveScratchOrg"` before creating one; ask the user before deleting any.
 4. **DEC-13 (needs approval):** three permission-set differences Salesforce forces (error log Edit + View All; platform event Read).
    Already deployed; `03 §6` gets updated once approved.
 5. **DEC-14 (needs approval, blocks M7):** `Public_Url__c` is specified as URL(1000), but Salesforce URL and Text fields stop at

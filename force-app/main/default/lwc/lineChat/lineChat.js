@@ -27,6 +27,8 @@ import PREVIEW_UNSUPPORTED from "@salesforce/label/c.LINE_Preview_Unsupported";
 
 const MAX_TEXT_LENGTH = 5000;
 const DEFAULT_POLL_SECONDS = 5;
+// Within this many pixels of the top counts as "at the top" on trackpads and touch screens.
+const SCROLL_TOP_THRESHOLD_PX = 40;
 
 /**
  * Chat panel for the Contact record page: history, polling and sending text.
@@ -45,6 +47,8 @@ export default class LineChat extends LightningElement {
   draft = "";
   errorMessage;
 
+  scrollAnchor;
+  shouldScrollToBottom = false;
   pollIntervalMs = DEFAULT_POLL_SECONDS * 1000;
   pollTimer;
   visibilityHandler;
@@ -124,18 +128,28 @@ export default class LineChat extends LightningElement {
       });
       this.messages = page.messages;
       this.hasMore = page.hasMore;
+      this.shouldScrollToBottom = true;
       this.errorMessage = undefined;
     } catch (error) {
       this.errorMessage = this.messageFrom(error);
     }
   }
 
+  /**
+   * Loads the page before the oldest message held. Triggered by scrolling to the top of the list, and by the
+   * button above it, which keeps the same behaviour reachable from the keyboard and a screen reader.
+   */
   async handleLoadOlder() {
-    if (!this.messages.length || this.isLoadingOlder) {
+    if (!this.messages.length || this.isLoadingOlder || !this.hasMore) {
       return;
     }
     this.isLoadingOlder = true;
     const oldest = this.messages[0];
+    // Remember the current height so the view can stay on the same message after older ones are prepended.
+    const list = this.listElement;
+    this.scrollAnchor = list
+      ? { previousHeight: list.scrollHeight, previousTop: list.scrollTop }
+      : undefined;
     try {
       const page = await getMessages({
         conversationId: this.selectedConversationId,
@@ -146,9 +160,42 @@ export default class LineChat extends LightningElement {
       this.messages = [...page.messages, ...this.messages];
       this.hasMore = page.hasMore;
     } catch (error) {
+      this.scrollAnchor = undefined;
       this.errorMessage = this.messageFrom(error);
     } finally {
       this.isLoadingOlder = false;
+    }
+  }
+
+  /**
+   * Near the top of the list means "show me what came before".
+   * @param {Event} event scroll event of the message list
+   */
+  handleScroll(event) {
+    if (event.target.scrollTop <= SCROLL_TOP_THRESHOLD_PX) {
+      this.handleLoadOlder();
+    }
+  }
+
+  get listElement() {
+    return this.template.querySelector(".line-messages");
+  }
+
+  renderedCallback() {
+    const list = this.listElement;
+    if (!list) {
+      return;
+    }
+    if (this.scrollAnchor) {
+      // Keep the message the rep was reading in place, instead of jumping to the new top.
+      const { previousHeight, previousTop } = this.scrollAnchor;
+      list.scrollTop = list.scrollHeight - previousHeight + previousTop;
+      this.scrollAnchor = undefined;
+      return;
+    }
+    if (this.shouldScrollToBottom) {
+      list.scrollTop = list.scrollHeight;
+      this.shouldScrollToBottom = false;
     }
   }
 
@@ -202,6 +249,7 @@ export default class LineChat extends LightningElement {
         const added = incoming.filter((m) => !known.has(m.id));
         if (added.length) {
           this.messages = [...this.messages, ...added];
+          this.shouldScrollToBottom = true;
           if (added.some((m) => !m.isOutbound)) {
             await this.markConversationRead();
           }
@@ -252,6 +300,7 @@ export default class LineChat extends LightningElement {
         text
       });
       this.messages = [...this.messages, sent];
+      this.shouldScrollToBottom = true;
       this.draft = "";
       this.errorMessage = undefined;
     } catch (error) {

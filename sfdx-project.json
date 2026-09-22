@@ -6,7 +6,7 @@
       "package": "LINE Connect",
       "versionName": "MVP",
       "versionNumber": "0.1.0.NEXT",
-      "versionDescription": "Connects LINE Official Accounts to Salesforce"
+      "versionDescription": "Connects LINE Official Accounts to Salesforce: per-rep OA chat from the Contact page."
     },
     {
       "path": "unpackaged",
@@ -14,7 +14,10 @@
     }
   ],
   "name": "sf-line-dev",
-  "namespace": "",
+  "namespace": "tsthlineoa",
   "sfdcLoginUrl": "https://login.salesforce.com",
-  "sourceApiVersion": "67.0"
+  "sourceApiVersion": "67.0",
+  "packageAliases": {
+    "LINE Connect": "0HogL0000004bNZSAY"
+  }
 }
