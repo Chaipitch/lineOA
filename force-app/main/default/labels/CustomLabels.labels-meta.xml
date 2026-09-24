@@ -51,6 +51,15 @@
         <value>This LINE OA has used its monthly message allowance.</value>
     </labels>
     <labels>
+        <fullName>LINE_Unknown_Customer</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Stands in for the customer's name before their LINE profile has been fetched</shortDescription>
+        <value>a new LINE customer</value>
+    </labels>
+    <labels>
         <fullName>LINE_Notification_New_Message_Title</fullName>
         <categories>LINE Connect</categories>
         <language>en_US</language>

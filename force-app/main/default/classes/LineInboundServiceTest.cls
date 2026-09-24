@@ -442,6 +442,29 @@ private class LineInboundServiceTest {
   }
 
   @IsTest
+  static void notificationNamesTheCustomerOnlyOnceTheProfileIsKnown() {
+    LineTestFactory.ensurePackageAccess();
+    LINE_Conversation__c beforeProfile = new LINE_Conversation__c(
+      Name = CUSTOMER,
+      LINE_User_Id__c = CUSTOMER
+    );
+    Assert.areEqual(
+      System.Label.LINE_Unknown_Customer,
+      LineInboundService.notificationName(beforeProfile),
+      'The raw LINE user ID means nothing to a rep'
+    );
+
+    LINE_Conversation__c afterProfile = new LINE_Conversation__c(
+      Name = 'Somchai',
+      LINE_User_Id__c = CUSTOMER
+    );
+    Assert.areEqual(
+      'Somchai',
+      LineInboundService.notificationName(afterProfile)
+    );
+  }
+
+  @IsTest
   static void inactiveOAUsesFallbackUser() {
     LineTestFactory.ensurePackageAccess();
     LINE_OA_Configuration__c oaA = oa(LineTestFactory.CHANNEL_A);

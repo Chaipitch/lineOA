@@ -100,8 +100,21 @@ Record the [VERIFY] results for stateless tokens, `destination`, and Automated P
   - **Error log** list.
 - `LineAdminController` checks the `LINE_Admin` custom permission.
 - `LineOAConfigTriggerHandler` → `LineReassignBatch` (optional Contact Owner update).
+- **Message quota per OA** (L2). `LineApiClient.getQuota()` and `getQuotaConsumption()` already exist and are
+  unused outside the smoke-test script; this is the first place they reach a user.
+  - **M8a (do first, no schema commitment):** a *Quota* column on the OA table — `used / allowance` with the
+    remainder, fetched live on demand, admin only. `type = "none"` means an unlimited plan and shows as such.
+    Two callouts per OA, so refresh is a button, never a page-load or a poll.
+  - **M8b (needs a decision first):** store `Quota_Limit__c`, `Quota_Used__c` and `Quota_Checked_At__c` on
+    `LINE_OA_Configuration__c`, refreshed by the nightly scheduler (M9), so quota can be reported and alerted on.
+    Packaged fields are permanent (09 §4), so this needs a `DECISIONS.md` entry and a schema change to 03 §3.
+  - **M8c (optional, decide with M8b):** warn the rep in `lineChat` when their OA is near its limit. More useful
+    than a number on a page an admin rarely opens, but it needs the stored fields — reps must not trigger callouts.
+  - Salesforce replies are **push** messages and always count against the quota; LINE's *reply* messages don't, but
+    reply tokens are single-use and short-lived, so the package cannot rely on them (04 §3, L2).
 
-**Done when:** acceptance criterion 5 passes; OA onboarding is done entirely in the UI.
+**Done when:** acceptance criterion 5 passes; OA onboarding is done entirely in the UI; an admin can see how many
+messages each OA has left this month without leaving Salesforce.
 
 ## M9 — Daily Event sync (2–3 d)
 `LineDailyEventSyncBatch` per 03 §3 Event; `LineScheduler` runs it nightly (plus retention). Idempotent by `LINE_Sync_Key__c`.

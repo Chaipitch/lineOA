@@ -505,7 +505,7 @@ public without sharing class LineInboundService {
     }
     Integer sent = 0;
     for (LINE_Conversation__c c : [
-      SELECT Id, Name, OwnerId, Last_Message_Preview__c
+      SELECT Id, Name, OwnerId, Last_Message_Preview__c, LINE_User_Id__c
       FROM LINE_Conversation__c
       WHERE Id IN :conversationsWithNewMessages
       WITH SYSTEM_MODE
@@ -517,18 +517,19 @@ public without sharing class LineInboundService {
         continue;
       }
       try {
+        String displayName = notificationName(c);
         Messaging.CustomNotification n = new Messaging.CustomNotification();
         n.setNotificationTypeId(typeId);
         n.setTargetId(c.Id);
         n.setTitle(
           String.format(
             System.Label.LINE_Notification_New_Message_Title,
-            new List<Object>{ c.Name }
+            new List<Object>{ displayName }
           )
         );
         n.setBody(
           String.isBlank(c.Last_Message_Preview__c)
-            ? c.Name
+            ? displayName
             : c.Last_Message_Preview__c
         );
         n.send(new Set<String>{ c.OwnerId });
@@ -538,6 +539,17 @@ public without sharing class LineInboundService {
       }
     }
     return sent;
+  }
+
+  /**
+   * The customer's name for a notification. A conversation is created before its profile callout returns, so on a
+   * customer's first message the name is still their opaque LINE user ID; showing that to a rep means nothing.
+   */
+  @TestVisible
+  private static String notificationName(LINE_Conversation__c c) {
+    Boolean profileNotFetchedYet =
+      String.isBlank(c.Name) || c.Name == c.LINE_User_Id__c;
+    return profileNotFetchedYet ? System.Label.LINE_Unknown_Customer : c.Name;
   }
 
   private static Id notificationTypeId() {

@@ -25,6 +25,10 @@
         <name>LINE_Error_Monthly_Limit</name>
     </customLabels>
     <customLabels>
+        <label>ลูกค้าใหม่ทาง LINE</label>
+        <name>LINE_Unknown_Customer</name>
+    </customLabels>
+    <customLabels>
         <label>ข้อความ LINE ใหม่จาก {0}</label>
         <name>LINE_Notification_New_Message_Title</name>
     </customLabels>

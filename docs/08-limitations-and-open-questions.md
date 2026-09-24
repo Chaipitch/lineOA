@@ -5,7 +5,7 @@
 | # | Limitation | Mitigation |
 |---|---|---|
 | L1 | Replies sent from LINE OA Manager (app/web) never reach Salesforce. Evidence and options for the BA: `LINE_API_OA_MANAGER_LIMITATION.md` | Turn Chat off per OA (recommended), or a business rule: reply from Salesforce only |
-| L2 | Each OA has its own LINE plan and monthly message allowance; Salesforce replies are push messages and count | The client sizes plans; `lineAdmin` shows quota; clear "monthly limit" error |
+| L2 | Each OA has its own LINE plan and monthly message allowance; Salesforce replies are push messages and count | The client sizes plans; a clear "monthly limit" error today; `lineAdmin` shows each OA's quota in **M8a**, with stored fields and rep-facing warnings as M8b/M8c |
 | L3 | Per-rep OA setup in the LINE consoles is manual (~20–30 min per rep) | The Salesforce side is one form in `lineAdmin` |
 | L4 | One OA = one rep; splitting a rep's customers means customers must add the new rep's OA | Reassign the whole OA; generic OA names |
 | L5 | Chat refresh is polling (~5 s), not instant | Custom notifications for instant alerts |
@@ -54,4 +54,6 @@
 5. Approve the permission-set differences forced by the platform (DECISIONS DEC-13) and the type of `LINE_Message__c.Public_Url__c` (URL fields max out at 255 characters; DEC-14).
 6. ~~Should a new LINE user get a Contact automatically?~~ **Answered 2026-09-24**: yes, on the first message, only
    when the LINE user ID is new, on by default (DEC-27).
-7. Should `LINE_OA_Configuration__c` track field history (`Assigned_Rep__c`, `Is_Active__c`) to meet "admin actions on OAs are logged" (01 §5)? Not in 03 today.
+7. Quota visibility (M8): live fetch only (M8a), or also **store** quota on `LINE_OA_Configuration__c` so it can be
+   reported and alerted on (M8b, permanent packaged fields), and warn reps in the chat panel (M8c)?
+8. Should `LINE_OA_Configuration__c` track field history (`Assigned_Rep__c`, `Is_Active__c`) to meet "admin actions on OAs are logged" (01 §5)? Not in 03 today.
