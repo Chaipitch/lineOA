@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Auto_Create_Contact__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description
+  >Create a Contact automatically when a LINE user with no matching Contact sends their first message. The Contact is named after the LINE display name and owned by the OA&apos;s rep.</description>
+    <label>Auto Create Contact</label>
+    <type>Checkbox</type>
+</CustomField>

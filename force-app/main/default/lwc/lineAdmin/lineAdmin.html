@@ -82,6 +82,14 @@
 
         <lightning-input
           type="checkbox"
+          label="Create a Contact for a new LINE user's first message"
+          data-field="autoCreateContact"
+          checked={settings.autoCreateContact}
+          onchange={handleSettingChange}
+          class="slds-var-m-top_x-small"
+        ></lightning-input>
+        <lightning-input
+          type="checkbox"
           label="Daily activity sync enabled"
           data-field="dailySyncEnabled"
           checked={settings.dailySyncEnabled}

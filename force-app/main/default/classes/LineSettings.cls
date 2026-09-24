@@ -135,6 +135,14 @@ public inherited sharing class LineSettings {
   }
 
   /**
+   * @return whether a Contact is created for a LINE user who has none when they send their first message (default true)
+   */
+  public static Boolean autoCreateContact() {
+    // A missing org record means the admin never changed it, so the spec default (on) applies.
+    return record().Id == null ? true : record().Auto_Create_Contact__c == true;
+  }
+
+  /**
    * @return whether reassigning an OA also moves the owner of its linked Contacts (default false)
    */
   public static Boolean updateContactOwnerOnReassign() {

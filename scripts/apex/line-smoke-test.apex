@@ -12,8 +12,8 @@
 // Run:  sf apex run --file scripts/apex/line-smoke-test.apex --target-org line-dev
 // The token is never printed. The push uses one message from the OA's monthly quota; set SEND_PUSH = false to skip.
 
-String CHANNEL_ID = 'REPLACE_WITH_CHANNEL_ID';
-String MY_USER_ID = 'REPLACE_WITH_YOUR_USER_ID';
+String CHANNEL_ID = '2011343097';
+String MY_USER_ID = 'Ub248f17a106c01a9512c936335f92ef4';
 Boolean SEND_PUSH = true;
 
 void out(String label, Object value) {

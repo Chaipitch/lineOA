@@ -34,6 +34,8 @@ public without sharing class LineCalloutQueueable implements Queueable, Database
     public Id oaConfigId;
     public String channelId;
     public String lineUserId;
+    // PROFILE only: the customer has sent a message, so the conversation may gain a Contact (03 §5).
+    public Boolean resolveContact;
   }
 
   /**
@@ -56,12 +58,37 @@ public without sharing class LineCalloutQueueable implements Queueable, Database
     String channelId,
     String lineUserId
   ) {
+    return profileItem(
+      conversationId,
+      oaConfigId,
+      channelId,
+      lineUserId,
+      false
+    );
+  }
+
+  /**
+   * @param conversationId conversation to update
+   * @param oaConfigId the conversation's OA
+   * @param channelId the OA's channel ID
+   * @param lineUserId the customer's LINE user ID
+   * @param resolveContact whether to link or create a Contact for this conversation (03 §5)
+   * @return a profile work item
+   */
+  public static WorkItem profileItem(
+    Id conversationId,
+    Id oaConfigId,
+    String channelId,
+    String lineUserId,
+    Boolean resolveContact
+  ) {
     WorkItem item = new WorkItem();
     item.type = TYPE_PROFILE;
     item.recordId = conversationId;
     item.oaConfigId = oaConfigId;
     item.channelId = channelId;
     item.lineUserId = lineUserId;
+    item.resolveContact = resolveContact;
     return item;
   }
 
@@ -112,14 +139,29 @@ public without sharing class LineCalloutQueueable implements Queueable, Database
     }
     try {
       List<SObject> updates = new List<SObject>();
+      Map<Id, LINE_Conversation__c> conversationUpdates = new Map<Id, LINE_Conversation__c>();
+      Set<Id> resolveContactIds = new Set<Id>();
       // 1. Callouts
       for (WorkItem item : slice) {
         SObject change = run(item);
-        if (change != null) {
+        if (item.type == TYPE_PROFILE) {
+          if (item.resolveContact == true) {
+            resolveContactIds.add(item.recordId);
+          }
+          if (change != null) {
+            conversationUpdates.put(
+              item.recordId,
+              (LINE_Conversation__c) change
+            );
+          }
+        } else if (change != null) {
           updates.add(change);
         }
       }
-      // 2. DML
+      // 2. Linking (queries and DML only, so it stays after every callout)
+      linkContacts(resolveContactIds, conversationUpdates);
+      updates.addAll(conversationUpdates.values());
+      // 3. DML
       if (!updates.isEmpty()) {
         // Group by type: a mixed list may have at most 10 type chunks.
         updates.sort();
@@ -135,6 +177,38 @@ public without sharing class LineCalloutQueueable implements Queueable, Database
       LineLogger.error('LineCalloutQueueable.execute', e);
     } finally {
       LineLogger.flush();
+    }
+  }
+
+  /**
+   * Gives each conversation a Contact where one can be found or created, merging the result into the conversation
+   * updates so every conversation is still updated exactly once.
+   */
+  private static void linkContacts(
+    Set<Id> conversationIds,
+    Map<Id, LINE_Conversation__c> conversationUpdates
+  ) {
+    if (conversationIds.isEmpty()) {
+      return;
+    }
+    Map<Id, String> displayNames = new Map<Id, String>();
+    for (Id conversationId : conversationIds) {
+      LINE_Conversation__c pending = conversationUpdates.get(conversationId);
+      if (pending != null && String.isNotBlank(pending.Name)) {
+        displayNames.put(conversationId, pending.Name);
+      }
+    }
+    Map<Id, Id> contactIds = LineLinkService.resolveContacts(
+      conversationIds,
+      displayNames
+    );
+    for (Id conversationId : contactIds.keySet()) {
+      LINE_Conversation__c pending = conversationUpdates.get(conversationId);
+      if (pending == null) {
+        pending = new LINE_Conversation__c(Id = conversationId);
+        conversationUpdates.put(conversationId, pending);
+      }
+      pending.Contact__c = contactIds.get(conversationId);
     }
   }
 

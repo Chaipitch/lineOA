@@ -31,6 +31,8 @@ public with sharing class LineAdminController {
     @AuraEnabled
     public Integer messageRetentionMonths;
     @AuraEnabled
+    public Boolean autoCreateContact;
+    @AuraEnabled
     public Boolean dailySyncEnabled;
     @AuraEnabled
     public Boolean updateContactOwnerOnReassign;
@@ -95,6 +97,7 @@ public with sharing class LineAdminController {
    * @param inviteCodeExpiryDays QR invite lifetime
    * @param publicLinkExpiryDays outbound file link lifetime
    * @param messageRetentionMonths months to keep messages, 0 = forever
+   * @param autoCreateContact whether a new LINE user's first message creates a Contact
    * @param dailySyncEnabled whether the nightly Event sync runs
    * @param updateContactOwnerOnReassign whether reassigning an OA also moves Contact ownership
    * @return the saved settings
@@ -107,6 +110,7 @@ public with sharing class LineAdminController {
     Integer inviteCodeExpiryDays,
     Integer publicLinkExpiryDays,
     Integer messageRetentionMonths,
+    Boolean autoCreateContact,
     Boolean dailySyncEnabled,
     Boolean updateContactOwnerOnReassign
   ) {
@@ -126,6 +130,7 @@ public with sharing class LineAdminController {
       settings.Invite_Code_Expiry_Days__c = inviteCodeExpiryDays;
       settings.Public_Link_Expiry_Days__c = publicLinkExpiryDays;
       settings.Message_Retention_Months__c = messageRetentionMonths;
+      settings.Auto_Create_Contact__c = autoCreateContact == true;
       settings.Daily_Sync_Enabled__c = dailySyncEnabled == true;
       settings.Update_Contact_Owner_On_Reassign__c =
         updateContactOwnerOnReassign == true;
@@ -223,6 +228,7 @@ public with sharing class LineAdminController {
     view.inviteCodeExpiryDays = LineSettings.inviteCodeExpiryDays();
     view.publicLinkExpiryDays = LineSettings.publicLinkExpiryDays();
     view.messageRetentionMonths = LineSettings.messageRetentionMonths();
+    view.autoCreateContact = LineSettings.autoCreateContact();
     view.dailySyncEnabled = LineSettings.dailySyncEnabled();
     view.updateContactOwnerOnReassign = LineSettings.updateContactOwnerOnReassign();
     return view;

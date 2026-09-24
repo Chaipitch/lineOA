@@ -106,6 +106,7 @@ export default class LineAdmin extends LightningElement {
         messageRetentionMonths: this.toNumber(
           this.settings.messageRetentionMonths
         ),
+        autoCreateContact: this.settings.autoCreateContact === true,
         dailySyncEnabled: this.settings.dailySyncEnabled === true,
         updateContactOwnerOnReassign:
           this.settings.updateContactOwnerOnReassign === true

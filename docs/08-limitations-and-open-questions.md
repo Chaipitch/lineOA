@@ -4,7 +4,7 @@
 
 | # | Limitation | Mitigation |
 |---|---|---|
-| L1 | Replies sent from LINE OA Manager (app/web) never reach Salesforce | Business rule: reply from Salesforce only |
+| L1 | Replies sent from LINE OA Manager (app/web) never reach Salesforce. Evidence and options for the BA: `LINE_API_OA_MANAGER_LIMITATION.md` | Turn Chat off per OA (recommended), or a business rule: reply from Salesforce only |
 | L2 | Each OA has its own LINE plan and monthly message allowance; Salesforce replies are push messages and count | The client sizes plans; `lineAdmin` shows quota; clear "monthly limit" error |
 | L3 | Per-rep OA setup in the LINE consoles is manual (~20–30 min per rep) | The Salesforce side is one form in `lineAdmin` |
 | L4 | One OA = one rep; splitting a rep's customers means customers must add the new rep's OA | Reassign the whole OA; generic OA names |
@@ -52,4 +52,6 @@
 3. Licensing model later (free, per-org or per-user). Affects the guest-user design check above.
 4. Can `archive/qa-org-retrieve-2026-09-19/` be deleted? It's a reference retrieve of `sf-line-dev` that was moved out of `force-app/` in M0 (DECISIONS DEC-01).
 5. Approve the permission-set differences forced by the platform (DECISIONS DEC-13) and the type of `LINE_Message__c.Public_Url__c` (URL fields max out at 255 characters; DEC-14).
-6. Should `LINE_OA_Configuration__c` track field history (`Assigned_Rep__c`, `Is_Active__c`) to meet "admin actions on OAs are logged" (01 §5)? Not in 03 today.
+6. ~~Should a new LINE user get a Contact automatically?~~ **Answered 2026-09-24**: yes, on the first message, only
+   when the LINE user ID is new, on by default (DEC-27).
+7. Should `LINE_OA_Configuration__c` track field history (`Assigned_Rep__c`, `Is_Active__c`) to meet "admin actions on OAs are logged" (01 §5)? Not in 03 today.

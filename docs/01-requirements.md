@@ -36,6 +36,8 @@ result of a webhook test. Admins can also rotate the secret, reassign the rep, d
 ### F3 — Customer adds the OA
 LINE sends a `follow` event. The package creates a `LINE_Conversation__c` owned by the OA's rep and fetches
 the customer's LINE name and picture. If a Contact already has this LINE user ID, it auto-links. The rep is notified.
+On the customer's **first message**, a conversation that still has no Contact gets one: an existing Contact with that
+LINE user ID, or a new Contact named after the LINE display name while `Auto_Create_Contact__c` is on (the default).
 
 ### F4 — Link a conversation to a Contact
 Three ways, in order of preference:

@@ -147,6 +147,11 @@ Implemented only in `LineLinkService`.
    - Apply the manual-link checks (rule 3) → link, clear the code, and queue a confirmation **reply**.
    - An invalid or expired code: store the message as normal, don't link, and reply "code expired, ask your sales rep for a new one" (reply only).
 2. **Auto-link**: `Contact.LINE_User_Id__c` = the conversation's `LINE_User_Id__c` → set `Contact__c`.
+   - **Auto-create** (DEC-27): on the customer's **first message**, if no Contact holds that LINE user ID and
+     `Auto_Create_Contact__c` is on (default), create one: `LastName` = LINE display name (falling back to the LINE
+     user ID), `LINE_User_Id__c`, `LINE_OA_Configuration__c`, owner = the conversation's owner when that is a user.
+     One Contact per LINE user, shared by every OA's conversation with them. Runs after the profile callout, in
+     `LineCalloutQueueable`. A failed insert is logged and leaves the conversation unlinked.
 3. **Manual link** (`linkToContact(conversationId, contactId)`):
    - Contact has no LINE user ID → set `Contact.LINE_User_Id__c`; set `Contact.LINE_OA_Configuration__c` if blank.
    - Contact already has the **same** ID → link.

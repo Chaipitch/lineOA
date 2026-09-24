@@ -5,7 +5,7 @@
  * Steps: parse and filter → resolve owners → upsert conversations by `Unique_Key__c` → upsert messages by
  * `Webhook_Event_Id__c` (redeliveries are no-ops and don't touch unread counts) → notify owners → enqueue one
  * `LineCalloutQueueable` for follow-up callouts.
- * Linking to Contacts (auto-link, invite codes) is added in M6 by `LineLinkService`.
+ * Contacts are linked or created by `LineLinkService`, from the follow-up queueable (03 §5); invite codes follow.
  *
  * `without sharing` (02 §2): runs as Automated Process from the platform event trigger and creates conversations
  * owned by reps, which no user context could do. Nothing here is exposed to users directly.
@@ -257,6 +257,7 @@ public without sharing class LineInboundService {
         Unique_Key__c,
         OwnerId,
         Name,
+        Contact__c,
         Unread_Count__c,
         Last_Message_At__c,
         Status__c
@@ -558,7 +559,8 @@ public without sharing class LineInboundService {
     return null;
   }
 
-  // Profile fetch for new conversations and for (re-)follows. One queueable per transaction (CLAUDE.md).
+  // Profile fetch for new conversations and for (re-)follows, plus Contact resolution on a customer's first
+  // message (03 §5). One queueable per transaction (CLAUDE.md).
   private static Integer enqueueFollowUps(
     List<Incoming> incoming,
     Map<String, LINE_Conversation__c> existing,
@@ -567,11 +569,25 @@ public without sharing class LineInboundService {
     Map<Id, LineCalloutQueueable.WorkItem> items = new Map<Id, LineCalloutQueueable.WorkItem>();
     for (Incoming item : incoming) {
       Id conversationId = conversationIdByKey.get(item.key);
-      Boolean isNew = !existing.containsKey(item.key);
+      if (conversationId == null) {
+        continue;
+      }
+      LINE_Conversation__c current = existing.get(item.key);
+      Boolean isNew = current == null;
+      // A message from someone we have no Contact for. The profile callout gives the Contact its display name.
+      Boolean resolveContact =
+        item.event.type == 'message' && (isNew || current.Contact__c == null);
+      Boolean wantsProfile = isNew || item.event.type == 'follow';
+
+      LineCalloutQueueable.WorkItem queued = items.get(conversationId);
+      if (queued != null) {
+        queued.resolveContact = queued.resolveContact == true || resolveContact;
+        continue;
+      }
+      // An unlinked conversation that only sent a message needs a fresh callout, which is worth making only
+      // while auto-creation is on; otherwise the rep links it from the inbox.
       if (
-        conversationId == null ||
-        items.containsKey(conversationId) ||
-        !(isNew || item.event.type == 'follow')
+        !wantsProfile && !(resolveContact && LineSettings.autoCreateContact())
       ) {
         continue;
       }
@@ -581,7 +597,8 @@ public without sharing class LineInboundService {
           conversationId,
           item.oa.Id,
           item.oa.Channel_Id__c,
-          item.event.source.userId
+          item.event.source.userId,
+          resolveContact
         )
       );
     }

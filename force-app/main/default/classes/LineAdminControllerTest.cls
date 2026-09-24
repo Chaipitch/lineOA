@@ -65,6 +65,7 @@ private class LineAdminControllerTest {
                 null,
                 null,
                 true,
+                true,
                 false
               );
             }
@@ -115,6 +116,7 @@ private class LineAdminControllerTest {
         2,
         6,
         false,
+        false,
         true
       );
     }
@@ -132,6 +134,7 @@ private class LineAdminControllerTest {
     Assert.areEqual(2, saved.publicLinkExpiryDays);
     Assert.areEqual(6, saved.messageRetentionMonths);
     Assert.isFalse(saved.dailySyncEnabled);
+    Assert.isFalse(saved.autoCreateContact, 'The admin turned it off');
     Assert.isTrue(saved.updateContactOwnerOnReassign);
   }
 
@@ -149,11 +152,13 @@ private class LineAdminControllerTest {
         null,
         null,
         true,
+        true,
         false
       );
     }
 
     Assert.areEqual(5, saved.pollIntervalSeconds);
+    Assert.isTrue(saved.autoCreateContact, 'On by default');
     Assert.areEqual(7, saved.inviteCodeExpiryDays);
     Assert.areEqual(7, saved.publicLinkExpiryDays);
     Assert.areEqual(0, saved.messageRetentionMonths);

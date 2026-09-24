@@ -57,7 +57,8 @@ private class LineInboundServiceTest {
         Status__c,
         Unread_Count__c,
         Last_Message_At__c,
-        Last_Message_Preview__c
+        Last_Message_Preview__c,
+        Contact__c
       FROM LINE_Conversation__c
       WHERE Unique_Key__c = :key
       WITH SYSTEM_MODE
@@ -345,7 +346,7 @@ private class LineInboundServiceTest {
   }
 
   @IsTest
-  static void existingConversationMessageQueuesNoProfile() {
+  static void linkedConversationMessageQueuesNoProfile() {
     LineTestFactory.ensurePackageAccess();
     sendToA(
       new List<String>{ LineTestFactory.textEvent(CUSTOMER, 'first', 'evt1') }
@@ -356,13 +357,69 @@ private class LineInboundServiceTest {
       'New conversation → profile'
     );
 
+    // Stand in for the queueable, which doesn't run inside this transaction.
+    Contact c = new Contact(LastName = 'Somchai', LINE_User_Id__c = CUSTOMER);
+    insert as system c;
+    LINE_Conversation__c conv = conversation(
+      LineTestFactory.CHANNEL_A,
+      CUSTOMER
+    );
+    conv.Contact__c = c.Id;
+    update as system conv;
+
     sendToA(
       new List<String>{ LineTestFactory.textEvent(CUSTOMER, 'second', 'evt2') }
     );
     Assert.areEqual(
       0,
       LineInboundService.lastResult.calloutItemsQueued,
-      'Known conversation → none'
+      'Known conversation with a Contact → none'
+    );
+  }
+
+  @IsTest
+  static void unlinkedConversationMessageQueuesContactResolution() {
+    LineTestFactory.ensurePackageAccess();
+    // A follow with no message: nothing to link yet (the decision is "on first message").
+    sendToA(new List<String>{ LineTestFactory.followEvent(CUSTOMER, 'evtF') });
+    Assert.areEqual(1, LineInboundService.lastResult.calloutItemsQueued);
+
+    // The first message on that conversation asks for a Contact, even though the conversation is not new.
+    sendToA(
+      new List<String>{ LineTestFactory.textEvent(CUSTOMER, 'hello', 'evt1') }
+    );
+    Assert.areEqual(
+      1,
+      LineInboundService.lastResult.calloutItemsQueued,
+      'Unlinked conversation + message → resolve the Contact'
+    );
+  }
+
+  @IsTest
+  static void newUserMessageCreatesAContact() {
+    LineTestFactory.ensurePackageAccess();
+    Test.setMock(HttpCalloutMock.class, new LineHttpMock());
+    Test.startTest();
+    sendToA(
+      new List<String>{ LineTestFactory.textEvent(CUSTOMER, 'hello', 'evt1') }
+    );
+    Test.stopTest();
+
+    Contact created = [
+      SELECT Id, LastName, LINE_User_Id__c
+      FROM Contact
+      WITH SYSTEM_MODE
+    ];
+    Assert.areEqual(CUSTOMER, created.LINE_User_Id__c);
+    Assert.areEqual(
+      'Somchai',
+      created.LastName,
+      'Named from the LINE profile, not the user ID'
+    );
+    Assert.areEqual(
+      created.Id,
+      conversation(LineTestFactory.CHANNEL_A, CUSTOMER).Contact__c,
+      'The conversation is linked to it'
     );
   }
 
