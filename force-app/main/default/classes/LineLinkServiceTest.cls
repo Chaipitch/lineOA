@@ -103,7 +103,12 @@ private class LineLinkServiceTest {
     Assert.areEqual(existing.Id, result.get(conversationId));
     Assert.areEqual(
       1,
-      [SELECT COUNT() FROM Contact WHERE LINE_User_Id__c = :USER_1],
+      [
+        SELECT COUNT()
+        FROM Contact
+        WHERE LINE_User_Id__c = :USER_1
+        WITH SYSTEM_MODE
+      ],
       'No second Contact for a LINE user that already has one'
     );
   }
@@ -125,7 +130,7 @@ private class LineLinkServiceTest {
       result.isEmpty(),
       'The setting is off, so nothing is created'
     );
-    Assert.areEqual(0, [SELECT COUNT() FROM Contact]);
+    Assert.areEqual(0, [SELECT COUNT() FROM Contact WITH SYSTEM_MODE]);
   }
 
   @IsTest
@@ -146,7 +151,7 @@ private class LineLinkServiceTest {
     Test.stopTest();
 
     Assert.isTrue(result.isEmpty());
-    Assert.areEqual(1, [SELECT COUNT() FROM Contact]);
+    Assert.areEqual(1, [SELECT COUNT() FROM Contact WITH SYSTEM_MODE]);
   }
 
   @IsTest
@@ -205,7 +210,7 @@ private class LineLinkServiceTest {
     Assert.areEqual(2, result.size());
     Assert.areEqual(
       1,
-      [SELECT COUNT() FROM Contact],
+      [SELECT COUNT() FROM Contact WITH SYSTEM_MODE],
       'Both conversations share one Contact'
     );
     Assert.areEqual(
@@ -267,7 +272,7 @@ private class LineLinkServiceTest {
     Test.stopTest();
 
     Assert.isTrue(result.isEmpty(), 'Nothing is linked when the insert fails');
-    Assert.areEqual(0, [SELECT COUNT() FROM Contact]);
+    Assert.areEqual(0, [SELECT COUNT() FROM Contact WITH SYSTEM_MODE]);
     Assert.areEqual(
       'LineLinkService.createContacts',
       [SELECT Source__c FROM LINE_Error_Log__c WITH SYSTEM_MODE].Source__c,
@@ -284,6 +289,6 @@ private class LineLinkServiceTest {
     );
     Assert.isTrue(LineLinkService.resolveContacts(null, null).isEmpty());
     Test.stopTest();
-    Assert.areEqual(0, [SELECT COUNT() FROM Contact]);
+    Assert.areEqual(0, [SELECT COUNT() FROM Contact WITH SYSTEM_MODE]);
   }
 }
