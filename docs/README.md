@@ -25,6 +25,7 @@ Claude Code does all of the implementation; its working rules are in [../CLAUDE.
 | [08-limitations-and-open-questions.md](08-limitations-and-open-questions.md) | Limitations, technical risks, open questions |
 | [09-packaging.md](09-packaging.md) | Environments, project layout, commands, upgrade safety, subscriber realities, security review |
 | [HOW_IT_WORKS.md](HOW_IT_WORKS.md) | **Start here to understand the build**: what it does, how a message travels in each direction, and why the pieces are arranged that way |
+| [BA_TA_REVIEW_CORRECTIONS.md](BA_TA_REVIEW_CORRECTIONS.md) | Corrections to the BA's TA review document (7 Oct 2026) so it matches this specification |
 | [LINE_API_OA_MANAGER_LIMITATION.md](LINE_API_OA_MANAGER_LIMITATION.md) | Evidence for the BA that replies sent from the LINE OA Manager app cannot reach Salesforce, with the options |
 | [HANDOFF.md](HANDOFF.md) | **Current state of the build**: what's done, orgs in use, open decisions, traps. Read before continuing work. |
 | [KICKOFF_PROMPT.md](KICKOFF_PROMPT.md) | First prompt for a new Claude Code session |

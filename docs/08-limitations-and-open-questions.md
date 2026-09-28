@@ -44,6 +44,10 @@
 5. Do managers need to reply on behalf of a rep, or only read?
 6. Invite message wording in Thai/English (shown in the customer's LINE).
 7. Do target clients use Person Accounts? (affects post-MVP priority)
+8. Should the package **enforce** one active OA per rep, or is that an operational rule only? (Raised by the TA review
+   document, 2.2. The package neither enforces nor depends on it.)
+9. Are Opportunity links wanted in a later phase? A daily Event's `WhatId` already points to the conversation, so an
+   Opportunity link would need a different mechanism. (Raised by the TA review document, 3.3.)
 
 ## Open questions — ours
 
