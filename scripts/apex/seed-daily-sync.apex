@@ -10,7 +10,7 @@
 // Safe to re-run: it first deletes everything it created before, including the Events synced from it.
 // Times are "local time in the org's default time zone" (Setup → Company Information), the zone that defines a day.
 //
-// Run:  sf apex run --file scripts/apex/seed-daily-sync.apex --target-org line-ns
+// Run:  sf apex run --file scripts/apex/seed-daily-sync.apex --target-org line-dev
 // Scratch orgs only: in an installed package these classes and fields are not reachable from anonymous Apex.
 
 String CHANNEL = '9000000001';

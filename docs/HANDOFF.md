@@ -32,8 +32,7 @@ now says "a new LINE customer" instead of their raw LINE user ID). The next beta
 |---|---|---|
 | `sf-line-dev` | **Dev Hub** (Enterprise Edition trial, expires 2027-09-22). Owns the package and the namespace link | Never deploy source here. Limits: 3 active scratch orgs, 6 package versions a day. |
 | `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **Beta 3 (0.1.0.3) installed** | The real LINE OA **TerraskyTH-Dev-Acc** (`@833ybxes`, channel `2011724597`) is registered here, and its webhook points here. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Contact "Chaipitch" was auto-created from a real message. |
-| `line-ns` | **Namespaced scratch org**: where development and tests run | Expires **2026-10-22**. Rebuild: `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-ns`. |
-| `line-dev` | Older non-namespaced scratch org | Expires 2026-10-22. Retired: the OA no longer points at it. Ask before deleting it. |
+| `line-dev` | **The one scratch org** (namespaced `tsthlineoa`, user `test-egv3lqxcpg7t@example.com`); the project default | Expires **2026-10-22**. Rebuild: `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev`. Holds seed data from `scripts/apex/seed-daily-sync.apex`. Until 2026-09-29 this org was aliased `line-ns`; the old non-namespaced `line-dev` was deleted that day. |
 
 **`CLAUDE.md` is out of date on orgs:** it names `line-devhub` as the Dev Hub and `sf-line-dev` as the QA org. In practice
 `sf-line-dev` is the Dev Hub and `chaipitch-devhub` is the QA org. Ask the user before editing `CLAUDE.md`.
@@ -134,9 +133,9 @@ Read docs/README.md, docs/HANDOFF.md and docs/DECISIONS.md, then continue with M
 Useful commands:
 
 ```bash
-DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-ns   # fresh namespaced scratch org, fully set up
-sf project deploy start --target-org line-ns --wait 15 --ignore-conflicts
-sf apex run test --test-level RunLocalTests --target-org line-ns --code-coverage --result-format human --wait 30
+DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev  # fresh namespaced scratch org, fully set up
+sf project deploy start --target-org line-dev --wait 15 --ignore-conflicts
+sf apex run test --test-level RunLocalTests --target-org line-dev --code-coverage --result-format human --wait 30
 npm run prettier:verify && npm run lint && npm run test:unit
 sf package version create --package "LINE Connect" --installation-key-bypass --code-coverage --wait 90 --target-dev-hub sf-line-dev
 ```
