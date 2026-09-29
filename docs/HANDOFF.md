@@ -1,122 +1,129 @@
 # Handoff — state of the build
 
-Last updated: **2026-09-22**, after M5. Read `README.md` first, then this file, then `DECISIONS.md`.
-This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each milestone.
+Last updated: **2026-09-29**, after M9. Read `README.md` first, then this file, then `DECISIONS.md`.
+This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
+milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
 ## 1. Where we are
 
 | Milestone | State |
 |---|---|
-| M0 Packaging foundation | **Done except the beta install.** Namespace `tsthlineoa` linked, `sf package create` done (package `0HogL0000004bNZSAY`, Dev Hub `sf-line-dev`), scripts and docs in place. Beta 1 build + install into the QA org is the last step. |
-| M1 Data model & security metadata | **Done.** Deployed to the scratch org. Six approval items are still open (§4). |
-| M2 Core services | **Done.** Logger, settings, credential store, namespace, trigger base, API client, DTOs, test factory and HTTP mock. |
-| M3 Registration + inbound | **Code done and proven live with a real LINE OA.** Beta 1 and the QA-org end-to-end run are the remaining part. |
-| M4 Outbound text | **Done**, verified live: a reply sent from Salesforce reached a real phone. |
-| M5 Chat panel (`lineChat`) | **Done**: 146 Apex + 13 Jest tests pass. Loads older messages both by scrolling to the top and by a button (DEC-21). Visual check on a Contact record page still pending. |
-| M6 Linking + inbox | **Next**, after the Beta 1 install and QA run. |
+| M0 Packaging foundation | **Done.** Namespace `tsthlineoa`, package `LINE Connect` (`0HogL0000004bNZSAY`) owned by Dev Hub `sf-line-dev`. |
+| M1 Data model & security metadata | **Done.** |
+| M2 Core services | **Done.** |
+| M3 Registration + inbound | **Done, proven live** in a scratch org and in the installed package. |
+| M4 Outbound text | **Done, proven live**: a reply sent from Salesforce reached a real phone. |
+| M5 Chat panel (`lineChat`) | **Done, proven live** on a Contact page in the QA org. |
+| M6 Linking + inbox | **Partly done:** auto-link and auto-create Contact on first message (DEC-27). **Not done:** QR invite codes, manual link, `lineInbox`, `lineInvite`. |
+| M7 Files & images | Not started. |
+| M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29). **Not done:** rotate secret, reassign, deactivate, quota (M8a–c), error log. |
+| **M9 Daily Event sync** | **Done in the scratch org** (DEC-28–30): 187/187 Apex tests. Not yet in a package version. |
+| M10–M12 | Not started. |
 
-**Order change:** M1–M5 were built before the namespace existed (DECISIONS DEC-08). Since 2026-09-22 the namespace `tsthlineoa`
-is set in `sfdx-project.json` and development happens in the **namespaced** org `line-ns`, where all 146 tests pass and the
-runtime prefix, webhook URL and CustomNotificationType lookup were confirmed. Only the protected custom setting still behaves
-differently in an installed package, which the Beta 1 install checks.
+Checks at the end of M9: **187/187 Apex tests** and **25/25 Jest tests** pass, org-wide coverage **93%** (lowest class
+`LineAdminController` 87%), Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
 
-Checks at the end of M5: **146/146 Apex tests** and **10/10 Jest tests** pass, LINE classes **94.2%** coverage
-(lowest class 90%), Code Analyzer **0 Critical/High**, prettier and ESLint clean.
-
-The scratch org holds live test data: one registered LINE OA, a conversation with real messages, and a Contact
-("Chaipitch") linked to it **by a one-off script**, since linking is M6.
+**Committed but not in any package version yet:** M9, and the first-message notification fix (a customer's first message
+now says "a new LINE customer" instead of their raw LINE user ID). The next beta (0.1.0.4) picks both up.
 
 ## 2. Orgs and access
 
 | Alias | What it is | Notes |
 |---|---|---|
-| `line-dev` | Development scratch org, **non-namespaced** | Rebuilt 2026-09-22 with `DAYS=30`, so it **expires 2026-10-22**. Recreate with `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh`. The LINE OA is **not** registered in it yet (the secret must be re-entered through Setup). |
-| `sf-line-dev` | Developer Edition. Spec calls it the **QA org**; it is currently also the only enabled **Dev Hub** | Never `sf project deploy` here: installed package versions only. It also holds ~2,700 unrelated SDO demo components. |
-| `line-ns` | **Namespaced** scratch org (`tsthlineoa`), created 2026-09-22, expires 2026-10-22 | Where namespaced development and testing happen from now on. No LINE OA registered in it. |
-| namespace org | Developer Edition holding the namespace `tsthlineoa` | Linked to the Dev Hub 2026-09-22. Keep the org alive and its credentials safe: the namespace is permanent. |
+| `sf-line-dev` | **Dev Hub** (Enterprise Edition trial, expires 2027-09-22). Owns the package and the namespace link | Never deploy source here. Limits: 3 active scratch orgs, 6 package versions a day. |
+| `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **Beta 3 (0.1.0.3) installed** | The real LINE OA **TerraskyTH-Dev-Acc** (`@833ybxes`, channel `2011724597`) is registered here, and its webhook points here. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Contact "Chaipitch" was auto-created from a real message. |
+| `line-ns` | **Namespaced scratch org**: where development and tests run | Expires **2026-10-22**. Rebuild: `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-ns`. |
+| `line-dev` | Older non-namespaced scratch org | Expires 2026-10-22. Retired: the OA no longer points at it. Ask before deleting it. |
 
-The scratch org has a Site (`LineWebhook`) whose URL ends in `/linewebhook`, two test reps (Rep A English, Rep B Thai),
-permission sets assigned, and `LINE_Settings__c` seeded. `setup-scratch.sh` does all of that and is safe to re-run.
+**`CLAUDE.md` is out of date on orgs:** it names `line-devhub` as the Dev Hub and `sf-line-dev` as the QA org. In practice
+`sf-line-dev` is the Dev Hub and `chaipitch-devhub` is the QA org. Ask the user before editing `CLAUDE.md`.
 
-**A real LINE OA is registered in the current scratch org** and its webhook points there. Look it up with:
-`sf data query --target-org line-dev --query "SELECT Name, Channel_Id__c, Basic_Id__c, Webhook_Status__c FROM LINE_OA_Configuration__c"`.
-It is on the **free LINE plan: 300 push messages a month**, so don't run bulk send tests against it. Replies to invite
-codes (M6) are free. When the scratch org is recreated, re-register the OA, which repoints its webhook:
+The OA is on the **free LINE plan (300 push messages a month)**. Don't run bulk-send tests against it.
 
-1. Store the secret in the new org through Setup → Custom Settings → **LINE OA Credential** → Manage → New
-   (Name = Channel ID, Channel Secret = the secret). Never put a secret in a file, a script or a CLI command.
-2. Run `scripts/apex/register-oa.apex` with the Channel ID filled in (it reads the secret from the setting).
-3. `scripts/apex/line-smoke-test.apex` checks credentials, bot info, quota and a push, without touching webhook settings.
+**Git:** `origin` is `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`, up to date at `f6550aa` (before M9).
+The user wants to move to `git@github.com:Chaipitch/lineOA.git` over SSH. The new repo exists and is empty, and SSH works
+as `Chaipitch`, but pushing to a new remote was blocked by the auto-mode safety check, so the user is switching it
+themselves (`git remote set-url origin …` then `git push -u origin main`).
 
-## 3. What is proven to work (live, not just in tests)
+## 3. What is proven to work live
 
-- Stateless token from Channel ID + secret; bot info; quota; push to a phone (DECISIONS §2).
-- LINE → Site guest user → signature check → platform event → Automated Process trigger → conversation and message stored.
-- The profile callout and custom notification both run **as Automated Process**, with no subscriber-side config (D3 verified).
-- Fake signature → 401, unknown OA → 403, junk → 400, and nothing is stored (acceptance criterion 3).
+- A real phone → LINE → Site guest user → signature check → platform event → Automated Process → conversation and
+  message stored → rep notified. Verified in a scratch org and in the installed package in the QA org.
+- Profile callout names the conversation; auto-create makes the Contact (QA org, 2026-09-24).
+- Reply from the chat panel delivered to the phone.
+- Fake signature → 401, unknown OA → 403, junk → 400, and nothing is stored.
+- In the installed package, the protected setting `LINE_OA_Credential__c` is invisible to a subscriber System
+  Administrator (SOQL returns "not supported").
+- Registering an OA from the LINE Admin page sets the webhook URL at LINE.
 
-Namespaced org (2026-09-22): runtime prefix `tsthlineoa`, webhook path `/services/apexrest/tsthlineoa/line/webhook`, and the
-CustomNotificationType resolved by DeveloperName + NamespacePrefix. 146/146 tests pass there.
+**Not yet proven live:** the M9 daily sync in an installed package. In the next beta, press **Sync today now** on the
+LINE Admin page and check the Contact's Activity timeline (07 §3 step 9).
 
-Not proven yet: that the protected custom setting is hidden from subscriber admins, and that everything survives packaging.
-Both are Beta 1 checks in the QA org.
+## 4. Open items
 
-## 4. Open items, in the order they block work
-
-1. **Dev Hub is `sf-line-dev`**, which is also the QA org: a known compromise (08). The package is now permanently owned by it.
-2. **Scratch org limit is 3 active** on this Dev Hub. Check with `sf data query --target-org sf-line-dev --query "SELECT SignupUsername, ExpirationDate FROM ActiveScratchOrg"` before creating one; ask the user before deleting any.
-4. **DEC-13 (needs approval):** three permission-set differences Salesforce forces (error log Edit + View All; platform event Read).
-   Already deployed; `03 §6` gets updated once approved.
-5. **DEC-14 (needs approval, blocks M7):** `Public_Url__c` is specified as URL(1000), but Salesforce URL and Text fields stop at
-   255 characters. Recommendation: Long Text Area(1000) under the same API name. **The field is not created yet.**
-6. **Field history on OA configuration?** Would satisfy "admin actions are logged" (01 §5); not in 03 today.
-7. **Delete `archive/`?** It holds the retrieve of the QA org that was moved out of `force-app/` (DEC-01).
+1. **Quota: display only, or block sending?** The BA's TA review document proposes blocking; the plan (06 M8a–c) only
+   displays. Needs a decision before the TA review on **7 Oct 2026**. See `BA_TA_REVIEW_CORRECTIONS.md` section B.
+2. **BA document corrections** (`BA_TA_REVIEW_CORRECTIONS.md`) are with the user to pass on before 7 Oct.
+3. **Beta 4** with M9 and the notification fix. Installing it means uninstalling Beta 3 first, which deletes the package's
+   data in the QA org. **Ask before uninstalling anything from the QA org.**
+4. **[VERIFY] same LINE user ID across OAs under one Provider** (D5): auto-link across OAs depends on it. Test in M6
+   with a second OA.
+5. **Business questions** in `08`: managers replying on a rep's behalf, retention period, invite wording, one active OA
+   per rep enforced or not, Opportunity links.
+6. **Small bug, not fixed:** the OA table's Active/Inactive badge on the LINE Admin page sets a `variant` attribute that
+   `lightning-badge` doesn't have, so it never shows a colour.
 
 ## 5. Traps already hit (don't rediscover these)
 
-- **Don't name an Apex variable or parameter `json`.** Apex is case-insensitive, so it hides the `JSON` class and the error
-  ("Method does not exist … from the type String") points somewhere else.
-- **Prettier's Apex parser fails on a method called `on(...)`.** The mock's methods are `stub`, `stubBlob`, `stubCalloutException`.
-- **`substringAfterLast('.')` returns an empty string when there is no dot.** It silently broke handler names.
-- **Apex `==` on Strings ignores case**, which would accept a signature with flipped letter case. Use the constant-time compare
-  in `LineSignatureVerifier`.
-- **`getNumDml()` on a `DmlException` you constructed yourself throws an uncatchable `UnexpectedException`.** Match on the message.
-- **Event/Task custom fields live on `Activity`**, and their permission-set entry must be `Activity.<field>`. An `Event.<field>`
-  entry deploys and is then silently dropped (DEC-10).
-- **Scratch orgs have very few licences** (2 Salesforce, 3 Salesforce Platform). `LineTestFactory.createUser` tries each licence
-  in turn and wraps user creation in `System.runAs` to avoid mixed-DML errors. Keep tests to at most 2 new users.
-- **Running Apex tests makes source tracking report conflicts** on the classes that ran, because the org recompiles them.
-  `--ignore-conflicts` is safe here; nobody else edits the scratch org.
-- **Graph-engine (sfge) findings attach to the *primary* location**, which for the webhook is the query in
-  `LineOAConfigSelector`, not the entry point. Suppression markers must sit there (DEC-18).
-- **Thai translations need Translation Workbench**, which `config/project-scratch-def.json` now switches on.
-- **`sf package create` rewrites `sfdx-project.json`**: it set `"default": false` on the package directory (so the next build
-  refused to start) and renamed `versionName` to "ver 0.1". Check the file after running it.
-- **The package build org is created from a default scratch definition**, so it lacks Translation Workbench and the Thai
-  translation fails with `th: Not available for deploy for this organization`. Fixed by `"definitionFile":
-  "config/project-scratch-def.json"` on the package directory.
-- **Tests in the package build org run as a user with none of the package permission sets**, so package objects and fields are
-  invisible: inserts fail with "fields being inaccessible" and queries with "No such column …", even though the same tests pass
-  in a scratch org. Every test method calls `LineTestFactory.ensurePackageAccess()` first, which assigns `LINE_Admin` to the
-  running user (DEC-24).
-- **Salesforce's docs site refuses automated fetches (403).** Use LINE's OpenAPI specs at `github.com/line/line-openapi`, and
-  verify Salesforce behaviour by trying it in a scratch org.
+**Package build org**
+- **Tests in the package build org run as a user with none of the package permission sets.** Every test method calls
+  `LineTestFactory.ensurePackageAccess()` first, **and every query or DML on a package object or field uses
+  `WITH SYSTEM_MODE` / `insert as system`**, including `SELECT COUNT()`. A query that passes in every scratch org fails
+  only in the build (DEC-24; bit us again in Beta 3). `WITH SYSTEM_MODE` goes before `ORDER BY` / `LIMIT`.
+- **The build org is created from a default scratch definition** unless the package directory has
+  `"definitionFile": "config/project-scratch-def.json"`, which Thai translations need (Translation Workbench).
+- **`sf package create` rewrites `sfdx-project.json`** (sets `"default": false`, renames `versionName`). Check it after.
+
+**Installed package**
+- **Betas can't be upgraded.** Uninstall the old beta first, which deletes its data. Afterwards, check the permission
+  set assignments (`LINE_Webhook_Guest` on the Site guest user; `LINE_Admin`, `LINE_Chat_User` on people). The Site
+  itself survives.
+- **Only `global` members are callable in a subscriber org**, and the only global class is the webhook. Anything an admin
+  must run (register an OA, schedule a job) needs a button on the LINE Admin page (DEC-25, DEC-29).
+- **Betas install only into Developer Edition or sandbox orgs**, which is why the QA org is `chaipitch-devhub`.
+- **LINE console settings, or messages silently never arrive:** Messaging API tab → **Use webhook ON**; OA Manager →
+  Response settings → **Bot** mode, not Chat. The Verify button returns 200 even when Use webhook is off.
+
+**Apex**
+- **Apex strings take single quotes only.** A double-quoted assertion message fails to parse, in Prettier too.
+- **Don't name a variable `json`** (hides the `JSON` class). **Apex `==` on Strings ignores case.**
+- **Callout after DML** fails with "uncommitted work pending" (DEC-26).
+- **Test helpers that query per call** (e.g. the org time zone) hit 100 SOQL in bulk tests. `orgTimeZone()` is now cached.
+- **`getNumDml()` on a `DmlException` you constructed throws an uncatchable error.** Match on the message.
+- **Event/Task custom fields live on `Activity`**, and permission-set entries must read `Activity.<field>` (DEC-10).
+- **Scratch orgs have very few licences.** Keep tests to at most 2 new users; `LineTestFactory.createUser` handles it.
+
+**Tooling**
+- **`--json` output from `sf` can start with a CLI-update warning line**, which breaks JSON parsing. Check the text, not
+  just the parser.
+- **Running Apex tests makes source tracking report conflicts**; `--ignore-conflicts` is safe in our scratch orgs.
+- **Salesforce's docs site refuses automated fetches.** Use LINE's OpenAPI specs at `github.com/line/line-openapi`, and
+  check Salesforce behaviour with a `--dry-run` deploy to a scratch org.
 
 ## 6. Conventions worth knowing before editing
 
-- Secrets live only in `LINE_OA_Credential__c`, and only `LineCredentialStore` touches it. Nothing else may carry a secret:
-  not a DTO, log, test, script or doc. `LineLogger` also masks anything that looks like a token.
+- Secrets live only in `LINE_OA_Credential__c`, and only `LineCredentialStore` touches it. Nothing else may carry a
+  secret. `LineLogger` also masks anything that looks like a token.
 - Callouts before DML in every transaction. The webhook does no DML at all, not even logging.
 - All user-facing text comes from Custom Labels, with a Thai translation added at the same time.
-- Every packaged API name is permanent once released. Check 03 before creating any field, picklist value or object.
-- `global` is allowed only on `LineWebhookResource`.
+- Every packaged API name is permanent once released. Check `03` before creating any field, picklist value or object.
+- `global` only on `LineWebhookResource`. `without sharing` only where `02` §2 lists it, with the reason in the class.
 
 ## 7. Suggested next steps
 
-1. **M4 — outbound text** (`LineOutboundService.sendText`, `LineChatController.sendText`): doesn't need the namespace and can be
-   tested live against the registered OA. Watch the 300-message monthly quota.
-2. **In parallel:** get the namespace linked, then do M0's leftovers (`sf package create`, empty beta) and M3's Beta 1 in `sf-line-dev`.
-3. Before M7, settle DEC-14 so `Public_Url__c` can be created with the right type the first time.
+1. **Beta 4** (M9 + notification fix) → QA org → press *Sync today now* → check the Event on the Contact.
+2. **Settle quota** (display or block) before 7 Oct.
+3. **Rest of M6**: QR invite codes, manual link, `lineInbox`.
 
 ## 8. Starting a new session
 
@@ -127,9 +134,9 @@ Read docs/README.md, docs/HANDOFF.md and docs/DECISIONS.md, then continue with M
 Useful commands:
 
 ```bash
-DEVHUB=sf-line-dev ./scripts/setup-scratch.sh          # fresh scratch org, fully set up
-sf project deploy start --source-dir force-app --target-org line-dev --ignore-conflicts
-sf apex run test --test-level RunLocalTests --target-org line-dev --code-coverage --result-format human --wait 30
+DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-ns   # fresh namespaced scratch org, fully set up
+sf project deploy start --target-org line-ns --wait 15 --ignore-conflicts
+sf apex run test --test-level RunLocalTests --target-org line-ns --code-coverage --result-format human --wait 30
 npm run prettier:verify && npm run lint && npm run test:unit
-npm run scan                                            # Code Analyzer, fails on High/Critical
+sf package version create --package "LINE Connect" --installation-key-bypass --code-coverage --wait 90 --target-dev-hub sf-line-dev
 ```

@@ -47,7 +47,7 @@ private class LineAdminControllerTest {
 
     Test.startTest();
     System.runAs(rep()) {
-      for (Integer i = 0; i < 4; i++) {
+      for (Integer i = 0; i < 8; i++) {
         try {
           switch on i {
             when 0 {
@@ -68,6 +68,18 @@ private class LineAdminControllerTest {
                 true,
                 false
               );
+            }
+            when 3 {
+              LineAdminController.getJobs();
+            }
+            when 4 {
+              LineAdminController.scheduleJobs();
+            }
+            when 5 {
+              LineAdminController.unscheduleJobs();
+            }
+            when 6 {
+              LineAdminController.runDailySyncNow();
             }
             when else {
               LineAdminController.registerOA(
@@ -90,6 +102,35 @@ private class LineAdminControllerTest {
       [SELECT COUNT() FROM LINE_OA_Configuration__c WITH SYSTEM_MODE],
       'A rep cannot register an OA'
     );
+    Assert.isNull(LineScheduler.current(), 'A rep cannot schedule the job');
+  }
+
+  // ---------- nightly jobs (DEC-29) ----------
+
+  @IsTest
+  static void adminSchedulesRunsAndUnschedulesTheNightlyJob() {
+    LineTestFactory.ensurePackageAccess();
+    LineAdminController.JobsView before;
+    LineAdminController.JobsView scheduled;
+    LineAdminController.JobsView afterRun;
+    LineAdminController.JobsView unscheduled;
+
+    Test.startTest();
+    System.runAs(admin()) {
+      before = LineAdminController.getJobs();
+      scheduled = LineAdminController.scheduleJobs();
+      afterRun = LineAdminController.runDailySyncNow();
+      unscheduled = LineAdminController.unscheduleJobs();
+    }
+    Test.stopTest();
+
+    Assert.isFalse(before.scheduled);
+    Assert.isNull(before.lastRunStatus, 'Never run');
+    Assert.isTrue(before.dailySyncEnabled, 'On by default');
+    Assert.isTrue(scheduled.scheduled);
+    Assert.isNotNull(scheduled.nextRunAt);
+    Assert.isNotNull(afterRun.lastRunStatus, 'The manual run shows up');
+    Assert.isFalse(unscheduled.scheduled);
   }
 
   // ---------- settings ----------

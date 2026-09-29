@@ -5,6 +5,10 @@ import getSettings from "@salesforce/apex/LineAdminController.getSettings";
 import saveSettings from "@salesforce/apex/LineAdminController.saveSettings";
 import getOAs from "@salesforce/apex/LineAdminController.getOAs";
 import registerOA from "@salesforce/apex/LineAdminController.registerOA";
+import getJobs from "@salesforce/apex/LineAdminController.getJobs";
+import scheduleJobs from "@salesforce/apex/LineAdminController.scheduleJobs";
+import unscheduleJobs from "@salesforce/apex/LineAdminController.unscheduleJobs";
+import runDailySyncNow from "@salesforce/apex/LineAdminController.runDailySyncNow";
 
 import TITLE from "@salesforce/label/c.LINE_Admin_Title";
 import SETTINGS from "@salesforce/label/c.LINE_Admin_Settings";
@@ -24,14 +28,27 @@ import ASSIGNED_REP from "@salesforce/label/c.LINE_Admin_Assigned_Rep";
 import REGISTERED from "@salesforce/label/c.LINE_Admin_Registered";
 import REGISTER_HELP from "@salesforce/label/c.LINE_Admin_Register_Help";
 import GENERIC_ERROR from "@salesforce/label/c.LINE_Error_Generic";
+import JOBS from "@salesforce/label/c.LINE_Admin_Jobs";
+import JOBS_HELP from "@salesforce/label/c.LINE_Admin_Jobs_Help";
+import JOBS_SCHEDULED from "@salesforce/label/c.LINE_Admin_Jobs_Scheduled";
+import JOBS_NOT_SCHEDULED from "@salesforce/label/c.LINE_Admin_Jobs_Not_Scheduled";
+import JOBS_LAST_RUN from "@salesforce/label/c.LINE_Admin_Jobs_Last_Run";
+import JOBS_SCHEDULE from "@salesforce/label/c.LINE_Admin_Jobs_Schedule";
+import JOBS_UNSCHEDULE from "@salesforce/label/c.LINE_Admin_Jobs_Unschedule";
+import JOBS_RUN_NOW from "@salesforce/label/c.LINE_Admin_Jobs_Run_Now";
+import JOBS_STARTED from "@salesforce/label/c.LINE_Admin_Jobs_Started";
+import JOBS_SYNC_OFF from "@salesforce/label/c.LINE_Admin_Jobs_Sync_Off";
 
 /**
- * LINE Admin app page: org settings and OA registration.
+ * LINE Admin app page: org settings, nightly jobs and OA registration.
  * The channel secret is only ever sent to Apex; it is never read back, stored in component state, or logged.
  */
 export default class LineAdmin extends LightningElement {
   @track settings = {};
   @track oas = [];
+  @track jobs = {};
+  jobsLoaded = false;
+  isJobBusy = false;
   isLoading = true;
   isSaving = false;
   isRegistering = false;
@@ -56,7 +73,16 @@ export default class LineAdmin extends LightningElement {
     channelSecret: CHANNEL_SECRET,
     channelSecretHelp: CHANNEL_SECRET_HELP,
     assignedRep: ASSIGNED_REP,
-    registerHelp: REGISTER_HELP
+    registerHelp: REGISTER_HELP,
+    jobs: JOBS,
+    jobsHelp: JOBS_HELP,
+    jobsScheduled: JOBS_SCHEDULED,
+    jobsNotScheduled: JOBS_NOT_SCHEDULED,
+    jobsLastRun: JOBS_LAST_RUN,
+    jobsSchedule: JOBS_SCHEDULE,
+    jobsUnschedule: JOBS_UNSCHEDULE,
+    jobsRunNow: JOBS_RUN_NOW,
+    jobsSyncOff: JOBS_SYNC_OFF
   };
 
   async connectedCallback() {
@@ -68,6 +94,8 @@ export default class LineAdmin extends LightningElement {
     try {
       this.settings = await getSettings();
       this.oas = await getOAs();
+      this.jobs = await getJobs();
+      this.jobsLoaded = true;
       this.errorMessage = undefined;
     } catch (error) {
       this.errorMessage = this.messageFrom(error);
@@ -120,6 +148,35 @@ export default class LineAdmin extends LightningElement {
     }
   }
 
+  // ---------- nightly jobs ----------
+
+  handleSchedule() {
+    return this.runJobAction(scheduleJobs);
+  }
+
+  handleUnschedule() {
+    return this.runJobAction(unscheduleJobs);
+  }
+
+  handleRunNow() {
+    return this.runJobAction(runDailySyncNow, JOBS_STARTED);
+  }
+
+  async runJobAction(action, successMessage) {
+    this.isJobBusy = true;
+    try {
+      this.jobs = await action();
+      this.jobsLoaded = true;
+      if (successMessage) {
+        this.toast(successMessage, "success");
+      }
+    } catch (error) {
+      this.toast(this.messageFrom(error), "error");
+    } finally {
+      this.isJobBusy = false;
+    }
+  }
+
   // ---------- registration ----------
 
   handleChannelIdChange(event) {
@@ -159,6 +216,14 @@ export default class LineAdmin extends LightningElement {
   }
 
   // ---------- view model ----------
+
+  get showSyncOff() {
+    return this.jobsLoaded && this.jobs.dailySyncEnabled === false;
+  }
+
+  get isUnscheduleDisabled() {
+    return this.isJobBusy || !this.jobs.scheduled;
+  }
 
   get hasOAs() {
     return this.oas.length > 0;

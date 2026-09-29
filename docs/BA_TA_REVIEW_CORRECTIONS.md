@@ -79,27 +79,36 @@ log record, an attacker could fill the subscriber's data storage by sending junk
 
 **Correction:** "Reject with 403 (unknown OA) or 401 (bad signature). No record is written."
 
-### A4. Events are created by the nightly batch only
+### A4. Events: nightly only, and the Event shape as adopted from 2.8
 
 **Where:** page 1 diagram (the *Public Endpoint* box lists "Update conversation" and "Create/Update Event"; inbound
 flow step 6 "Create or update a daily Event"), page 11 diagram step 4, 3.3 step 5, data model "Event (1 per Contact per
 day)".
 
-**The design (03 §3 *Event*, milestone M9):**
+**The design (03 §3 *Event*, milestone M9).** On 29 September 2026 the specification **adopted section 2.8** of this
+document for the Event itself (DEC-28), so 2.8 stays as written. What still needs correcting is *when* Events are made
+and the Opportunity link:
 - The webhook endpoint only verifies the request and publishes a platform event. It does not update conversations or
   create Events. Processing runs afterwards, asynchronously.
-- Events are created **only** by the nightly batch. Section 3.1 step 10 of the document already says this. The
-  diagrams contradict it.
-- There is one Event per **conversation** per day. Because a conversation is one Contact with one OA, a Contact who
-  chats with two reps gets **two** Events that day, not one.
-- `WhoId` = the Contact; `WhatId` = **the LINE Conversation**. `WhatId` holds one record, so it cannot also point to an
-  Opportunity. **Linking Events to Opportunities is not in scope.**
-- Subject: `LINE Conversation - <OA name> - dd MMM yyyy`, not `LINE Conversation – <Contact Name>`.
-- Owner: the conversation owner (the rep). Conversations without a Contact are skipped.
-- Reruns cannot duplicate an Event, because each Event carries `LINE_Sync_Key__c` (`<conversation Id>:<date>`).
+- Events are created **only** by the nightly batch (01:00, for the previous day). Section 3.1 step 10 of the document
+  already says this. The diagrams contradict it.
+- There is one Event per **conversation** per day, as 2.8 says. Because a conversation is one Contact with one OA, a
+  Contact who chats with two reps gets **two** Events that day. The page 1 diagram's "1 per Contact per day" is wrong.
+- As built (2.8 plus the decisions it left open): `WhoId` = the Contact; a **LINE Conversation lookup** on Event;
+  `WhatId` = the Contact's **Account** (blank if none). There is no Opportunity link, because nothing in the schema
+  ties a conversation to an Opportunity.
+- Subject: `LINE Conversation – <Contact name> – <OA name>`. 2.8 has the Contact name only; the OA name was added so
+  that two reps' Events for the same customer on the same day can be told apart. Please add it to 2.8.
+- Owner: the conversation owner (the rep). Conversations without a Contact are skipped. The Event shows as *Free*, so
+  it never blocks the rep's calendar.
+- 2.8 leaves *Activity Date / Start-End* open: it is the day's first to last message. A "day" is midnight to midnight
+  in the org's default time zone.
+- A rerun rebuilds the same Event from the stored messages and never creates a second one (`LINE_Sync_Key__c` =
+  `<conversation Id>:<date>`), as 3.3 step 4 already says.
 
 **Corrections:** remove Event creation from the endpoint and inbound boxes in both diagrams; change "1 per Contact per
-day" to "1 per conversation per day"; remove the Opportunity `WhatId` from 3.3 step 5 and from 5.4.
+day" to "1 per conversation per day"; in 3.3 step 5 replace "Opportunity … otherwise Account/blank" with "`WhatId` = the
+Contact's Account, blank if none"; remove the Opportunity relation from 5.4; add the OA name to the subject in 2.8.
 
 ### A5. Customers without a Contact: conversations come first
 
@@ -366,5 +375,5 @@ either is wrong, messages silently never arrive, as the first QA install found o
 | 1 | Quota **enforcement** (block sending), or quota **display** only? | Section B; `08` open question 7 |
 | 2 | Can managers reply on behalf of a rep, or only read? | `08` business question 5 |
 | 3 | Should the package **enforce** one active OA per rep, or leave it as an operational rule? | Not tracked yet; new |
-| 4 | Are Opportunity links wanted in a later phase? They cannot share `WhatId` with the conversation. | Not tracked yet; new |
+| 4 | Are Opportunity links wanted in a later phase? `WhatId` now holds the Account (DEC-28), and nothing links a conversation to an Opportunity. | `08` business question 9 |
 | 5 | Can reps also reply from the LINE OA Manager app? Those replies never reach Salesforce. | `08` L1; `LINE_API_OA_MANAGER_LIMITATION.md` |

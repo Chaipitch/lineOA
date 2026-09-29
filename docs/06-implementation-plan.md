@@ -119,6 +119,9 @@ messages each OA has left this month without leaving Salesforce.
 ## M9 — Daily Event sync (2–3 d)
 `LineDailyEventSyncBatch` per 03 §3 Event; `LineScheduler` runs it nightly (plus retention). Idempotent by `LINE_Sync_Key__c`.
 Partial-success DML with logging.
+- Event shape follows the TA review document §2.8 (DEC-28): new lookup `Event.LINE_Conversation__c`, `WhatId` = Account.
+- **Pulled forward from M8** (DEC-29): the *Nightly jobs* card on the LINE Admin page — status, **Schedule**,
+  **Unschedule**, **Sync today now**. A subscriber cannot schedule a non-global class any other way.
 
 **Done when:** acceptance criterion 8 passes, including a rerun and an org with a validation rule on Event (test).
 

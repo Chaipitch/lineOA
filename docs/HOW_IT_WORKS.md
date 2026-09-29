@@ -180,7 +180,7 @@ The class carries a file-wide Code Analyzer suppression saying exactly that.
 `FeatureManagement.checkPermission('LINE_Admin')` — the custom permission, not a profile name, because we cannot know
 the subscriber's profiles.
 
-Two jobs today:
+Three jobs today:
 
 - **Settings** — the Site base URL (from which the webhook URL is computed and displayed), the fallback owner, poll
   interval, retention, invite expiry, auto-create-Contact, daily sync.
@@ -188,12 +188,45 @@ Two jobs today:
   credentials), reads `/v2/bot/info` for the bot user ID, **sets the webhook URL at LINE**, runs LINE's webhook test,
   and only then writes the OA configuration and stores the secret. Callouts first, DML last, again.
 
+- **Nightly jobs** — shows whether the nightly job is scheduled and how the last daily sync went, with *Schedule*,
+  *Unschedule* and *Sync today now* buttons (section 5.1).
+
 Registering is what points a real OA at a particular org — which is why moving from a scratch org to the QA org is
 just a matter of registering the OA there.
 
 This page exists earlier than planned (DEC-25). It had to: in a subscriber org only `global` members are callable
 from anonymous Apex, and the only `global` class is the webhook, so without a UI a subscriber admin could not
-register an OA at all.
+register an OA at all. The nightly-jobs buttons came early for the same reason (DEC-29): a subscriber cannot schedule a
+package class from Setup either.
+
+### 5.1 Daily Activity History — `LineDailyEventSyncBatch`
+
+LINE Message is the record of every bubble; Activity History is where Salesforce users actually look. So once a night
+(01:00, started by `LineScheduler`) a batch turns **each conversation's day into one Event**:
+
+```
+Subject      LINE Conversation – Somchai – May Sales OA
+Who          Somchai (Contact)          What   Acme (the Contact's Account)
+LINE Conv.   LC-000001                  Owner  May (the rep)        Show as  Free
+Start / End  10:01 / 10:08 (first and last message of the day)
+Description  10:01 Customer: Could you send the revised quotation?
+             10:03 May: Sure, I will send it today.
+             10:08 Customer: [Sticker]
+```
+
+The shape follows section 2.8 of the business's design document (DEC-28). The details that make it safe to run
+unattended for years (DEC-30):
+
+- **A day** is midnight to midnight in the org's default time zone; transcript times are shown in the rep's.
+- **Idempotent:** each Event carries `LINE_Sync_Key__c` = `<conversation Id>:<date>`. A rerun finds it and **rebuilds** it
+  from the stored messages, so a rerun never duplicates and also picks up a message that arrived late.
+- **Skips** conversations with no Contact, and conversations that had no messages that day.
+- **`ShowAs = Free`**, so a busy chat day never blocks the rep's calendar.
+- **Partial success:** if a subscriber's validation rule rejects one Event, that one is logged and the rest are created.
+- **`without sharing`**, because the job runs as whichever admin scheduled it and must see every conversation whatever
+  that admin's sharing is. Nothing it reads is shown to anyone.
+
+*Sync today now* runs the same batch for **today so far**; that night's run rebuilds the same Event with the whole day.
 
 ---
 
@@ -208,6 +241,7 @@ register an OA at all.
 | `LINE_OA_Credential__c` | **Protected** custom setting: the channel secret, keyed by channel ID | Name = channel ID |
 | `LINE_Settings__c` | Org-level settings | — |
 | `Contact` | Four packaged fields: `LINE_User_Id__c`, `LINE_OA_Configuration__c`, `LINE_Invite_Code__c`, `LINE_Invite_Expires_At__c` | |
+| `Event` | Two packaged fields: `LINE_Conversation__c` (lookup) and `LINE_Sync_Key__c` | `LINE_Sync_Key__c` = `<conversationId>:<date>` |
 
 The schema is **fixed** (`03`). Changing it needs a decision in `DECISIONS.md`, because a packaged field is permanent.
 
@@ -260,7 +294,7 @@ The habits that this constraint forces, which are otherwise easy to mistake for 
 
 ## 9. Testing
 
-166 Apex tests and 20 Jest tests, org-wide coverage 93%.
+187 Apex tests and 25 Jest tests, org-wide coverage 93%.
 
 - Callouts are mocked with `LineHttpMock`; test data comes from `LineTestFactory`; no `SeeAllData`.
 - Webhook tests build a genuinely **signed** `RestContext.request` and then `Test.getEventBus().deliver()`, so the
@@ -282,11 +316,12 @@ Two traps worth knowing before you write a test, both learned the hard way and r
 ## 10. What is built, and what is not
 
 **Working end to end:** inbound webhook → storage → notification, the chat panel, outbound text, OA registration and
-settings from the admin page, automatic Contact creation.
+settings from the admin page, automatic Contact creation. **Built and tested, awaiting its first package version:** the
+daily Activity History sync and its scheduling buttons (M9).
 
 **Not built yet:** QR/link invites and the rep inbox (the rest of M6), images and files (M7), the remaining admin
-actions — rotate secret, reassign, deactivate, quota display, error log (M8), the daily Activity History summary,
-retention and reassignment batches (M9–M10). `06-implementation-plan.md` is the running order;
+actions — rotate secret, reassign, deactivate, quota display, error log (M8), the retention and reassignment batches
+(M8, M10). `06-implementation-plan.md` is the running order;
 `HANDOFF.md` is the current state.
 
 **Known product limits**, all in `08`: replies sent from the LINE OA Manager app never reach Salesforce; polling is

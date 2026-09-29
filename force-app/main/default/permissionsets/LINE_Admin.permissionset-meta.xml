@@ -40,6 +40,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>Activity.LINE_Conversation__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Activity.LINE_Sync_Key__c</field>
         <readable>true</readable>
     </fieldPermissions>

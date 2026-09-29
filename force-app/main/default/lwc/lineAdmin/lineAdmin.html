@@ -115,6 +115,77 @@
       </div>
     </lightning-card>
 
+    <!-- Nightly jobs (DEC-29): a subscriber can't schedule a package class any other way -->
+    <lightning-card
+      title={labels.jobs}
+      icon-name="utility:clock"
+      class="slds-var-m-top_small"
+    >
+      <div class="slds-var-p-horizontal_medium slds-var-p-bottom_small">
+        <p class="slds-text-color_weak slds-var-m-bottom_x-small">
+          {labels.jobsHelp}
+        </p>
+        <template lwc:if={jobsLoaded}>
+          <template lwc:if={jobs.scheduled}>
+            <p data-id="job-scheduled">
+              {labels.jobsScheduled}
+              <lightning-formatted-date-time
+                value={jobs.nextRunAt}
+                year="numeric"
+                month="short"
+                day="numeric"
+                hour="2-digit"
+                minute="2-digit"
+              ></lightning-formatted-date-time>
+            </p>
+          </template>
+          <template lwc:else>
+            <p data-id="job-not-scheduled" class="slds-text-color_error">
+              {labels.jobsNotScheduled}
+            </p>
+          </template>
+          <template lwc:if={showSyncOff}>
+            <p class="slds-text-color_weak">{labels.jobsSyncOff}</p>
+          </template>
+          <template lwc:if={jobs.lastRunStatus}>
+            <p data-id="job-last-run" class="slds-var-m-top_xx-small">
+              {labels.jobsLastRun} {jobs.lastRunStatus}
+              <lightning-formatted-date-time
+                value={jobs.lastRunAt}
+                year="numeric"
+                month="short"
+                day="numeric"
+                hour="2-digit"
+                minute="2-digit"
+              ></lightning-formatted-date-time>
+            </p>
+          </template>
+        </template>
+        <div class="slds-var-m-top_small">
+          <lightning-button-group>
+            <lightning-button
+              data-id="schedule"
+              label={labels.jobsSchedule}
+              disabled={isJobBusy}
+              onclick={handleSchedule}
+            ></lightning-button>
+            <lightning-button
+              data-id="unschedule"
+              label={labels.jobsUnschedule}
+              disabled={isUnscheduleDisabled}
+              onclick={handleUnschedule}
+            ></lightning-button>
+            <lightning-button
+              data-id="run-now"
+              label={labels.jobsRunNow}
+              disabled={isJobBusy}
+              onclick={handleRunNow}
+            ></lightning-button>
+          </lightning-button-group>
+        </div>
+      </div>
+    </lightning-card>
+
     <!-- Registered OAs -->
     <lightning-card
       title={labels.oas}

@@ -36,7 +36,7 @@ This is the install guide we give clients. Keep it this short: every extra step 
 | C2 | Setup → Sites: register a site domain if none exists; create site `LineWebhook` (active; any home page) |
 | C3 | Site → Public Access Settings → guest user → assign permission set **LINE_Webhook_Guest** |
 | C4 | Assign **LINE_Admin** to admins and **LINE_Chat_User** to reps and managers |
-| C5 | App Launcher → LINE Chat → **LINE Admin** tab → Settings: paste the site base URL, pick the fallback owner, and review retention, invite expiry and daily sync. **Schedule nightly jobs**. |
+| C5 | App Launcher → LINE Chat → **LINE Admin** tab → Settings: paste the site base URL, pick the fallback owner, and review retention, invite expiry and daily sync. Then, on the same page, **Nightly jobs → Schedule** (01:00 in the admin's time zone). Without it no daily Events are created. |
 | C6 | Lightning App Builder → Contact record page → add **lineChat** → activate. Optionally add **lineInbox** to the Home page. |
 | C7 | Optional: create a queue that supports LINE Conversation and use it as the fallback owner |
 

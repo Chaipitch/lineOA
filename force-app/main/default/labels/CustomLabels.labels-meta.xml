@@ -461,4 +461,120 @@
         <shortDescription>Non-admin opening the admin page</shortDescription>
         <value>Only LINE admins can open this page.</value>
     </labels>
+    <labels>
+        <fullName>LINE_Event_Subject</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Daily Event subject. {0} = Contact name, {1} = LINE OA name</shortDescription>
+        <value>LINE Conversation – {0} – {1}</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Event_Customer</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Speaker name for customer lines in the daily Event transcript</shortDescription>
+        <value>Customer</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Event_Truncated</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Last line of a daily Event transcript that was too long</shortDescription>
+        <value>… (continued in LINE Connect)</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Admin page: nightly jobs card title</shortDescription>
+        <value>Nightly jobs</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Help</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: what the nightly jobs do</shortDescription>
+        <value
+    >Every night at 01:00 the daily sync writes one Event per LINE conversation for the previous day, with its transcript.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Scheduled</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: job scheduled; followed by the next run date/time</shortDescription>
+        <value>Scheduled. Next run:</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Not_Scheduled</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Admin page: job not scheduled</shortDescription>
+        <value>Not scheduled. No daily Events are being created.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Last_Run</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: last run; followed by its status and date/time</shortDescription>
+        <value>Last sync:</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Schedule</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Admin page: schedule button</shortDescription>
+        <value>Schedule</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Unschedule</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Admin page: unschedule button</shortDescription>
+        <value>Unschedule</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Run_Now</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: run the sync for today now</shortDescription>
+        <value>Sync today now</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Started</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Toast after starting the sync manually</shortDescription>
+        <value
+    >Daily sync started. Today&apos;s Events appear when it finishes.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Sync_Off</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: daily sync disabled in settings</shortDescription>
+        <value
+    >Daily sync is turned off in Settings, so the nightly job does nothing.</value>
+    </labels>
 </CustomLabels>

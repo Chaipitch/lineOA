@@ -224,4 +224,57 @@
         <label>เฉพาะผู้ดูแล LINE เท่านั้นที่เปิดหน้านี้ได้</label>
         <name>LINE_Error_Admin_Only</name>
     </customLabels>
+    <customLabels>
+        <label>การสนทนา LINE – {0} – {1}</label>
+        <name>LINE_Event_Subject</name>
+    </customLabels>
+    <customLabels>
+        <label>ลูกค้า</label>
+        <name>LINE_Event_Customer</name>
+    </customLabels>
+    <customLabels>
+        <label>… (ดูต่อใน LINE Connect)</label>
+        <name>LINE_Event_Truncated</name>
+    </customLabels>
+    <customLabels>
+        <label>งานประจำคืน</label>
+        <name>LINE_Admin_Jobs</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >ทุกคืนเวลา 01:00 ระบบจะสร้าง Event หนึ่งรายการต่อการสนทนา LINE ของวันก่อนหน้า พร้อมบันทึกข้อความ</label>
+        <name>LINE_Admin_Jobs_Help</name>
+    </customLabels>
+    <customLabels>
+        <label>ตั้งเวลาแล้ว รอบถัดไป:</label>
+        <name>LINE_Admin_Jobs_Scheduled</name>
+    </customLabels>
+    <customLabels>
+        <label>ยังไม่ได้ตั้งเวลา ระบบจะไม่สร้าง Event รายวัน</label>
+        <name>LINE_Admin_Jobs_Not_Scheduled</name>
+    </customLabels>
+    <customLabels>
+        <label>ซิงก์ล่าสุด:</label>
+        <name>LINE_Admin_Jobs_Last_Run</name>
+    </customLabels>
+    <customLabels>
+        <label>ตั้งเวลา</label>
+        <name>LINE_Admin_Jobs_Schedule</name>
+    </customLabels>
+    <customLabels>
+        <label>ยกเลิกการตั้งเวลา</label>
+        <name>LINE_Admin_Jobs_Unschedule</name>
+    </customLabels>
+    <customLabels>
+        <label>ซิงก์วันนี้ทันที</label>
+        <name>LINE_Admin_Jobs_Run_Now</name>
+    </customLabels>
+    <customLabels>
+        <label>เริ่มซิงก์แล้ว Event ของวันนี้จะปรากฏเมื่อเสร็จ</label>
+        <name>LINE_Admin_Jobs_Started</name>
+    </customLabels>
+    <customLabels>
+        <label>การซิงก์รายวันถูกปิดในการตั้งค่า งานประจำคืนจึงไม่ทำอะไร</label>
+        <name>LINE_Admin_Jobs_Sync_Off</name>
+    </customLabels>
 </Translations>

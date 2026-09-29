@@ -63,7 +63,7 @@ Contact Owner can optionally follow (setting). If there is no replacement yet, t
 conversations go to the fallback owner.
 
 ### F8 — Daily Activity History
-A nightly job creates **one Event per LINE Conversation per day** (Who = Contact, What = conversation) with that day's transcript.
+A nightly job creates **one Event per LINE Conversation per day** (Who = Contact, What = the Contact's Account, plus a lookup to the conversation) with that day's transcript (DEC-28).
 
 ### F9 — Retention
 A nightly job deletes messages older than N months (setting; 0 = keep forever). Files linked to deleted messages are

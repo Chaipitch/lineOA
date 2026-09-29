@@ -28,14 +28,15 @@ live in a protected custom setting (§4).
  Contact ──────────1:N (optional)───► LINE_Conversation__c          (Contact__c, blank until linked)
  LINE_Conversation__c ──────1:N─────► LINE_Message__c               (master-detail)
  Contact ──────────1:N──────────────► Event                         (WhoId)
- LINE_Conversation__c ──────1:N─────► Event                         (WhatId)
+ LINE_Conversation__c ──────1:N─────► Event                         (Event.LINE_Conversation__c, DEC-28)
+ Account ──────────1:N──────────────► Event                         (WhatId = the Contact's Account, DEC-28)
 ```
 
 **Interpretation of the diagram (confirm with the BA if any is wrong):**
 - *User → LINE Conversation* is the record **owner** (`OwnerId`), which drives visibility. It equals the OA's assigned rep, or the fallback owner when the OA is inactive.
 - *LINE OA Configuration → Contact* is the Contact's **primary LINE OA** (`Contact.LINE_OA_Configuration__c`). The chat panel opens that OA's conversation first. It is set when the Contact is first linked, if blank.
 - *Contact = "LINE customer identity"*: `Contact.LINE_User_Id__c` stores the customer's LINE user ID. All OAs are under one LINE Provider, so a customer has the same user ID in every OA [VERIFY]. When the customer adds a second rep's OA, the new conversation is **linked automatically** to the same Contact.
-- *Event* uses `WhoId` = Contact and `WhatId` = LINE Conversation. This needs **Allow Activities** on `LINE_Conversation__c`. One Event per conversation per day equals one Event per Contact per OA per day.
+- *Event* uses `WhoId` = Contact, `WhatId` = the Contact's **Account** (blank if none), and a custom lookup `LINE_Conversation__c` to the conversation (DEC-28, following the TA review document §2.8). One Event per conversation per day equals one Event per Contact per OA per day.
 
 ## 3. Fields
 
@@ -115,11 +116,19 @@ Get the Contact and OA through the parent (`LINE_Conversation__r.Contact__c`), n
 | Field | Type | Notes |
 |---|---|---|
 | LINE_Sync_Key__c | Text(80) | `<ConversationId>:<yyyy-MM-dd>`. Query before insert, so reruns don't duplicate. |
+| LINE_Conversation__c | Lookup(LINE_Conversation__c), delete: set null | The conversation this Event summarises (DEC-28). Relationship name `LINE_Events`. |
 
-Event values: `WhoId` = conversation's Contact, `WhatId` = conversation, `OwnerId` = conversation owner (if a User),
-`Subject` = `LINE Conversation - <OA name> - dd MMM yyyy`, `StartDateTime`/`EndDateTime` = first/last message,
-`Description` = transcript `[HH:mm] Customer|<Rep name>: text` (times in the Event owner's time zone, truncated to 32,000 chars).
-Skip conversations with no Contact.
+Event values (DEC-28, DEC-30):
+- `WhoId` = the conversation's Contact; `WhatId` = that Contact's `AccountId` (blank if none); `LINE_Conversation__c` = the conversation.
+- `OwnerId` = the conversation owner if a User; otherwise the user running the job.
+- `Subject` = `LINE Conversation – <Contact name> – <OA name>` (Custom Label `LINE_Event_Subject`), max 255.
+- `StartDateTime` / `EndDateTime` = the day's first / last message. `ShowAs` = **Free**, so chat summaries never block the rep's calendar.
+- `Description` = one line per message, `HH:mm Customer: text` or `HH:mm <rep first name>: text`; non-text messages use the
+  chat previews (`[Sticker]`, `[File] name` …). Times in the Event owner's time zone. Truncated to 32,000 characters.
+- **The day** runs midnight to midnight in the **org's default time zone**. Nightly at 01:00 the job syncs the previous day.
+- **A rerun rebuilds** the existing Event from the stored messages (found by `LINE_Sync_Key__c`), so it also repairs a
+  day that missed late messages. It never creates a second Event.
+- Skip conversations with no Contact, and conversations with no messages that day.
 
 ## 4. Supporting metadata (technical, all packaged unless noted)
 

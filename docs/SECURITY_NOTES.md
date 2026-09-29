@@ -61,7 +61,8 @@ From 02 §2. Each class carries a justification comment in code. Filled in as ea
 | `LineInboundService` (+ inner `OwnerResolver`) | Creates conversations/messages owned by reps, from system context | ✅ M3 (DML uses `AccessLevel.SYSTEM_MODE`) |
 | `LineCalloutQueueable` | Async follow-up; updates conversations and OA configurations the running user may not own | ✅ M3 |
 | `LineOAConfigAdminService` | Writes the secret and OA configurations; the caller checks `LINE_Admin` (M8) | ✅ M3 (anonymous-Apex only until M8) |
-| `LineLinkService` | Invite-code links from the inbound path; user-initiated paths check access in user mode first | M6 |
+| `LineLinkService` | Links and creates Contacts from the inbound path (Automated Process); user-initiated paths will check access in user mode first | ✅ M6 part (auto-link, auto-create; DEC-27) |
+| `LineDailyEventSyncBatch` | Runs as whichever admin scheduled it, possibly for years; must see every conversation whatever that admin's sharing is. Writes Events owned by reps; nothing is shown to a user | ✅ M9 (DEC-30; queries `WITH SYSTEM_MODE`, DML `AccessLevel.SYSTEM_MODE`, partial success) |
 | `LineCalloutQueueable` | Async follow-up to inbound processing | M3 |
 | `LineOutboundService` | Called after the controller checks access in user mode; writes the message record | ✅ M4 (class-wide `sfge` suppression with reason, DEC-20) |
 | `LineOAConfigAdminService` | Called after `LineAdminController` checks the `LINE_Admin` custom permission; writes the secret | M3/M8 |

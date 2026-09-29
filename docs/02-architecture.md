@@ -51,9 +51,9 @@ Only `LineWebhookResource` is `global`. Everything else is `public`. `@AuraEnabl
 | `LineOAConfigAdminService` | `without sharing` | Register, rotate, reassign, deactivate (callouts first, then DML). |
 | `LineOAConfigTriggerHandler` | `without sharing` | On rep or active change → start `LineReassignBatch`. |
 | `LineReassignBatch` | | Moves the owner of an OA's conversations; optionally Contact Owner. |
-| `LineDailyEventSyncBatch` | | One Event per conversation per day. |
+| `LineDailyEventSyncBatch` | `without sharing` | One Event per conversation per day (03 §3 Event). Runs as whichever admin scheduled it, possibly for years; it must see every conversation whatever that admin's sharing is, or the sync would silently shrink. Nothing it reads is shown to a user (DEC-30). |
 | `LineRetentionBatch` | | Deletes messages older than retention, and their files. |
-| `LineScheduler` | – | One `Schedulable` that runs both nightly batches. Scheduled or unscheduled from the admin UI. |
+| `LineScheduler` | `with sharing` | One `Schedulable` that runs both nightly batches (retention from M10). Scheduled, unscheduled or run now from the admin UI (DEC-29). |
 | `LineLogger` | – | Writes `LINE_Error_Log__c`; never throws. Buffers entries, and `flush()` runs at the end of each entry point. |
 | `LineTriggerHandler` (base) | – | Minimal virtual trigger handler with bypass. |
 

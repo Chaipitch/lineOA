@@ -4,6 +4,10 @@ import getSettings from "@salesforce/apex/LineAdminController.getSettings";
 import saveSettings from "@salesforce/apex/LineAdminController.saveSettings";
 import getOAs from "@salesforce/apex/LineAdminController.getOAs";
 import registerOA from "@salesforce/apex/LineAdminController.registerOA";
+import getJobs from "@salesforce/apex/LineAdminController.getJobs";
+import scheduleJobs from "@salesforce/apex/LineAdminController.scheduleJobs";
+import unscheduleJobs from "@salesforce/apex/LineAdminController.unscheduleJobs";
+import runDailySyncNow from "@salesforce/apex/LineAdminController.runDailySyncNow";
 
 jest.mock(
   "@salesforce/apex/LineAdminController.getSettings",
@@ -22,6 +26,26 @@ jest.mock(
 );
 jest.mock(
   "@salesforce/apex/LineAdminController.registerOA",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineAdminController.getJobs",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineAdminController.scheduleJobs",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineAdminController.unscheduleJobs",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineAdminController.runDailySyncNow",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
@@ -49,6 +73,16 @@ const OA = {
   assignedRepName: "Rep A",
   isActive: true,
   webhookStatus: "OK (200 OK)"
+};
+
+const NOT_SCHEDULED = { scheduled: false, dailySyncEnabled: true };
+const SCHEDULED = {
+  scheduled: true,
+  nextRunAt: "2026-09-30T18:00:00.000Z",
+  dailySyncEnabled: true,
+  lastRunStatus: "Completed",
+  lastRunAt: "2026-09-29T18:05:00.000Z",
+  lastRunErrors: 0
 };
 
 async function flush() {
@@ -79,6 +113,10 @@ describe("c-line-admin", () => {
     saveSettings.mockResolvedValue({ ...SETTINGS });
     getOAs.mockResolvedValue([OA]);
     registerOA.mockResolvedValue(OA);
+    getJobs.mockResolvedValue({ ...NOT_SCHEDULED });
+    scheduleJobs.mockResolvedValue({ ...SCHEDULED });
+    unscheduleJobs.mockResolvedValue({ ...NOT_SCHEDULED });
+    runDailySyncNow.mockResolvedValue({ ...SCHEDULED });
   });
 
   afterEach(() => {
@@ -232,5 +270,86 @@ describe("c-line-admin", () => {
     await flush();
 
     expect(element.shadowRoot.textContent).toContain("Only LINE admins");
+  });
+
+  it("warns when the nightly job is not scheduled, and schedules it", async () => {
+    const element = createComponent();
+    await flush();
+
+    const root = element.shadowRoot;
+    expect(root.querySelector('[data-id="job-not-scheduled"]')).not.toBeNull();
+    expect(root.querySelector('[data-id="unschedule"]').disabled).toBe(true);
+
+    root
+      .querySelector('[data-id="schedule"]')
+      .dispatchEvent(new CustomEvent("click"));
+    await flush();
+
+    expect(scheduleJobs).toHaveBeenCalled();
+    expect(root.querySelector('[data-id="job-scheduled"]')).not.toBeNull();
+    expect(
+      root.querySelector('[data-id="job-last-run"]').textContent
+    ).toContain("Completed");
+    expect(root.querySelector('[data-id="unschedule"]').disabled).toBe(false);
+  });
+
+  it("unschedules the nightly job", async () => {
+    getJobs.mockResolvedValue({ ...SCHEDULED });
+    const element = createComponent();
+    await flush();
+
+    element.shadowRoot
+      .querySelector('[data-id="unschedule"]')
+      .dispatchEvent(new CustomEvent("click"));
+    await flush();
+
+    expect(unscheduleJobs).toHaveBeenCalled();
+    expect(
+      element.shadowRoot.querySelector('[data-id="job-not-scheduled"]')
+    ).not.toBeNull();
+  });
+
+  it("runs the daily sync now and confirms it started", async () => {
+    const element = createComponent();
+    await flush();
+    const toastHandler = jest.fn();
+    element.addEventListener("lightning__showtoast", toastHandler);
+
+    element.shadowRoot
+      .querySelector('[data-id="run-now"]')
+      .dispatchEvent(new CustomEvent("click"));
+    await flush();
+
+    expect(runDailySyncNow).toHaveBeenCalled();
+    expect(toastHandler.mock.calls[0][0].detail.message).toBe(
+      "c.LINE_Admin_Jobs_Started"
+    );
+  });
+
+  it("says so when daily sync is turned off in settings", async () => {
+    getJobs.mockResolvedValue({ scheduled: true, dailySyncEnabled: false });
+    const element = createComponent();
+    await flush();
+
+    expect(element.shadowRoot.textContent).toContain(
+      "c.LINE_Admin_Jobs_Sync_Off"
+    );
+  });
+
+  it("reports a failed job action", async () => {
+    scheduleJobs.mockRejectedValue({
+      body: { message: "Only LINE admins can do this." }
+    });
+    const element = createComponent();
+    await flush();
+    const toastHandler = jest.fn();
+    element.addEventListener("lightning__showtoast", toastHandler);
+
+    element.shadowRoot
+      .querySelector('[data-id="schedule"]')
+      .dispatchEvent(new CustomEvent("click"));
+    await flush();
+
+    expect(toastHandler.mock.calls[0][0].detail.variant).toBe("error");
   });
 });

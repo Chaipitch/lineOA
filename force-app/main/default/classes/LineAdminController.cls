@@ -61,6 +61,10 @@ public with sharing class LineAdminController {
     @AuraEnabled
     public Datetime lastVerifiedAt;
 
+    private OaView() {
+      this.isActive = true;
+    }
+
     private OaView(LINE_OA_Configuration__c oa) {
       this.id = oa.Id;
       this.name = oa.Name;
@@ -203,14 +207,16 @@ public with sharing class LineAdminController {
           return oa;
         }
       }
-      List<OaView> visible = getOAs();
-      throw new LineOAConfigAdminService.AdminException(
-        'DIAG expected ' +
-          result.oaConfigId +
-          ' among ' +
-          visible.size() +
-          ' rows'
-      );
+      // Registered, but not visible to this admin in user mode (e.g. no Read on the OA object): report what LINE
+      // returned rather than failing a registration that succeeded.
+      OaView registered = new OaView();
+      registered.id = result.oaConfigId;
+      registered.name = result.name;
+      registered.basicId = result.basicId;
+      registered.botUserId = result.botUserId;
+      registered.assignedRepId = repId;
+      registered.webhookStatus = result.webhookStatus;
+      return registered;
     } catch (Exception e) {
       throw handled(e, 'registerOA');
     }
@@ -231,6 +237,99 @@ public with sharing class LineAdminController {
     view.autoCreateContact = LineSettings.autoCreateContact();
     view.dailySyncEnabled = LineSettings.dailySyncEnabled();
     view.updateContactOwnerOnReassign = LineSettings.updateContactOwnerOnReassign();
+    return view;
+  }
+
+  /** The nightly job and the last daily sync, as shown on the admin page (DEC-29). */
+  public class JobsView {
+    @AuraEnabled
+    public Boolean scheduled = false;
+    @AuraEnabled
+    public Datetime nextRunAt;
+    @AuraEnabled
+    public Boolean dailySyncEnabled;
+    @AuraEnabled
+    public String lastRunStatus;
+    @AuraEnabled
+    public Datetime lastRunAt;
+    @AuraEnabled
+    public Integer lastRunErrors;
+  }
+
+  /**
+   * @return whether the nightly job is scheduled, when it runs next, and how the last daily sync went
+   */
+  @AuraEnabled
+  public static JobsView getJobs() {
+    try {
+      assertAdmin();
+      return currentJobs();
+    } catch (Exception e) {
+      throw handled(e, 'getJobs');
+    }
+  }
+
+  /**
+   * Schedules the nightly job at 01:00 (the admin's time zone), replacing any existing schedule.
+   * @return the refreshed job status
+   */
+  @AuraEnabled
+  public static JobsView scheduleJobs() {
+    try {
+      assertAdmin();
+      LineScheduler.schedule();
+      return currentJobs();
+    } catch (Exception e) {
+      throw handled(e, 'scheduleJobs');
+    }
+  }
+
+  /**
+   * Removes the nightly job.
+   * @return the refreshed job status
+   */
+  @AuraEnabled
+  public static JobsView unscheduleJobs() {
+    try {
+      assertAdmin();
+      LineScheduler.unschedule();
+      return currentJobs();
+    } catch (Exception e) {
+      throw handled(e, 'unscheduleJobs');
+    }
+  }
+
+  /**
+   * Starts the daily sync for today so far (07 §3 step 9).
+   * @return the refreshed job status
+   */
+  @AuraEnabled
+  public static JobsView runDailySyncNow() {
+    try {
+      assertAdmin();
+      LineScheduler.runDailySyncNow();
+      return currentJobs();
+    } catch (Exception e) {
+      throw handled(e, 'runDailySyncNow');
+    }
+  }
+
+  private static JobsView currentJobs() {
+    JobsView view = new JobsView();
+    view.dailySyncEnabled = LineSettings.dailySyncEnabled();
+    CronTrigger job = LineScheduler.current();
+    if (job != null) {
+      view.scheduled = true;
+      view.nextRunAt = job.NextFireTime;
+    }
+    AsyncApexJob last = LineScheduler.lastDailySync();
+    if (last != null) {
+      view.lastRunStatus = last.Status;
+      view.lastRunAt = last.CompletedDate == null
+        ? last.CreatedDate
+        : last.CompletedDate;
+      view.lastRunErrors = last.NumberOfErrors;
+    }
     return view;
   }
 
