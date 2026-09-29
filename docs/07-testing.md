@@ -46,13 +46,15 @@ Test.getEventBus().deliver();   // runs the PE trigger
 | Inactive OA | owner = fallback owner; no notification when the owner is a queue |
 | Linking — manual | sets Contact__c + Contact.LINE_User_Id__c + primary OA if blank; conflicts refused; no Edit on Contact → refused |
 | Linking — auto | second OA conversation auto-links by LINE user ID |
+| Linking — auto-create (DEC-27) | first message from an unknown LINE user → Contact created (LastName = LINE display name, `LINE_User_Id__c`, primary OA, owner = rep) and linked; an existing Contact with that ID → linked, no new Contact; same person on two OAs → one Contact; follow without a message → no Contact; setting off → none; display name over 80 chars → cut; Contact insert rejected → logged, conversation unlinked, message still stored |
+| Notifications | the rep who owns the conversation is notified; a customer's first message (profile not fetched yet) says "a new LINE customer", not the raw LINE user ID |
 | Linking — invite | valid code links + clears code + queues reply; expired/unknown code → no link, "expired" reply; code in the middle of the text still matches |
 | Subscriber automation | a Contact validation rule that blocks updates → message still stored, link failure logged |
 | Outbound | text/image/document success → Sent + Sender; 429 monthly limit → Failed + readable error; 409 → Sent; no access to the conversation → exception |
 | Files | download → ContentVersion linked to conversation (+ Contact); over the size limit → Too Large, no callout; download 5xx → Download Failed + retry path |
 | Visibility | `System.runAs(RepB)`: can't read Rep A's conversations/messages through the controller or SOQL |
 | Reassignment | batch moves owners; optional Contact Owner update; Rep B now reads the history |
-| Admin | non-admin calling `LineAdminController` → refused; register fills bot fields, sets the webhook, stores the secret; bad credentials → nothing saved; rotate secret |
+| Admin | non-admin calling any `LineAdminController` method → refused; settings round trip (auto-create, daily sync, blank numbers → defaults); register fills bot fields, sets the webhook, stores the secret; bad credentials → nothing saved; nightly jobs: schedule, run now, unschedule; rotate secret (M8) |
 | Secret handling | no controller DTO contains the secret (serialize and assert) |
 | Daily sync | 3 messages in one conversation yesterday → one Event (Who = Contact, What = Account, `LINE_Conversation__c`, owner, subject, times, transcript, `ShowAs` Free); rerun → still one, **rebuilt** with a late message; unlinked conversation → none; no messages that day → none; sync off → none; queue owner → running user; Event rejected → logged, other Events still created; transcript truncated at 32,000; 100 conversations in one run; day boundaries across DST; scheduler: schedule twice = one job, unschedule, run now = today |
 | Retention | messages older than N months deleted with files; 0 = none deleted |
@@ -68,7 +70,10 @@ Pre: 2 OAs registered in LINE Admin (OA-A → Rep A, OA-B → Rep B); phones 1 a
 2. Phone 1 sends text, a sticker, a photo and a PDF. → All shown in `lineChat` within ~10 s; the files are Salesforce Files.
 3. Rep A replies with text, an image and a document. → Phone 1 receives them from OA-A; the document is a working link.
 4. Phone 1 adds OA-B and says hi. → Auto-linked to Somchai; only Rep B sees it.
-5. Phone 2 adds OA-A without an invite. → Appears in Rep A's *Unlinked* inbox → Rep A links it manually.
+5. Phone 2 adds OA-A without an invite and sends "hello". → A Contact named after phone 2's LINE display name is
+   created, owned by Rep A, and the chat shows on it (DEC-27). Rep A's first notification says "a new LINE customer".
+   Then turn **auto-create off** in LINE Admin → Settings, and repeat with a third LINE account: → no Contact; the
+   conversation appears in Rep A's *Unlinked* inbox → Rep A links it manually (M6).
 6. `curl` with a fake signature → 401, nothing stored.
    ```
    curl -i -X POST https://<site>/services/apexrest/<ns>/line/webhook -H 'Content-Type: application/json' \
