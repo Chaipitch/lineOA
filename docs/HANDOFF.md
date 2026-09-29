@@ -23,8 +23,8 @@ milestone. For how the system works, read `HOW_IT_WORKS.md`.
 Checks at the end of M9: **187/187 Apex tests** and **25/25 Jest tests** pass, org-wide coverage **93%** (lowest class
 `LineAdminController` 87%), Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
 
-**Committed but not in any package version yet:** M9, and the first-message notification fix (a customer's first message
-now says "a new LINE customer" instead of their raw LINE user ID). The next beta (0.1.0.4) picks both up.
+**Beta 4 (`0.1.0.4`, `04tgL000000WOs1QAG`) built 2026-09-29**, 94% coverage: M9, the first-message notification fix
+and the `registerOA` cleanup. Not yet installed in the QA org (the user installs it; Beta 3 must be uninstalled first).
 
 ## 2. Orgs and access
 
