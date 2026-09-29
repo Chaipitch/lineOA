@@ -40,7 +40,8 @@ Implemented (M3), tested and verified live with LINE:
   Tests use fake values only.
 
 Implemented: M1 — `LINE_OA_Credential__c` is a List custom setting with Visibility **Protected**; no permission set grants access to it.
-The protection itself only applies once installed as a managed package; it will be checked in the QA org after the first beta.
+The protection itself only applies once installed as a managed package. **Verified 2026-09-22 (Beta 1, QA org):** a subscriber
+System Administrator querying `tsthlineoa__LINE_OA_Credential__c` gets "sObject type … is not supported" (DECISIONS §2).
 
 Implemented: M2
 - `LineCredentialStore` is the only class that references `LINE_OA_Credential__c`. It validates the channel ID (digits, at most 38 characters) and secret, and its errors never echo the value (tested).
@@ -60,12 +61,10 @@ From 02 §2. Each class carries a justification comment in code. Filled in as ea
 | `LineWebhookEventTriggerHandler` | PE trigger runs as Automated Process | ✅ M3 |
 | `LineInboundService` (+ inner `OwnerResolver`) | Creates conversations/messages owned by reps, from system context | ✅ M3 (DML uses `AccessLevel.SYSTEM_MODE`) |
 | `LineCalloutQueueable` | Async follow-up; updates conversations and OA configurations the running user may not own | ✅ M3 |
-| `LineOAConfigAdminService` | Writes the secret and OA configurations; the caller checks `LINE_Admin` (M8) | ✅ M3 (anonymous-Apex only until M8) |
+| `LineOAConfigAdminService` | Writes the secret and OA configurations; the caller (`LineAdminController`) checks the `LINE_Admin` custom permission first | ✅ M3; admin page since DEC-25 |
 | `LineLinkService` | Links and creates Contacts from the inbound path (Automated Process); user-initiated paths will check access in user mode first | ✅ M6 part (auto-link, auto-create; DEC-27) |
 | `LineDailyEventSyncBatch` | Runs as whichever admin scheduled it, possibly for years; must see every conversation whatever that admin's sharing is. Writes Events owned by reps; nothing is shown to a user | ✅ M9 (DEC-30; queries `WITH SYSTEM_MODE`, DML `AccessLevel.SYSTEM_MODE`, partial success) |
-| `LineCalloutQueueable` | Async follow-up to inbound processing | M3 |
 | `LineOutboundService` | Called after the controller checks access in user mode; writes the message record | ✅ M4 (class-wide `sfge` suppression with reason, DEC-20) |
-| `LineOAConfigAdminService` | Called after `LineAdminController` checks the `LINE_Admin` custom permission; writes the secret | M3/M8 |
 | `LineOAConfigTriggerHandler` | Starts the reassignment batch | M8 |
 
 ## 5. CRUD/FLS and sharing
@@ -85,14 +84,22 @@ decides who may reply) and checks `LINE_Message__c.isCreateable()` before any ca
 conversation and that nothing is sent or stored when the check fails. Errors reach the LWC as `AuraHandledException` with a
 Custom Label; LINE's own wording is passed through only for errors the rep can act on (monthly limit, invalid text).
 
-Pending: the remaining controller methods (M5) and `LineAdminController` (M8).
+Implemented (M5): every `LineChatController` read (`getConversations`, `getMessages`, `getMessagesSince`, `markRead`) runs
+`WITH USER_MODE`, so a rep only ever sees conversations sharing lets them see; tested with `System.runAs(RepB)`.
+
+Implemented (DEC-25, DEC-29): `LineAdminController` is `with sharing` and every method starts with
+`FeatureManagement.checkPermission('LINE_Admin')`; tested by calling each method as a rep. The channel secret goes in
+through `registerOA` only, is never returned, and the page's password field is cleared after use. Settings are custom
+settings written `as system` after that check. Job status reads `CronTrigger` / `AsyncApexJob` in system mode, which is
+job metadata, not business data.
 
 ## 6. Client side (LWC)
 
 - Message text is rendered as text, never HTML. Customer links are shown as text, not auto-linked.
 - No `innerHTML` with untrusted data. No `console.log`.
 
-Implemented: — (M5+)
+Implemented (M5, M8 part): `lineChat` and `lineAdmin` render message text with text bindings only (no `innerHTML`, no
+`lwc:dom="manual"`), have no `console.log`, and ESLint passes on every build.
 
 ## 7. Outbound public links
 
@@ -106,6 +113,9 @@ Run: `npm run scan` (Recommended + Security + AppExchange rules, fails on High/C
 
 | Date | Scope | Critical/High | Notes |
 |---|---|---|---|
+| 2026-09-29 | `force-app` (M9 daily sync, nightly jobs) | 0 | 58 Moderate, 212 Low. New Moderate: complexity on `LineDailyEventSyncBatch` and `LineAdminController`, justified in DECISIONS §3 |
+| 2026-09-24 | `force-app` (DEC-27 auto-create, Beta 3) | 0 | 51 Moderate, 186 Low: unchanged categories |
+| 2026-09-22 | `force-app` (M5, admin page, Beta 1–2) | 0 | Unchanged categories |
 | 2026-09-19 | `force-app` (empty, M0) | 0 | Baseline |
 | 2026-09-19 | `force-app` (M1 metadata) | 0 | 4 Moderate `ProtectSensitiveData` name-heuristic hits, justified in DECISIONS §3 |
 | 2026-09-22 | `force-app` (M4 outbound text) | 0 (5 graph-engine Highs suppressed class-wide on `LineOutboundService` with reason, DEC-20) | 36 Moderate, 165 Low: unchanged categories |

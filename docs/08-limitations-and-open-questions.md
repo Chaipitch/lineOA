@@ -20,20 +20,20 @@
 
 | Risk | Checked in |
 |---|---|
-| Stateless token issuance works with Channel ID + secret | M2/M3 |
+| Stateless token issuance works with Channel ID + secret | ✅ Verified live (DECISIONS §2) |
 | Same LINE user ID across OAs under one Provider (auto-link depends on it) | M6 |
 | `line.me/R/oaMessage` pre-fill works for users who haven't added the OA yet (iOS/Android) | M6 |
-| Automated Process user can send custom notifications and run callout queueables | M3 |
-| CustomNotificationType is packageable and resolvable in subscriber orgs | M1/M3 |
+| Automated Process user can send custom notifications and run callout queueables | ✅ Verified live, also in the installed package (DECISIONS §2) |
+| CustomNotificationType is packageable and resolvable in subscriber orgs | ✅ Verified in Beta 1 (DECISIONS §2) |
 | LINE accepts Salesforce `ContentDownloadUrl` for images/video | M7 |
 | Reply token validity is long enough for PE → queueable latency | M6 |
 | Guest user + package licensing interaction (before any LMA licensing) | Before licensing |
-| Scratch org features needed for Sites | M0 |
-| `sf-line-dev` (the QA org) is currently registered as a **Dev Hub**. If it also becomes this project's Dev Hub, the org that owns the package is the org that receives the betas, so installs aren't tested in a clean org. A Developer Edition Dev Hub also has low daily limits for scratch orgs and package versions. Recommended: a separate Dev Hub (PBO), with `sf-line-dev` used only as the QA org. | M0 |
-| **Subscriber admins cannot register a LINE OA until the admin UI (M8) exists.** Only `global` members are callable from subscriber context, and by design the only global class is `LineWebhookResource` (hard rule 2), so `LineOAConfigAdminService.registerOA` fails in the QA org with "Type is not visible". 06 M3 assumes Beta 1 can "register 2 real OAs" there. Options: pull the OA-registration part of `lineAdmin` (M8) forward before the next beta, or accept that real-LINE end-to-end testing stays in scratch orgs until M8. | M6/M8 |
+| Scratch org features needed for Sites | ✅ M0 (`setup-scratch.sh` creates the Site) |
+| ✅ **Resolved (DEC-31):** the Dev Hub is `sf-line-dev` (Enterprise Edition trial, not a PBO) and owns the package; betas can't be installed in it, so the QA org is a separate Developer Edition org, `chaipitch-devhub`. A **PBO is still needed** before an AppExchange listing or LMA licensing, and moving a package to another Dev Hub is hard. Daily limits here: 3 active scratch orgs, 6 package versions. | Before licensing |
+| ✅ **Resolved (DEC-25, DEC-29):** anything a subscriber admin must run (register an OA, schedule the nightly job) is a button on the LINE Admin page, because only `global` members are callable in a subscriber org and the only global class is the webhook. Keep this in mind for every new admin action. | Every milestone |
 | Apex tests create users (up to ~3 per test: Rep A, Rep B, admin). Orgs with no spare "Salesforce"/"Salesforce Platform" licences (a scratch org has 2 + 3, some already used) fail with `LICENSE_LIMIT_EXCEEDED`. Mitigation: `LineTestFactory` uses either licence, tests use the running admin as the admin, and each test creates at most 2 users. Watch this in the package-version build org. | M3 |
 | Platform event triggers get batches of up to 2,000 events by default, and the batch size can't be set without a subscriber-side `PlatformEventSubscriberConfig` (not packageable). `LineInboundService` uses a fixed number of queries and DML statements per batch, and notifications are capped at 100 per batch; confirm CPU/heap headroom with a 2,000-event test in the M11 load check. | M11 |
-| The M0 "empty beta" may be refused if the package directory has no metadata. Fallback: put one harmless component in the beta (e.g. a single Custom Label). Betas can't be upgraded, so nothing in them is permanent. | M0 |
+| ✅ **Resolved:** the first beta was built after M5 with real metadata, so an empty beta was never needed. | – |
 
 ## Open questions — business (via BA)
 
@@ -51,13 +51,15 @@
 
 ## Open questions — ours
 
-1. Package name and namespace (permanent).
-2. Dev Hub: join the Partner Program and use a PBO now (recommended), or a Developer Edition Dev Hub for development first?
+1. ~~Package name and namespace~~ **Answered:** LINE Connect, `tsthlineoa` (DEC-23).
+2. ~~Dev Hub~~ **Answered for now:** `sf-line-dev` (DEC-31). Joining the Partner Program for a PBO is still needed before listing or licensing.
 3. Licensing model later (free, per-org or per-user). Affects the guest-user design check above.
-4. Can `archive/qa-org-retrieve-2026-09-19/` be deleted? It's a reference retrieve of `sf-line-dev` that was moved out of `force-app/` in M0 (DECISIONS DEC-01).
-5. Approve the permission-set differences forced by the platform (DECISIONS DEC-13) and the type of `LINE_Message__c.Public_Url__c` (URL fields max out at 255 characters; DEC-14).
+4. ~~Can `archive/` be deleted?~~ **Answered 2026-09-22:** keep it.
+5. ~~Permission-set differences and `Public_Url__c` type~~ **Approved 2026-09-22** (DEC-13, DEC-14).
 6. ~~Should a new LINE user get a Contact automatically?~~ **Answered 2026-09-24**: yes, on the first message, only
    when the LINE user ID is new, on by default (DEC-27).
-7. Quota visibility (M8): live fetch only (M8a), or also **store** quota on `LINE_OA_Configuration__c` so it can be
-   reported and alerted on (M8b, permanent packaged fields), and warn reps in the chat panel (M8c)?
-8. Should `LINE_OA_Configuration__c` track field history (`Assigned_Rep__c`, `Is_Active__c`) to meet "admin actions on OAs are logged" (01 §5)? Not in 03 today.
+7. **Quota (M8): display only, or also block sending?** The plan shows quota: live fetch (M8a), optionally stored on
+   `LINE_OA_Configuration__c` for reports and alerts (M8b, permanent packaged fields) and a warning to reps (M8c). The
+   BA's TA review document proposes **blocking** pushes at a threshold instead (`BA_TA_REVIEW_CORRECTIONS.md` section B).
+   **Needed before the TA review on 7 Oct 2026.**
+8. ~~Field history on `LINE_OA_Configuration__c`?~~ **Approved 2026-09-22** (DEC-22).

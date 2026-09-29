@@ -10,10 +10,12 @@ Legend: **[HUMAN]** = a person has to do it in a UI or console. **[CLAUDE]** = C
 | A2 | In the Dev Hub: Setup → Dev Hub → **Enable Dev Hub** and **Enable Unlocked Packages and Second-Generation Managed Packages** | [HUMAN] |
 | A3 | Sign up a **separate** Developer Edition org as the **namespace org** → Setup → Package Manager → register the namespace (short, permanent, e.g. `lineconn`) | [HUMAN] |
 | A4 | Dev Hub → App Launcher → **Namespace Registries** → Link Namespace (log in to the namespace org) | [HUMAN] |
-| A5 | `sf org login web --set-default-dev-hub --alias line-devhub` | [HUMAN] runs, or [CLAUDE] with the browser |
+| A5 | `sf org login web --set-default-dev-hub --alias sf-line-dev` | [HUMAN] runs, or [CLAUDE] with the browser |
 | A6 | Set `"namespace": "<ns>"` in `sfdx-project.json`. Restructure the package directory (see 09 §2). Update the scratch definition. | [CLAUDE] |
-| A7 | `sf package create --name "LINE Connect" --package-type Managed --path force-app --target-dev-hub line-devhub` (package name TBD) | [CLAUDE] |
-| A8 | `sf-line-dev` (existing Developer Edition) becomes the **QA org**. It never gets source deploys, only **installed package versions** (beta, then released). | – |
+| A7 | `sf package create --name "LINE Connect" --package-type Managed --path force-app --target-dev-hub sf-line-dev` | [CLAUDE] |
+| A8 | A Developer Edition org, `chaipitch-devhub`, is the **QA org**. It never gets source deploys, only **installed package versions** (beta, then released). Betas can only be installed in Developer Edition or sandbox orgs (DEC-31). | – |
+
+**Done (2026-09-22):** Dev Hub `sf-line-dev` (Enterprise Edition trial, not a PBO), namespace `tsthlineoa` (DEC-23), package `LINE Connect`. A PBO is still needed before an AppExchange listing or LMA licensing.
 
 ## Part B — LINE side, per client
 
@@ -24,6 +26,8 @@ Legend: **[HUMAN]** = a person has to do it in a UI or console. **[CLAUDE]** = C
    - **[HUMAN]** Settings → Messaging API → Enable → choose the client's Provider.
    - **[HUMAN]** Response settings: Webhook **ON**; Auto-response **OFF**; Greeting optional. Chat ON/OFF is the client's decision (replies sent from OA Manager aren't captured).
    - **[HUMAN]** Developers Console → channel: copy the **Channel ID** and **Channel secret**. Messaging API tab: **Use webhook ON**, **Webhook redelivery ON**.
+     Check *Use webhook* explicitly: the console's **Verify** button returns 200 even while it is off, and then no message ever
+     reaches Salesforce (found on the first QA install, 2026-09-24). The package sets the webhook **URL** itself (Part D).
    - **[HUMAN]** Send the Channel ID and secret to the client's Salesforce admin over a secure channel.
 
 ## Part C — Subscriber org: install and configure (once per client org)

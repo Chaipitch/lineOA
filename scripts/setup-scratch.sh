@@ -4,7 +4,7 @@
 #   ./scripts/setup-scratch.sh [alias]          # default alias: line-dev
 #
 # Environment overrides:
-#   DEVHUB=line-devhub   Dev Hub alias
+#   DEVHUB=sf-line-dev   Dev Hub alias
 #   DAYS=14              scratch org lifetime (1-30)
 #   SKIP_CREATE=1        reuse an existing org with this alias (re-run the setup steps only)
 #
@@ -13,7 +13,7 @@
 set -euo pipefail
 
 ALIAS="${1:-line-dev}"
-DEVHUB="${DEVHUB:-line-devhub}"
+DEVHUB="${DEVHUB:-sf-line-dev}"
 DAYS="${DAYS:-14}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"

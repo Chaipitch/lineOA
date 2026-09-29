@@ -338,7 +338,7 @@ conversations by hand; only inbound processing creates them (DEC-13).
 | Objects, fields, platform event, protected setting, settings | LINE Admin page: site URL and fallback owner |
 | Permission sets, custom permission, custom notification | Per OA: **Channel ID, Channel Secret, rep**. Nothing else. |
 | Remote Site Settings for the two LINE hosts | **Add `lineChat` to the Contact record page** (pages are never auto-activated) |
-| Custom Labels in English and Thai | In the LINE consoles: **"Use webhook" ON**, Response mode **Bot** (not Chat) |
+| Custom Labels in English and Thai | In the LINE Developers Console: **"Use webhook" ON** (Messaging API tab) |
 | `LINE_Sync_Key__c` on Event | |
 
 Remove from the table: *Bot User ID, Provider ID* (fetched automatically or not needed), *Channel Access Token /
@@ -346,8 +346,8 @@ External Credential principal* (A1), *Custom Metadata default records* (section 
 *Opportunity relation* (A4).
 
 The package also **sets the webhook URL in LINE automatically** when an OA is registered. The admin never pastes it
-into the LINE Developers Console. They do have to switch *Use webhook* on there, and set Response mode to *Bot*. If
-either is wrong, messages silently never arrive, as the first QA install found on 24 September 2026.
+into the LINE Developers Console. They do have to switch *Use webhook* on there: while it is off, the console's
+*Verify* button still succeeds but no message ever arrives, as the first QA install found on 24 September 2026.
 
 ---
 

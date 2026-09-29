@@ -4,13 +4,13 @@
 
 | Org | Purpose | How code gets there |
 |---|---|---|
-| Dev Hub (PBO recommended) | Owns the package, creates scratch orgs and package versions | – |
-| Namespace org | Holds the registered namespace only | – |
-| **Scratch orgs** (namespaced, 7–30 days) | Day-to-day development and Apex tests. Until the namespace exists (before M3), non-namespaced scratch orgs from `sf-line-dev` (DECISIONS DEC-08). | `sf project deploy start` |
-| **QA org** = `sf-line-dev` (Developer Edition) | End-to-end tests with real LINE OAs, install and upgrade tests | Install **package versions** only |
+| Dev Hub `sf-line-dev` (PBO recommended later) | Owns the package, creates scratch orgs and package versions | – |
+| Namespace org (org `00Dg700000HVZNt`) | Holds the registered namespace `tsthlineoa` only | – |
+| **Scratch org** `line-dev` (namespaced, up to 30 days) | Day-to-day development and Apex tests. One at a time; rebuilt by `scripts/setup-scratch.sh` (DEC-31) | `sf project deploy start` |
+| **QA org** = `chaipitch-devhub` (Developer Edition) | End-to-end tests with real LINE OAs, install and upgrade tests | Install **package versions** only |
 | Client orgs | Production and sandboxes | Install **released** versions |
 
-Why scratch orgs: namespaced source can only be deployed to orgs that have the namespace. Deploying to `sf-line-dev` without the
+Why scratch orgs: namespaced source can only be deployed to orgs that have the namespace. Deploying to a non-namespaced org without the
 namespace would hide namespace bugs, such as the REST URL, dynamic references and CustomNotificationType lookup.
 
 Real-LINE testing in a scratch org is possible (it needs its own Site and webhook registration), but do it in the QA org with
@@ -48,17 +48,18 @@ Scratch definition: Developer edition, `hasSampleData: false`. Add features/sett
 
 ```bash
 # new scratch org (namespaced automatically from sfdx-project.json)
-sf org create scratch --definition-file config/project-scratch-def.json --alias line-dev --duration-days 14 --target-dev-hub line-devhub --set-default
+DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev    # or, by hand:
+sf org create scratch --definition-file config/project-scratch-def.json --alias line-dev --duration-days 30 --target-dev-hub sf-line-dev --set-default
 sf project deploy start --target-org line-dev
 sf org assign permset --name LINE_Admin --target-org line-dev
 sf apex run test --test-level RunLocalTests --code-coverage --result-format human --wait 20 --target-org line-dev
 
 # beta package version (validation + 75% coverage are required for promotion later)
-sf package version create --package "LINE Connect" --installation-key-bypass --code-coverage --wait 60 --target-dev-hub line-devhub
-sf package install --package "LINE Connect@0.1.0-1" --target-org sf-line-dev --wait 20 --publish-wait 10
+sf package version create --package "LINE Connect" --installation-key-bypass --code-coverage --wait 90 --target-dev-hub sf-line-dev
+sf package install --package "LINE Connect@0.1.0-3" --target-org chaipitch-devhub --wait 30 --publish-wait 15
 
 # release (only when the user says so)
-sf package version promote --package "LINE Connect@0.1.0-3" --target-dev-hub line-devhub
+sf package version promote --package "LINE Connect@0.1.0-<n>" --target-dev-hub sf-line-dev
 ```
 Use an installation key for anything shared outside the team. Store it in a password manager, never in the repo.
 

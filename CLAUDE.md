@@ -8,15 +8,15 @@ The spec is in `docs/`. Start at `docs/README.md`.
 
 ## Project facts
 
-- Package type: **Managed 2GP**. The namespace `<ns>` and package name are set in M0 (see `docs/09-packaging.md`).
+- Package type: **Managed 2GP**. Package **LINE Connect** (`0HogL0000004bNZSAY`), namespace **`tsthlineoa`** (DEC-23). Docs write `<ns>` where the namespace goes.
 - `sourceApiVersion` 67.0. Every `-meta.xml` uses `<apiVersion>67.0</apiVersion>`.
 - **Orgs:**
-  - Dev Hub alias `line-devhub`.
-  - Development happens in **namespaced scratch orgs** (default alias `line-dev`).
-  - `sf-line-dev` is the **QA org**. It gets **installed package versions only**, never `sf project deploy`.
+  - **Dev Hub** alias `sf-line-dev`. It owns the package. Never deploy source there.
+  - Development happens in **one namespaced scratch org**, alias `line-dev` (the project default).
+  - **QA org** alias `chaipitch-devhub` (Developer Edition). It gets **installed package versions only**, never `sf project deploy` (DEC-31).
 - `force-app/` = everything that ships in the package. `unpackaged/` = org setup for scratch/QA only.
-- Fresh project: no existing trigger framework, logger or test factory. Use the conventions below.
-- Not a git repo yet. Don't `git init`, commit or push unless asked.
+- Git remote `origin` = `git@github.com:Chaipitch/lineOA.git` (SSH). Commit or push only when asked.
+- Current state of the build: `docs/HANDOFF.md`. How it works: `docs/HOW_IT_WORKS.md`.
 
 ## Source of truth
 
@@ -100,8 +100,8 @@ sf project deploy start --target-org line-dev --wait 10
 sf apex run test --class-names <Class>Test --target-org line-dev --code-coverage --result-format human --wait 10
 sf apex run test --test-level RunLocalTests --target-org line-dev --code-coverage --result-format human --wait 20
 sf code-analyzer run --workspace force-app --output-file reports/code-analyzer.html
-sf package version create --package "LINE Connect" --installation-key-bypass --code-coverage --wait 60 --target-dev-hub line-devhub
-sf package install --package "<version alias>" --target-org sf-line-dev --wait 20 --publish-wait 10
+sf package version create --package "LINE Connect" --installation-key-bypass --code-coverage --wait 90 --target-dev-hub sf-line-dev
+sf package install --package "<version alias>" --target-org chaipitch-devhub --wait 30 --publish-wait 15
 npm run prettier && npm run lint && npm run test:unit
 ```
 Ask before: deleting orgs, uninstalling the package from the QA org, `sf package version promote`, or changing Dev Hub settings.

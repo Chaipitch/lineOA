@@ -34,15 +34,13 @@ now says "a new LINE customer" instead of their raw LINE user ID). The next beta
 | `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **Beta 3 (0.1.0.3) installed** | The real LINE OA **TerraskyTH-Dev-Acc** (`@833ybxes`, channel `2011724597`) is registered here, and its webhook points here. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Contact "Chaipitch" was auto-created from a real message. |
 | `line-dev` | **The one scratch org** (namespaced `tsthlineoa`, user `test-egv3lqxcpg7t@example.com`); the project default | Expires **2026-10-22**. Rebuild: `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev`. Holds seed data from `scripts/apex/seed-daily-sync.apex`. Until 2026-09-29 this org was aliased `line-ns`; the old non-namespaced `line-dev` was deleted that day. |
 
-**`CLAUDE.md` is out of date on orgs:** it names `line-devhub` as the Dev Hub and `sf-line-dev` as the QA org. In practice
-`sf-line-dev` is the Dev Hub and `chaipitch-devhub` is the QA org. Ask the user before editing `CLAUDE.md`.
+**Another active scratch org** is listed in the Dev Hub, `test-bdmfveozrgxg@example.com`, which this machine has no login
+for. It takes one of the 3 slots. The user was asked whether they recognise it; don't delete it without asking.
 
 The OA is on the **free LINE plan (300 push messages a month)**. Don't run bulk-send tests against it.
 
-**Git:** `origin` is `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`, up to date at `f6550aa` (before M9).
-The user wants to move to `git@github.com:Chaipitch/lineOA.git` over SSH. The new repo exists and is empty, and SSH works
-as `Chaipitch`, but pushing to a new remote was blocked by the auto-mode safety check, so the user is switching it
-themselves (`git remote set-url origin …` then `git push -u origin main`).
+**Git:** `origin` is `git@github.com:Chaipitch/lineOA.git` (SSH, account `Chaipitch`), switched by the user on
+2026-09-29. The old repo `wchaipitch-ts/sf-line-dev-scratchorg` stops at `f6550aa` and is no longer used.
 
 ## 3. What is proven to work live
 
@@ -90,8 +88,10 @@ LINE Admin page and check the Contact's Activity timeline (07 §3 step 9).
 - **Only `global` members are callable in a subscriber org**, and the only global class is the webhook. Anything an admin
   must run (register an OA, schedule a job) needs a button on the LINE Admin page (DEC-25, DEC-29).
 - **Betas install only into Developer Edition or sandbox orgs**, which is why the QA org is `chaipitch-devhub`.
-- **LINE console settings, or messages silently never arrive:** Messaging API tab → **Use webhook ON**; OA Manager →
-  Response settings → **Bot** mode, not Chat. The Verify button returns 200 even when Use webhook is off.
+- **"Use webhook" must be ON** (Developers Console → Messaging API tab), or messages silently never arrive. The Verify
+  button returns 200 even while it is off. On 2026-09-24 the QA org received nothing until the webhook settings were
+  checked; OA Manager's Response settings (Webhooks on) were reviewed at the same time, so which one was off wasn't
+  isolated. Chat mode on or off is the client's choice (05 Part B).
 
 **Apex**
 - **Apex strings take single quotes only.** A double-quoted assertion message fails to parse, in Prettier too.

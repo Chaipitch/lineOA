@@ -4,23 +4,27 @@ Work **milestone by milestone**. Each milestone ends deployed to a scratch org w
 Estimates are person-days of development effort.
 
 Milestones M3, M6 and M11 each end with a **beta package version installed in the QA org**, so packaging problems show up early, not at the end.
+In practice betas are built whenever the QA org needs something new, and numbered by build (`0.1.0.N`), not by milestone.
 
-| # | Milestone | Est. |
-|---|---|---|
-| M0 | Packaging foundation | 2–3 |
-| M1 | Data model, settings, security metadata | 2–3 |
-| M2 | Core services: logger, settings, credential store, LINE API client | 2–3 |
-| M3 | OA registration + inbound webhook + processing → **Beta 1** | 4–5 |
-| M4 | Outbound text | 1.5–2 |
-| M5 | Chat panel (`lineChat`) | 4–5 |
-| M6 | Linking: manual, auto, QR invite + inbox (`lineInbox`) → **Beta 2** | 5–6 |
-| M7 | Files and images, in and out | 5–7 |
-| M8 | Admin UI (`lineAdmin`) + reassignment batch | 4–5 |
-| M9 | Daily Event sync | 2–3 |
-| M10 | Retention + error log housekeeping | 1.5–2 |
-| M11 | Hardening: security review readiness, EN/TH labels, LDV test → **Release candidate** | 4–5 |
-| M12 | QA org end-to-end, upgrade test, install guide, UAT support | 3–5 |
-| | **MVP total** | **40–54 d** (+15–20% contingency) |
+**Status on 2026-09-29** (details in `HANDOFF.md`): M0–M5 done; M6 part done (auto-link, auto-create Contact); M8 part done
+(settings, OA registration, nightly jobs); M9 done in the scratch org, not yet in a beta. Beta 3 (`0.1.0.3`) is in the QA org.
+
+| # | Milestone | Est. | Status |
+|---|---|---|---|
+| M0 | Packaging foundation | 2–3 | ✅ |
+| M1 | Data model, settings, security metadata | 2–3 | ✅ |
+| M2 | Core services: logger, settings, credential store, LINE API client | 2–3 | ✅ |
+| M3 | OA registration + inbound webhook + processing → **Beta 1** | 4–5 | ✅ |
+| M4 | Outbound text | 1.5–2 | ✅ |
+| M5 | Chat panel (`lineChat`) | 4–5 | ✅ |
+| M6 | Linking: manual, auto, QR invite + inbox (`lineInbox`) → **Beta 2** | 5–6 | Part: auto-link, auto-create (DEC-27) |
+| M7 | Files and images, in and out | 5–7 | |
+| M8 | Admin UI (`lineAdmin`) + reassignment batch | 4–5 | Part: settings, register OA, nightly jobs (DEC-25, DEC-29) |
+| M9 | Daily Event sync | 2–3 | ✅ scratch org; not yet in a beta |
+| M10 | Retention + error log housekeeping | 1.5–2 | |
+| M11 | Hardening: security review readiness, EN/TH labels, LDV test → **Release candidate** | 4–5 | |
+| M12 | QA org end-to-end, upgrade test, install guide, UAT support | 3–5 | |
+| | **MVP total** | **40–54 d** (+15–20% contingency) | |
 
 ---
 
@@ -31,10 +35,10 @@ Milestones M3, M6 and M11 each end with a **beta package version installed in th
 - [CLAUDE] `sf package create`. Create an empty beta version to prove the pipeline, and install it into the QA org.
 - [CLAUDE] Create `docs/DECISIONS.md` and `docs/SECURITY_NOTES.md`. Add a Code Analyzer run script.
 
-**Done when:** a scratch org is created by one script; an empty beta installs into `sf-line-dev`.
+**Done when:** a scratch org is created by one script; an empty beta installs into the QA org.
 
-> **Order change (DECISIONS DEC-08):** M1–M2 are built first in non-namespaced scratch orgs from `sf-line-dev`.
-> The [HUMAN] Dev Hub/namespace steps, `sf package create` and the beta install proof are completed before M3's Beta 1.
+> **Order change (DECISIONS DEC-08):** M1–M5 were built first in non-namespaced scratch orgs from `sf-line-dev`, then moved to a
+> namespaced one when `tsthlineoa` was linked (2026-09-22). The first beta was built after M5, not at M3.
 
 ## M1 — Data model & security metadata (2–3 d)
 Everything in 03: the 3 custom objects, Contact/Event fields, `LINE_Webhook_Event__e`, `LINE_OA_Credential__c` (protected),
