@@ -39,8 +39,8 @@ for. It takes one of the 3 slots. The user was asked whether they recognise it; 
 
 The OA is on the **free LINE plan (300 push messages a month)**. Don't run bulk-send tests against it.
 
-**Git:** `origin` is `git@github.com:Chaipitch/lineOA.git` (SSH, account `Chaipitch`), switched by the user on
-2026-09-29. The old repo `wchaipitch-ts/sf-line-dev-scratchorg` stops at `f6550aa` and is no longer used.
+**Git:** two remotes, both kept in step: `origin` = `git@github.com:Chaipitch/lineOA.git` (SSH, account `Chaipitch`)
+and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`. Push `main` to both.
 
 ## 3. What is proven to work live
 

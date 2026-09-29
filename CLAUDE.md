@@ -15,7 +15,8 @@ The spec is in `docs/`. Start at `docs/README.md`.
   - Development happens in **one namespaced scratch org**, alias `line-dev` (the project default).
   - **QA org** alias `chaipitch-devhub` (Developer Edition). It gets **installed package versions only**, never `sf project deploy` (DEC-31).
 - `force-app/` = everything that ships in the package. `unpackaged/` = org setup for scratch/QA only.
-- Git remote `origin` = `git@github.com:Chaipitch/lineOA.git` (SSH). Commit or push only when asked.
+- Git remotes: `origin` = `git@github.com:Chaipitch/lineOA.git` (SSH) and `scratchorg` =
+  `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`. When asked to push, push `main` to both. Commit or push only when asked.
 - Current state of the build: `docs/HANDOFF.md`. How it works: `docs/HOW_IT_WORKS.md`.
 
 ## Source of truth
