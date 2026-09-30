@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-09-29**, after M9. Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-09-30**, after Beta 4 went into the QA org. Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -17,21 +17,21 @@ milestone. For how the system works, read `HOW_IT_WORKS.md`.
 | M6 Linking + inbox | **Partly done:** auto-link and auto-create Contact on first message (DEC-27). **Not done:** QR invite codes, manual link, `lineInbox`, `lineInvite`. |
 | M7 Files & images | Not started. |
 | M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29). **Not done:** rotate secret, reassign, deactivate, quota (M8a–c), error log. |
-| **M9 Daily Event sync** | **Done in the scratch org** (DEC-28–30): 187/187 Apex tests. Not yet in a package version. |
+| **M9 Daily Event sync** | **Done, proven live** in the QA org on Beta 4 (DEC-28–30). Two follow-ups proposed for Beta 5 (§4). |
 | M10–M12 | Not started. |
 
 Checks at the end of M9: **187/187 Apex tests** and **25/25 Jest tests** pass, org-wide coverage **93%** (lowest class
 `LineAdminController` 87%), Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
 
-**Beta 4 (`0.1.0.4`, `04tgL000000WOs1QAG`) built 2026-09-29**, 94% coverage: M9, the first-message notification fix
-and the `registerOA` cleanup. Not yet installed in the QA org (the user installs it; Beta 3 must be uninstalled first).
+**Beta 4 (`0.1.0.4`, `04tgL000000WOs1QAG`)**, 94% coverage: M9, the first-message notification fix and the `registerOA`
+cleanup. **Installed in the QA org** by the user on 2026-09-29.
 
 ## 2. Orgs and access
 
 | Alias | What it is | Notes |
 |---|---|---|
 | `sf-line-dev` | **Dev Hub** (Enterprise Edition trial, expires 2027-09-22). Owns the package and the namespace link | Never deploy source here. Limits: 3 active scratch orgs, 6 package versions a day. |
-| `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **Beta 3 (0.1.0.3) installed** | The real LINE OA **TerraskyTH-Dev-Acc** (`@833ybxes`, channel `2011724597`) is registered here, and its webhook points here. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Contact "Chaipitch" was auto-created from a real message. |
+| `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **Beta 4 (0.1.0.4) installed** | Real LINE OA **TS Chaipitch** (`@803ctlbv`, channel `2011659553`) registered, webhook OK. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Org and admin time zone **Asia/Bangkok** (changed 2026-09-30). Nightly job scheduled, but still at the old time (§4). Contact "Chaipitch" auto-created from a real message. |
 | `line-dev` | **The one scratch org** (namespaced `tsthlineoa`, user `test-egv3lqxcpg7t@example.com`); the project default | Expires **2026-10-22**. Rebuild: `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev`. Holds seed data from `scripts/apex/seed-daily-sync.apex`. Until 2026-09-29 this org was aliased `line-ns`; the old non-namespaced `line-dev` was deleted that day. |
 
 **Another active scratch org** is listed in the Dev Hub, `test-bdmfveozrgxg@example.com`, which this machine has no login
@@ -53,21 +53,30 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
   Administrator (SOQL returns "not supported").
 - Registering an OA from the LINE Admin page sets the webhook URL at LINE.
 
-**Not yet proven live:** the M9 daily sync in an installed package. In the next beta, press **Sync today now** on the
-LINE Admin page and check the Contact's Activity timeline (07 §3 step 9).
+- **M9 in the installed package (Beta 4, 2026-09-29/30):** *Sync today now* completed with 0 errors and wrote the Event
+  (subject, Who, blank What for a Contact without an Account, Show as Free, transcript); the nightly job was
+  **scheduled from the LINE Admin page by a subscriber admin**, which only an installed package could prove.
 
 ## 4. Open items
 
 1. **Quota: display only, or block sending?** The BA's TA review document proposes blocking; the plan (06 M8a–c) only
    displays. Needs a decision before the TA review on **7 Oct 2026**. See `BA_TA_REVIEW_CORRECTIONS.md` section B.
 2. **BA document corrections** (`BA_TA_REVIEW_CORRECTIONS.md`) are with the user to pass on before 7 Oct.
-3. **Beta 4** with M9 and the notification fix. Installing it means uninstalling Beta 3 first, which deletes the package's
-   data in the QA org. **Ask before uninstalling anything from the QA org.**
-4. **[VERIFY] same LINE user ID across OAs under one Provider** (D5): auto-link across OAs depends on it. Test in M6
+3. **Reschedule the nightly job in the QA org** (LINE Admin → Nightly jobs → Schedule). It was scheduled while the admin
+   was on New York time, so it fires at 05:00 UTC (noon Bangkok), not 01:00 Bangkok. A schedule keeps the time zone it
+   was created in. The user was told that letting the noon run happen first rebuilds the deleted 29 Sep Event.
+4. **Proposed for Beta 5** (the user is choosing):
+   - Show the org time zone on the Nightly jobs card, and warn when the admin's differs. On 2026-09-29 the QA org was
+     on Los Angeles time, so Bangkok's evening of the 29th and morning of the 30th fell on the same "day" and one Event
+     held both. Correct per DEC-30, invisible to the admin.
+   - **Bug:** an Event can end before its last message. Salesforce keeps Event length in whole minutes and recomputes
+     `EndDateTime` from the start, dropping seconds. Fix: round the start down and the end up to the minute.
+   - Optional *Sync a date*: rebuild a past day's Events. Today a subscriber can't run the sync for any date but today.
+5. **[VERIFY] same LINE user ID across OAs under one Provider** (D5): auto-link across OAs depends on it. Test in M6
    with a second OA.
-5. **Business questions** in `08`: managers replying on a rep's behalf, retention period, invite wording, one active OA
+6. **Business questions** in `08`: managers replying on a rep's behalf, retention period, invite wording, one active OA
    per rep enforced or not, Opportunity links.
-6. **Small bug, not fixed:** the OA table's Active/Inactive badge on the LINE Admin page sets a `variant` attribute that
+7. **Small bug, not fixed:** the OA table's Active/Inactive badge on the LINE Admin page sets a `variant` attribute that
    `lightning-badge` doesn't have, so it never shows a colour.
 
 ## 5. Traps already hit (don't rediscover these)
@@ -85,6 +94,10 @@ LINE Admin page and check the Contact's Activity timeline (07 §3 step 9).
 - **Betas can't be upgraded.** Uninstall the old beta first, which deletes its data. Afterwards, check the permission
   set assignments (`LINE_Webhook_Guest` on the Site guest user; `LINE_Admin`, `LINE_Chat_User` on people). The Site
   itself survives.
+- **Uninstall is refused while** `LINE_Webhook_Guest` is assigned to the guest user, or `lineChat` sits on a Contact
+  Lightning page. Remove both first (the page in App Builder: the QA org gets no source deploys), then add them back.
+- **"Days" come from the org's default time zone, schedules from the scheduling admin's.** Check both before judging the
+  daily Events, and reschedule after changing either.
 - **Only `global` members are callable in a subscriber org**, and the only global class is the webhook. Anything an admin
   must run (register an OA, schedule a job) needs a button on the LINE Admin page (DEC-25, DEC-29).
 - **Betas install only into Developer Edition or sandbox orgs**, which is why the QA org is `chaipitch-devhub`.
@@ -120,9 +133,11 @@ LINE Admin page and check the Contact's Activity timeline (07 §3 step 9).
 
 ## 7. Suggested next steps
 
-1. **Beta 4** (M9 + notification fix) → QA org → press *Sync today now* → check the Event on the Contact.
-2. **Settle quota** (display or block) before 7 Oct.
-3. **Rest of M6**: QR invite codes, manual link, `lineInbox`.
+1. **Reschedule the nightly job** in the QA org (§4 item 3).
+2. **Before the TA review on 7 Oct:** settle quota (display or block) and pass the BA corrections on. The quota answer
+   decides whether M8 needs new packaged fields and a *Blocked* status.
+3. **Beta 5 fixes** (§4 item 4): time zone on the Nightly jobs card, Event end-time rounding; *Sync a date* if wanted.
+4. **Rest of M6**: QR invite codes, manual link, `lineInbox`. Needs a second OA for the cross-OA [VERIFY].
 
 ## 8. Starting a new session
 
