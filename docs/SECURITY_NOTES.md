@@ -119,6 +119,7 @@ Run: `npm run scan` (Recommended + Security + AppExchange rules, fails on High/C
 
 | Date | Scope | Critical/High | Notes |
 |---|---|---|---|
+| 2026-09-30 | Sticker pictures (`LineApiClient`, `LineChatController`, `lineChat`, CSP Trusted Site) | 0 | No new categories |
 | 2026-09-29 | `force-app` (M9 daily sync, nightly jobs) | 0 | 58 Moderate, 212 Low. New Moderate: complexity on `LineDailyEventSyncBatch` and `LineAdminController`, justified in DECISIONS §3 |
 | 2026-09-24 | `force-app` (DEC-27 auto-create, Beta 3) | 0 | 51 Moderate, 186 Low: unchanged categories |
 | 2026-09-22 | `force-app` (M5, admin page, Beta 1–2) | 0 | Unchanged categories |

@@ -21,7 +21,7 @@ built on 2026-09-30.
 | M6 | Linking: manual, auto, QR invite + inbox (`lineInbox`) → **Beta 2** | 5–6 | Part: auto-link, auto-create (DEC-27) |
 | M7 | Files and images, in and out | 5–7 | Part: sticker pictures (DEC-32) |
 | M8 | Admin UI (`lineAdmin`) + reassignment batch | 4–5 | Part: settings, register OA, nightly jobs (DEC-25, DEC-29) |
-| M9 | Daily Event sync | 2–3 | ✅ scratch org; not yet in a beta |
+| M9 | Daily Event sync | 2–3 | ✅ live in the QA org (Beta 4) |
 | M10 | Retention + error log housekeeping | 1.5–2 | |
 | M11 | Hardening: security review readiness, EN/TH labels, LDV test → **Release candidate** | 4–5 | |
 | M12 | QA org end-to-end, upgrade test, install guide, UAT support | 3–5 | |

@@ -23,8 +23,13 @@ milestone. For how the system works, read `HOW_IT_WORKS.md`.
 Checks on 2026-09-30 (after stickers): **189/189 Apex tests** and **28/28 Jest tests** pass, org-wide coverage **93%**,
 Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
 
-**Beta 4 (`0.1.0.4`, `04tgL000000WOs1QAG`)**, 94% coverage: M9, the first-message notification fix and the `registerOA`
-cleanup. **Installed in the QA org** by the user on 2026-09-29.
+**Beta 4 (`0.1.0.4`, `04tgL000000WOs1QAG`)**: M9, the first-message notification fix and the `registerOA` cleanup.
+**Installed in the QA org** by the user on 2026-09-29.
+
+**Beta 5 (`0.1.0.5`, `04tgL000000WjGXQA0`) built 2026-09-30**, 94% coverage: Beta 4 plus sticker pictures (DEC-32). The CSP
+Trusted Site packaged without problems. **Not yet installed in the QA org.** Install link:
+`https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000WjGXQA0`. Before uninstalling Beta 4, remove
+`lineChat` from the Contact page and the guest permission set assignment (§5), then put both back.
 
 ## 2. Orgs and access
 
@@ -66,7 +71,7 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
    was on New York time, so it fires at 05:00 UTC (noon Bangkok), not 01:00 Bangkok. A schedule keeps the time zone it
    was created in. The user was told that letting the noon run happen first rebuilds the deleted 29 Sep Event.
 4. **Proposed for Beta 5** (the user is choosing):
-   - Show the org time zone on the Nightly jobs card, and warn when the admin's differs. On 2026-09-29 the QA org was
+   - (Not in Beta 5, still proposed.) Show the org time zone on the Nightly jobs card, and warn when the admin's differs. On 2026-09-29 the QA org was
      on Los Angeles time, so Bangkok's evening of the 29th and morning of the 30th fell on the same "day" and one Event
      held both. Correct per DEC-30, invisible to the admin.
    - **Bug:** an Event can end before its last message. Salesforce keeps Event length in whole minutes and recomputes
