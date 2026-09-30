@@ -133,6 +133,35 @@ private class LineAdminControllerTest {
     Assert.isFalse(unscheduled.scheduled);
   }
 
+  @IsTest
+  static void jobsViewComparesOrgAndAdminTimeZones() {
+    LineTestFactory.ensurePackageAccess();
+    User admin = admin();
+    LineAdminController.JobsView view;
+
+    Test.startTest();
+    System.runAs(admin) {
+      view = LineAdminController.getJobs();
+    }
+    Test.stopTest();
+
+    String orgZone = LineDailyEventSyncBatch.orgTimeZone().getID();
+    String adminZone = [
+      SELECT TimeZoneSidKey
+      FROM User
+      WHERE Id = :admin.Id
+      WITH SYSTEM_MODE
+    ]
+    .TimeZoneSidKey;
+    Assert.areEqual(orgZone, view.orgTimeZone, 'The org default time zone');
+    Assert.areEqual(adminZone, view.userTimeZone, 'The admin time zone');
+    Assert.areEqual(
+      !orgZone.equals(adminZone),
+      view.timeZoneMismatch,
+      'Warns exactly when the two differ'
+    );
+  }
+
   // ---------- settings ----------
 
   @IsTest

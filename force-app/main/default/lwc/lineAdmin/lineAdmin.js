@@ -38,6 +38,7 @@ import JOBS_UNSCHEDULE from "@salesforce/label/c.LINE_Admin_Jobs_Unschedule";
 import JOBS_RUN_NOW from "@salesforce/label/c.LINE_Admin_Jobs_Run_Now";
 import JOBS_STARTED from "@salesforce/label/c.LINE_Admin_Jobs_Started";
 import JOBS_SYNC_OFF from "@salesforce/label/c.LINE_Admin_Jobs_Sync_Off";
+import JOBS_TIME_ZONE_WARNING from "@salesforce/label/c.LINE_Admin_Jobs_Time_Zone_Warning";
 
 /**
  * LINE Admin app page: org settings, nightly jobs and OA registration.
@@ -219,6 +220,17 @@ export default class LineAdmin extends LightningElement {
 
   get showSyncOff() {
     return this.jobsLoaded && this.jobs.dailySyncEnabled === false;
+  }
+
+  // Days split at the org's midnight (DEC-30); warn when that isn't the admin's midnight (DEC-32).
+  get timeZoneWarning() {
+    if (!this.jobsLoaded || !this.jobs.timeZoneMismatch) {
+      return undefined;
+    }
+    return JOBS_TIME_ZONE_WARNING.replace(
+      "{0}",
+      this.jobs.orgTimeZone
+    ).replaceAll("{1}", this.jobs.userTimeZone);
   }
 
   get isUnscheduleDisabled() {

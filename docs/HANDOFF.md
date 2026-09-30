@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-09-29**, after M9. Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-09-30**, after M9 and the daily-sync time-zone fix (DEC-32). Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -53,8 +53,11 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
   Administrator (SOQL returns "not supported").
 - Registering an OA from the LINE Admin page sets the webhook URL at LINE.
 
-**Not yet proven live:** the M9 daily sync in an installed package. In the next beta, press **Sync today now** on the
-LINE Admin page and check the Contact's Activity timeline (07 §3 step 9).
+**Daily sync in the QA org (2026-09-30):** it ran and created Events, but one Event held yesterday's and today's
+conversation. Cause: the org's Default Time Zone is not Bangkok, and a day is midnight to midnight in the org's time zone
+(DEC-30). Fix (DEC-32, config only): set Setup → Company Information → Default Time Zone to Asia/Bangkok, then press
+**Sync today now** and check that each day has its own Event (07 §3 step 9). The next beta adds a warning on the Nightly
+jobs card when the org and admin time zones differ.
 
 ## 4. Open items
 
@@ -67,7 +70,9 @@ LINE Admin page and check the Contact's Activity timeline (07 §3 step 9).
    with a second OA.
 5. **Business questions** in `08`: managers replying on a rep's behalf, retention period, invite wording, one active OA
    per rep enforced or not, Opportunity links.
-6. **Small bug, not fixed:** the OA table's Active/Inactive badge on the LINE Admin page sets a `variant` attribute that
+6. **QA org time zone:** set the Default Time Zone to Asia/Bangkok and re-check the daily Events (DEC-32). The
+   time-zone warning on the LINE Admin page is in source only, not yet in a package version.
+7. **Small bug, not fixed:** the OA table's Active/Inactive badge on the LINE Admin page sets a `variant` attribute that
    `lightning-badge` doesn't have, so it never shows a colour.
 
 ## 5. Traps already hit (don't rediscover these)

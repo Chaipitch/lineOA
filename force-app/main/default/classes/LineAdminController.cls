@@ -254,6 +254,15 @@ public with sharing class LineAdminController {
     public Datetime lastRunAt;
     @AuraEnabled
     public Integer lastRunErrors;
+    /** The org's default time zone, which sets where a sync day starts and ends (DEC-30, DEC-32). */
+    @AuraEnabled
+    public String orgTimeZone;
+    /** The admin's own time zone. */
+    @AuraEnabled
+    public String userTimeZone;
+    /** True when the two differ, so the admin is warned that days may not split where they expect (DEC-32). */
+    @AuraEnabled
+    public Boolean timeZoneMismatch = false;
   }
 
   /**
@@ -317,6 +326,9 @@ public with sharing class LineAdminController {
   private static JobsView currentJobs() {
     JobsView view = new JobsView();
     view.dailySyncEnabled = LineSettings.dailySyncEnabled();
+    view.orgTimeZone = LineDailyEventSyncBatch.orgTimeZone().getID();
+    view.userTimeZone = UserInfo.getTimeZone().getID();
+    view.timeZoneMismatch = !view.orgTimeZone.equals(view.userTimeZone);
     CronTrigger job = LineScheduler.current();
     if (job != null) {
       view.scheduled = true;

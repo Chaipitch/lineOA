@@ -147,6 +147,11 @@
           <template lwc:if={showSyncOff}>
             <p class="slds-text-color_weak">{labels.jobsSyncOff}</p>
           </template>
+          <template lwc:if={timeZoneWarning}>
+            <p data-id="job-time-zone" class="slds-text-color_error">
+              {timeZoneWarning}
+            </p>
+          </template>
           <template lwc:if={jobs.lastRunStatus}>
             <p data-id="job-last-run" class="slds-var-m-top_xx-small">
               {labels.jobsLastRun} {jobs.lastRunStatus}

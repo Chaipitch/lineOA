@@ -54,7 +54,7 @@ Test.getEventBus().deliver();   // runs the PE trigger
 | Files | download → ContentVersion linked to conversation (+ Contact); over the size limit → Too Large, no callout; download 5xx → Download Failed + retry path |
 | Visibility | `System.runAs(RepB)`: can't read Rep A's conversations/messages through the controller or SOQL |
 | Reassignment | batch moves owners; optional Contact Owner update; Rep B now reads the history |
-| Admin | non-admin calling any `LineAdminController` method → refused; settings round trip (auto-create, daily sync, blank numbers → defaults); register fills bot fields, sets the webhook, stores the secret; bad credentials → nothing saved; nightly jobs: schedule, run now, unschedule; rotate secret (M8) |
+| Admin | non-admin calling any `LineAdminController` method → refused; settings round trip (auto-create, daily sync, blank numbers → defaults); register fills bot fields, sets the webhook, stores the secret; bad credentials → nothing saved; nightly jobs: schedule, run now, unschedule; org vs admin time zone → warning only when they differ (DEC-32); rotate secret (M8) |
 | Secret handling | no controller DTO contains the secret (serialize and assert) |
 | Daily sync | 3 messages in one conversation yesterday → one Event (Who = Contact, What = Account, `LINE_Conversation__c`, owner, subject, times, transcript, `ShowAs` Free); rerun → still one, **rebuilt** with a late message; unlinked conversation → none; no messages that day → none; sync off → none; queue owner → running user; Event rejected → logged, other Events still created; transcript truncated at 32,000; 100 conversations in one run; day boundaries across DST; scheduler: schedule twice = one job, unschedule, run now = today |
 | Retention | messages older than N months deleted with files; 0 = none deleted |
@@ -81,7 +81,7 @@ Pre: 2 OAs registered in LINE Admin (OA-A → Rep A, OA-B → Rep B); phones 1 a
    ```
 7. LINE console redelivery of an event → no duplicate.
 8. Admin reassigns OA-A to Rep B. → Rep B sees the OA-A history; Rep A doesn't.
-9. LINE Admin → Nightly jobs → **Sync today now** → one Event per conversation for today on the Contact's Activity timeline, with the right transcript. **Schedule** → the card shows the next run at 01:00.
+9. Setup → Company Information → Default Time Zone is the business's (no time-zone warning on the Nightly jobs card). LINE Admin → Nightly jobs → **Sync today now** → one Event per conversation for today on the Contact's Activity timeline, with the right transcript. **Schedule** → the card shows the next run at 01:00.
 10. Reply from the LINE OA Manager app → confirm it does **not** appear (documented limitation).
 
 Record the results, timings and screenshots in `docs/QA_RESULTS_<version>.md`.

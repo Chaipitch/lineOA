@@ -217,7 +217,9 @@ Description  10:01 Customer: Could you send the revised quotation?
 The shape follows section 2.8 of the business's design document (DEC-28). The details that make it safe to run
 unattended for years (DEC-30):
 
-- **A day** is midnight to midnight in the org's default time zone; transcript times are shown in the rep's.
+- **A day** is midnight to midnight in the org's default time zone; transcript times are shown in the rep's. The org's
+  time zone must therefore be the business's (install step C5, DEC-32); the LINE Admin page warns when it differs from
+  the admin's.
 - **Idempotent:** each Event carries `LINE_Sync_Key__c` = `<conversation Id>:<date>`. A rerun finds it and **rebuilds** it
   from the stored messages, so a rerun never duplicates and also picks up a message that arrived late.
 - **Skips** conversations with no Contact, and conversations that had no messages that day.

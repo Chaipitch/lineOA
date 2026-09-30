@@ -336,6 +336,40 @@ describe("c-line-admin", () => {
     );
   });
 
+  it("warns when the org time zone differs from the admin's", async () => {
+    getJobs.mockResolvedValue({
+      ...SCHEDULED,
+      orgTimeZone: "America/Los_Angeles",
+      userTimeZone: "Asia/Bangkok",
+      timeZoneMismatch: true
+    });
+    const element = createComponent();
+    await flush();
+
+    const warning = element.shadowRoot.querySelector(
+      '[data-id="job-time-zone"]'
+    );
+    expect(warning).not.toBeNull();
+    expect(warning.textContent).toContain(
+      "c.LINE_Admin_Jobs_Time_Zone_Warning"
+    );
+  });
+
+  it("shows no time zone warning when the zones match", async () => {
+    getJobs.mockResolvedValue({
+      ...SCHEDULED,
+      orgTimeZone: "Asia/Bangkok",
+      userTimeZone: "Asia/Bangkok",
+      timeZoneMismatch: false
+    });
+    const element = createComponent();
+    await flush();
+
+    expect(
+      element.shadowRoot.querySelector('[data-id="job-time-zone"]')
+    ).toBeNull();
+  });
+
   it("reports a failed job action", async () => {
     scheduleJobs.mockRejectedValue({
       body: { message: "Only LINE admins can do this." }

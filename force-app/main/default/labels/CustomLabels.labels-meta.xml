@@ -577,4 +577,14 @@
         <value
     >Daily sync is turned off in Settings, so the nightly job does nothing.</value>
     </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Time_Zone_Warning</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: org time zone differs from the admin's</shortDescription>
+        <value
+    >Daily Events split at midnight in the org's default time zone ({0}), which differs from yours ({1}). To split at your midnight, set Setup → Company Information → Default Time Zone to {1}.</value>
+    </labels>
 </CustomLabels>

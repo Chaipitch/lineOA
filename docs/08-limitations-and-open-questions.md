@@ -15,6 +15,7 @@
 | L9 | Storage grows with message volume | Retention setting |
 | L10 | Contact record pages only (no Person Account page support in MVP) | Backlog |
 | L11 | PDPA: chats and files stored in Salesforce | Client provides consent/notice; retention |
+| L12 | Daily Events split days at midnight in the **org's** default time zone, one business day for every rep (DEC-30). If that time zone is not the business's, one Event can hold the end of one local day and the start of the next (seen in the QA org, 2026-09-30). Reps in a different time zone from the org see their days split at the org's midnight | Install step C5 sets the org time zone; the LINE Admin page warns when it differs from the admin's (DEC-32) |
 
 ## Technical risks (verify early; results go to DECISIONS.md)
 
