@@ -145,6 +145,10 @@ An LWC showing the conversation as bubbles, with the OA's tabs when a Contact ha
 banner, failed-send badges, and older messages loaded either by a button or by scrolling to the top (the scroll
 position is preserved around the insert, so reading doesn't jump).
 
+**Stickers show as pictures**, without a bubble, as in LINE. LINE's API gives only a sticker's ID, so the picture comes
+from LINE's sticker CDN, loaded by the browser (DEC-32). The server builds the URL from a digits-only ID; a packaged CSP
+Trusted Site allows that one host for images only. If LINE ever moves the pictures, the bubble shows `[Sticker]`.
+
 It **polls** rather than streams: every few seconds, `getMessagesSince`, and **only while
 `document.visibilityState === 'visible'`**, so a background tab costs nothing. The interval comes from settings.
 Timers are cleared in `disconnectedCallback`.
@@ -294,7 +298,7 @@ The habits that this constraint forces, which are otherwise easy to mistake for 
 
 ## 9. Testing
 
-187 Apex tests and 25 Jest tests, org-wide coverage 93%.
+189 Apex tests and 28 Jest tests, org-wide coverage 93%.
 
 - Callouts are mocked with `LineHttpMock`; test data comes from `LineTestFactory`; no `SeeAllData`.
 - Webhook tests build a genuinely **signed** `RestContext.request` and then `Test.getEventBus().deliver()`, so the

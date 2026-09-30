@@ -56,6 +56,9 @@ public with sharing class LineChatController {
     public String stickerPackageId;
     @AuraEnabled
     public String stickerId;
+    /** The sticker's picture on LINE's CDN (DEC-32); null for other messages or an unusable ID. */
+    @AuraEnabled
+    public String stickerUrl;
     @AuraEnabled
     public String location;
 
@@ -76,6 +79,9 @@ public with sharing class LineChatController {
       this.contentDocumentId = m.Content_Document_Id__c;
       this.stickerPackageId = m.Sticker_Package_Id__c;
       this.stickerId = m.Sticker_Id__c;
+      this.stickerUrl = m.Message_Type__c == 'sticker'
+        ? LineApiClient.stickerImageUrl(m.Sticker_Id__c)
+        : null;
       this.location = m.Location__c;
     }
   }

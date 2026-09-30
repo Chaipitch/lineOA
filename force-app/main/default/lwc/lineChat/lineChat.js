@@ -32,10 +32,14 @@ const SCROLL_TOP_THRESHOLD_PX = 40;
 
 /**
  * Chat panel for the Contact record page: history, polling and sending text.
- * Media and the invite flow arrive in M6/M7; non-text messages show as placeholders for now.
+ * Stickers show as pictures from LINE's sticker CDN (DEC-32), falling back to a placeholder if one won't load.
+ * Media and the invite flow arrive in M6/M7; other non-text messages show as placeholders for now.
  */
 export default class LineChat extends LightningElement {
   @api recordId;
+
+  // Sticker pictures that failed to load; those show the placeholder instead.
+  brokenStickerIds = [];
 
   @track conversations = [];
   @track messages = [];
@@ -54,6 +58,7 @@ export default class LineChat extends LightningElement {
   visibilityHandler;
 
   labels = {
+    sticker: PREVIEW_STICKER,
     title: TITLE,
     noConversations: NO_CONVERSATIONS,
     invite: INVITE,
@@ -372,22 +377,37 @@ export default class LineChat extends LightningElement {
   get messageViews() {
     return this.messages.map((m) => {
       const isText = m.messageType === "text";
+      const showSticker =
+        m.messageType === "sticker" &&
+        !!m.stickerUrl &&
+        !this.brokenStickerIds.includes(m.id);
       return {
         ...m,
         key: m.id,
-        bubbleClass: m.isOutbound
-          ? "line-bubble line-bubble_outbound slds-p-around_x-small"
-          : "line-bubble line-bubble_inbound slds-p-around_x-small",
+        bubbleClass: showSticker
+          ? "line-bubble line-bubble_sticker slds-p-around_x-small"
+          : m.isOutbound
+            ? "line-bubble line-bubble_outbound slds-p-around_x-small"
+            : "line-bubble line-bubble_inbound slds-p-around_x-small",
         rowClass: m.isOutbound
           ? "slds-grid slds-grid_align-end slds-m-bottom_x-small"
           : "slds-grid slds-m-bottom_x-small",
         isText,
-        placeholder: isText ? undefined : this.placeholderFor(m),
+        showSticker,
+        placeholder: isText || showSticker ? undefined : this.placeholderFor(m),
         isFailed: m.status === "Failed",
         failedLabel: FAILED_BADGE,
         failedDetail: m.errorMessage
       };
     });
+  }
+
+  // LINE's sticker CDN is not an official API (DEC-32): if a picture won't load, fall back to "[Sticker]".
+  handleStickerError(event) {
+    const id = event.target.dataset.id;
+    if (id && !this.brokenStickerIds.includes(id)) {
+      this.brokenStickerIds = [...this.brokenStickerIds, id];
+    }
   }
 
   placeholderFor(message) {

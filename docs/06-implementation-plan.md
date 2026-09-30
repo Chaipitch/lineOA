@@ -7,7 +7,8 @@ Milestones M3, M6 and M11 each end with a **beta package version installed in th
 In practice betas are built whenever the QA org needs something new, and numbered by build (`0.1.0.N`), not by milestone.
 
 **Status on 2026-09-29** (details in `HANDOFF.md`): M0–M5 done; M6 part done (auto-link, auto-create Contact); M8 part done
-(settings, OA registration, nightly jobs); M9 done in the scratch org, not yet in a beta. Beta 3 (`0.1.0.3`) is in the QA org.
+(settings, OA registration, nightly jobs); M9 done and live in the QA org on Beta 4; sticker pictures (part of M7, DEC-32)
+built on 2026-09-30.
 
 | # | Milestone | Est. | Status |
 |---|---|---|---|
@@ -18,7 +19,7 @@ In practice betas are built whenever the QA org needs something new, and numbere
 | M4 | Outbound text | 1.5–2 | ✅ |
 | M5 | Chat panel (`lineChat`) | 4–5 | ✅ |
 | M6 | Linking: manual, auto, QR invite + inbox (`lineInbox`) → **Beta 2** | 5–6 | Part: auto-link, auto-create (DEC-27) |
-| M7 | Files and images, in and out | 5–7 | |
+| M7 | Files and images, in and out | 5–7 | Part: sticker pictures (DEC-32) |
 | M8 | Admin UI (`lineAdmin`) + reassignment batch | 4–5 | Part: settings, register OA, nightly jobs (DEC-25, DEC-29) |
 | M9 | Daily Event sync | 2–3 | ✅ scratch org; not yet in a beta |
 | M10 | Retention + error log housekeeping | 1.5–2 | |
@@ -88,6 +89,7 @@ Record the [VERIFY] results for stateless tokens, `destination`, and Automated P
 **Done when:** acceptance criteria 6 passes on real phones (iOS and Android); the URL scheme result is recorded in DECISIONS.
 
 ## M7 — Files & images (5–7 d)
+- **Done early (DEC-32):** inbound stickers show as their picture from LINE's sticker CDN, with a `[Sticker]` fallback.
 - Inbound: download content in `LineCalloutQueueable` (size check → Too Large; one large file per execution; chain the rest),
   ContentVersion with `FirstPublishLocationId` = conversation, and a ContentDocumentLink to the Contact if linked. Thumbnails and download links in `lineChat`.
 - Outbound: upload in `lineChat` → image/video/audio sent natively, other files as an expiring `ContentDistribution` link in a text message.

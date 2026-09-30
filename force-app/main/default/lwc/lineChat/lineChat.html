@@ -90,6 +90,17 @@
                 <template lwc:if={message.isText}>
                   <p class="line-text">{message.text}</p>
                 </template>
+                <!-- Sticker picture from LINE's CDN (DEC-32); the URL is built server-side from a numeric sticker ID -->
+                <template lwc:elseif={message.showSticker}>
+                  <img
+                    class="line-sticker"
+                    src={message.stickerUrl}
+                    alt={labels.sticker}
+                    data-id={message.id}
+                    loading="lazy"
+                    onerror={handleStickerError}
+                  />
+                </template>
                 <template lwc:else>
                   <p class="slds-text-color_weak">{message.placeholder}</p>
                 </template>

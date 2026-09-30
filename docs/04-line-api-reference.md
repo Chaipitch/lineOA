@@ -72,7 +72,7 @@ Boolean ok = EncodingUtil.base64Encode(mac) == signatureHeader;
 | `video` | `duration`, `contentProvider` | yes if `line` |
 | `audio` | `duration`, `contentProvider` | yes if `line` |
 | `file` | `fileName`, `fileSize` | yes |
-| `sticker` | `packageId`, `stickerId`, `stickerResourceType`, `keywords` | no — render via sticker CDN URL or show "[Sticker]" [VERIFY CDN URL pattern; optional] |
+| `sticker` | `packageId`, `stickerId`, `stickerResourceType`, `keywords` | no — the chat panel shows the still picture from `https://stickershop.line-scdn.net/stickershop/v1/sticker/<stickerId>/android/sticker.png` (not an official API; verified 2026-09-30), falling back to "[Sticker]" (DEC-32) |
 | `location` | `title`, `address`, `latitude`, `longitude` | no |
 
 ## 3. Endpoints used

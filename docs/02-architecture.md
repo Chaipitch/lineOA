@@ -83,6 +83,8 @@ send custom notifications and enqueue callout queueables; if not, document an op
 - Access tokens: **stateless channel access tokens** issued from Channel ID + secret (`POST /oauth2/v3/token`, ~15 min) [VERIFY].
   There are no long-lived tokens to store or rotate. They are cached per transaction.
 - Callouts use packaged **Remote Site Settings** (`api.line.me`, `api-data.line.me`), and Apex sets the `Authorization` header itself.
+- Sticker pictures are the one browser-side load: `lineChat` shows them from `stickershop.line-scdn.net`, allowed by a packaged
+  CSP Trusted Site for images only (DEC-32). Apex never calls that host.
   No Named Credentials: a principal per OA would need subscriber metadata for every OA.
 
 ### D5 — Customer identity: the Contact holds the LINE user ID, conversations are per OA

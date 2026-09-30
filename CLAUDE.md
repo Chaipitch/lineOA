@@ -46,7 +46,8 @@ If the code must differ from the spec, **ask first**. Then record the change in 
    match the spec exactly.
    - `global` is allowed **only** on `LineWebhookResource`.
    - Never make destructive changes to packaged metadata without asking.
-3. **No AI services.** No runtime AI/LLM calls (no Gemini, OpenAI, Einstein or Agentforce). The only external hosts are `api.line.me` and `api-data.line.me`.
+3. **No AI services.** No runtime AI/LLM calls (no Gemini, OpenAI, Einstein or Agentforce). Apex calls only `api.line.me` and `api-data.line.me`.
+   The one other host is `stickershop.line-scdn.net`, for sticker **pictures loaded by the browser** only (CSP Trusted Site, images only; DEC-32).
 4. **Secrets.**
    - Channel secrets live **only** in the protected custom setting `LINE_OA_Credential__c`. Only `LineCredentialStore` touches it.
    - Never put a secret or access token in a DTO, LWC, log, `System.debug`, error message, test, script or doc.

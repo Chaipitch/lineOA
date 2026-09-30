@@ -11,6 +11,13 @@ public inherited sharing class LineApiClient {
   static final String API_BASE = 'https://api.line.me';
   @TestVisible
   static final String DATA_BASE = 'https://api-data.line.me';
+  // Sticker pictures (DEC-32): LINE's own sticker CDN, not part of the Messaging API. Only ever loaded by the browser,
+  // never called from Apex; the packaged CSP Trusted Site `LINE_Sticker_Images` allows this host for images only.
+  @TestVisible
+  static final String STICKER_IMAGE_BASE = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/';
+  private static final Pattern STICKER_ID_PATTERN = Pattern.compile(
+    '^[0-9]{1,20}$'
+  );
 
   private static final Integer TIMEOUT_MS = 20000;
   private static final Integer CONTENT_TIMEOUT_MS = 120000;
@@ -32,6 +39,21 @@ public inherited sharing class LineApiClient {
   private LineApiClient(String channelId, String channelSecret) {
     this.channelId = channelId;
     this.channelSecret = channelSecret;
+  }
+
+  /**
+   * The still picture of a LINE sticker, for the chat panel (DEC-32). Every sticker has one, animated or not.
+   * @param stickerId `stickerId` from a sticker message
+   * @return the image URL, or null when the value isn't a LINE sticker ID (digits only, so nothing else can reach the URL)
+   */
+  public static String stickerImageUrl(String stickerId) {
+    if (
+      String.isBlank(stickerId) ||
+      !STICKER_ID_PATTERN.matcher(stickerId).matches()
+    ) {
+      return null;
+    }
+    return STICKER_IMAGE_BASE + stickerId + '/android/sticker.png';
   }
 
   /**

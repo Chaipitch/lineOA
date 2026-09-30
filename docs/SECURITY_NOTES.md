@@ -10,7 +10,13 @@ Status per section: what is designed (from the spec) and what is **implemented a
 | `https://api.line.me` | Token, bot info, webhook set/test, profile, push, reply, quota | `LINE_API` | M1/M2 |
 | `https://api-data.line.me` | Message content download | `LINE_API_DATA` | M1/M2 |
 
-No other callouts. No AI/LLM services. No runtime CDN loads; the QR library is a static resource.
+No other callouts. No AI/LLM services. The QR library is a static resource.
+
+**One browser-side load (DEC-32):** `lineChat` shows sticker pictures from `https://stickershop.line-scdn.net`, allowed by the
+packaged CSP Trusted Site `LINE_Sticker_Images` for **img-src only** in Lightning Experience. Apex never calls it. The URL is
+built server-side (`LineApiClient.stickerImageUrl`) from an all-digit sticker ID, so nothing a customer types can reach it
+(tested with path, host and non-digit values). What LINE sees: the viewer's IP address and a sticker ID, no customer data.
+If the image fails, the panel shows `[Sticker]`.
 
 ## 2. Guest (unauthenticated) surface
 

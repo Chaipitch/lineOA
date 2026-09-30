@@ -141,6 +141,7 @@ Event values (DEC-28, DEC-30):
 | Custom permission `LINE_Admin` | Checked by `LineAdminController` (in addition to object permissions) |
 | CustomNotificationType `LINE_New_Message` (desktop + mobile) | New inbound message alert. Look up by DeveloperName + namespace. [VERIFY packageable] |
 | Remote Site Settings `LINE_API` (https://api.line.me), `LINE_API_DATA` (https://api-data.line.me) | Callouts |
+| CSP Trusted Site `LINE_Sticker_Images` (https://stickershop.line-scdn.net) | Sticker pictures in `lineChat`; **img-src only**, Lightning Experience (DEC-32) |
 | Static resource `qrcode` | QR code JS library (MIT or similar; version and licence recorded in `docs/DECISIONS.md`) |
 | Custom Labels (+ Thai translations) | All UI text, invite message text, notification text |
 | Lightning App `LINE Chat` + tabs | Tabs: LINE Conversations, LINE OA Configurations, LINE Admin (app page with `lineAdmin`) |

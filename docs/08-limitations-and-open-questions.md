@@ -15,6 +15,7 @@
 | L9 | Storage grows with message volume | Retention setting |
 | L10 | Contact record pages only (no Person Account page support in MVP) | Backlog |
 | L11 | PDPA: chats and files stored in Salesforce | Client provides consent/notice; retention |
+| L12 | Sticker pictures come from LINE's sticker CDN, which LINE doesn't document; animated stickers show as still pictures | Falls back to "[Sticker]" if the CDN changes (DEC-32) |
 
 ## Technical risks (verify early; results go to DECISIONS.md)
 

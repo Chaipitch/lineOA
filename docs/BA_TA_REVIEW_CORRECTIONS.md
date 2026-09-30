@@ -61,8 +61,9 @@ Reference* field, 2.9, 2.10, 3.2 step 4, 3.6, 5.1, 5.2, 5.4, 6 (*Admin UI: enter
 
 **Where:** page 3 data model, *Key Design Point 5*: "Opportunity update … (e.g., AI summary, sentiment)".
 
-The specification bans runtime AI or LLM calls of any kind (CLAUDE.md hard rule 3). The only external hosts are
-`api.line.me` and `api-data.line.me`. Updating Opportunities is not in scope either.
+The specification bans runtime AI or LLM calls of any kind (CLAUDE.md hard rule 3). Apex calls only `api.line.me` and
+`api-data.line.me`; the only other host is LINE's sticker CDN, which the browser uses for sticker pictures (DEC-32).
+Updating Opportunities is not in scope either.
 
 **Correction:** delete Key Design Point 5, or move it to *Out of Scope*.
 

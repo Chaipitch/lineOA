@@ -61,13 +61,15 @@ Test.getEventBus().deliver();   // runs the PE trigger
 
 ## 2. LWC Jest
 `lineChat`, `lineInbox`, `lineInvite`, `lineAdmin`: render, empty state, send/success/error toast, polling starts/stops on visibility, paging.
+`lineChat` stickers: picture shown from `stickerUrl` without a bubble; picture fails to load → `[Sticker]`; no URL → `[Sticker]`.
+Apex: `LineApiClient.stickerImageUrl` accepts digits only (path, host and letters rejected); a sticker `MessageView` carries the URL.
 
 ## 3. End-to-end in the QA org (each beta)
 
 Pre: 2 OAs registered in LINE Admin (OA-A → Rep A, OA-B → Rep B); phones 1 and 2 with LINE (iOS + Android).
 
 1. Rep A opens Contact "Somchai" → Invite via LINE → phone 1 scans the QR → sends the pre-filled message. → Linked, confirmation received, Rep A notified.
-2. Phone 1 sends text, a sticker, a photo and a PDF. → All shown in `lineChat` within ~10 s; the files are Salesforce Files.
+2. Phone 1 sends text, a sticker, a photo and a PDF. → All shown in `lineChat` within ~10 s; the sticker as its picture; the files are Salesforce Files.
 3. Rep A replies with text, an image and a document. → Phone 1 receives them from OA-A; the document is a working link.
 4. Phone 1 adds OA-B and says hi. → Auto-linked to Somchai; only Rep B sees it.
 5. Phone 2 adds OA-A without an invite and sends "hello". → A Contact named after phone 2's LINE display name is

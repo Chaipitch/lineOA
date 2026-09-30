@@ -21,3 +21,14 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* LINE shows stickers without a bubble behind them. */
+.line-bubble_sticker {
+  background-color: transparent;
+}
+
+.line-sticker {
+  display: block;
+  width: 7.5rem;
+  height: auto;
+}

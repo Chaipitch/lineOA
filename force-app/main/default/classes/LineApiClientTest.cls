@@ -31,6 +31,28 @@ private class LineApiClientTest {
   // ---------- token ----------
 
   @IsTest
+  static void stickerImageUrlIsBuiltFromANumericIdOnly() {
+    Assert.areEqual(
+      'https://stickershop.line-scdn.net/stickershop/v1/sticker/1988/android/sticker.png',
+      LineApiClient.stickerImageUrl('1988')
+    );
+    // Anything but digits could change the URL, so it gets no picture at all.
+    for (
+      String bad : new List<String>{
+        null,
+        '',
+        ' ',
+        '1988/../../x',
+        'https://evil.example.com/a.png',
+        '12a',
+        '1'.repeat(21)
+      }
+    ) {
+      Assert.isNull(LineApiClient.stickerImageUrl(bad), 'Rejected: ' + bad);
+    }
+  }
+
+  @IsTest
   static void issueTokenPostsFormEncodedCredentials() {
     LineTestFactory.ensurePackageAccess();
     LineHttpMock mock = mockHttp();

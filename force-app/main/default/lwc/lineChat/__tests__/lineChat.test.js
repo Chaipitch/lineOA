@@ -162,6 +162,74 @@ describe("c-line-chat", () => {
     expect(element.shadowRoot.querySelectorAll(".line-bubble").length).toBe(2);
   });
 
+  it("shows a sticker as its picture from LINE", async () => {
+    const url =
+      "https://stickershop.line-scdn.net/stickershop/v1/sticker/1988/android/sticker.png";
+    getMessages.mockResolvedValue({
+      messages: [
+        {
+          ...inboundMessage("m1", null),
+          messageType: "sticker",
+          stickerPackageId: "446",
+          stickerId: "1988",
+          stickerUrl: url
+        }
+      ],
+      hasMore: false
+    });
+    const element = createComponent();
+    await flush();
+
+    const img = element.shadowRoot.querySelector("img.line-sticker");
+    expect(img).not.toBeNull();
+    expect(img.src).toBe(url);
+    expect(img.alt).toBe("c.LINE_Preview_Sticker");
+    expect(
+      element.shadowRoot.querySelector(".line-bubble_sticker")
+    ).not.toBeNull();
+  });
+
+  it("falls back to the placeholder when a sticker picture won't load", async () => {
+    getMessages.mockResolvedValue({
+      messages: [
+        {
+          ...inboundMessage("m1", null),
+          messageType: "sticker",
+          stickerId: "1988",
+          stickerUrl:
+            "https://stickershop.line-scdn.net/stickershop/v1/sticker/1988/android/sticker.png"
+        }
+      ],
+      hasMore: false
+    });
+    const element = createComponent();
+    await flush();
+
+    element.shadowRoot
+      .querySelector("img.line-sticker")
+      .dispatchEvent(new CustomEvent("error"));
+    await flush();
+
+    expect(element.shadowRoot.querySelector("img.line-sticker")).toBeNull();
+    expect(
+      element.shadowRoot.querySelector(".line-messages").textContent
+    ).toContain("c.LINE_Preview_Sticker");
+  });
+
+  it("shows the placeholder for a sticker without a usable picture", async () => {
+    getMessages.mockResolvedValue({
+      messages: [{ ...inboundMessage("m1", null), messageType: "sticker" }],
+      hasMore: false
+    });
+    const element = createComponent();
+    await flush();
+
+    expect(element.shadowRoot.querySelector("img.line-sticker")).toBeNull();
+    expect(
+      element.shadowRoot.querySelector(".line-messages").textContent
+    ).toContain("c.LINE_Preview_Sticker");
+  });
+
   it("sends a message and appends it", async () => {
     const element = createComponent();
     await flush();

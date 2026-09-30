@@ -267,6 +267,35 @@ private class LineChatControllerTest {
     Assert.areEqual('quote.pdf', view.fileName);
     Assert.areEqual(2048, view.fileSize);
     Assert.isFalse(view.isOutbound);
+    Assert.isNull(view.stickerUrl, 'Only stickers carry a sticker picture');
+  }
+
+  @IsTest
+  static void stickerMessageCarriesItsPictureUrl() {
+    LineTestFactory.ensurePackageAccess();
+    Id conversationId = conversationId();
+    insert as system new LINE_Message__c(
+      LINE_Conversation__c = conversationId,
+      Direction__c = 'Inbound',
+      Message_Type__c = 'sticker',
+      Status__c = 'Received',
+      Sticker_Package_Id__c = '446',
+      Sticker_Id__c = '1988',
+      Sent_At__c = Datetime.now()
+    );
+
+    LineChatController.MessageView view;
+    System.runAs(repA()) {
+      view = LineChatController.getMessages(conversationId, null, null, 10)
+        .messages[0];
+    }
+
+    Assert.areEqual('1988', view.stickerId);
+    Assert.areEqual(
+      LineApiClient.stickerImageUrl('1988'),
+      view.stickerUrl,
+      'The panel gets the picture URL built on the server'
+    );
   }
 
   @IsTest

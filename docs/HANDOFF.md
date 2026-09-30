@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-09-30**, after Beta 4 went into the QA org. Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-09-30**, after sticker pictures (Beta 5). Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -15,13 +15,13 @@ milestone. For how the system works, read `HOW_IT_WORKS.md`.
 | M4 Outbound text | **Done, proven live**: a reply sent from Salesforce reached a real phone. |
 | M5 Chat panel (`lineChat`) | **Done, proven live** on a Contact page in the QA org. |
 | M6 Linking + inbox | **Partly done:** auto-link and auto-create Contact on first message (DEC-27). **Not done:** QR invite codes, manual link, `lineInbox`, `lineInvite`. |
-| M7 Files & images | Not started. |
+| M7 Files & images | **Part done:** stickers show as pictures (DEC-32). Images, video, audio and files still show placeholders. |
 | M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29). **Not done:** rotate secret, reassign, deactivate, quota (M8a–c), error log. |
 | **M9 Daily Event sync** | **Done, proven live** in the QA org on Beta 4 (DEC-28–30). Two follow-ups proposed for Beta 5 (§4). |
 | M10–M12 | Not started. |
 
-Checks at the end of M9: **187/187 Apex tests** and **25/25 Jest tests** pass, org-wide coverage **93%** (lowest class
-`LineAdminController` 87%), Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
+Checks on 2026-09-30 (after stickers): **189/189 Apex tests** and **28/28 Jest tests** pass, org-wide coverage **93%**,
+Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
 
 **Beta 4 (`0.1.0.4`, `04tgL000000WOs1QAG`)**, 94% coverage: M9, the first-message notification fix and the `registerOA`
 cleanup. **Installed in the QA org** by the user on 2026-09-29.
