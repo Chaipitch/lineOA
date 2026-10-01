@@ -139,6 +139,7 @@ Useful commands:
 
 ```bash
 DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev  # fresh namespaced scratch org, fully set up
+./scripts/create-reps.sh chaipitch-devhub <your email> 3        # test reps with LINE_Chat_User (multi-rep testing)
 sf project deploy start --target-org line-dev --wait 15 --ignore-conflicts
 sf apex run test --test-level RunLocalTests --target-org line-dev --code-coverage --result-format human --wait 30
 npm run prettier:verify && npm run lint && npm run test:unit

@@ -52,6 +52,11 @@ Register OA: Channel ID + Channel secret + rep. The package does the following, 
 3. Sets the webhook URL (`<Site_Base_Url__c>/services/apexrest/<ns>/line/webhook`) and runs the webhook test.
 4. Saves `LINE_OA_Configuration__c` and the secret in the protected setting. Shows the result.
 
+**Our QA org only:** `./scripts/create-reps.sh <alias> <email> [count] [time zone …]` creates test reps
+`line.rep1…N` with `LINE_Chat_User`. It uses Salesforce Platform seats first: a Developer Edition org has about 3–4
+spare seats in all, and a Partner Developer Edition org has more. Each rep then needs their own OA under the same
+Provider, registered to them here. This also lets us run the D5 [VERIFY] check with a second OA.
+
 ## Part E — Handover (rep leaves or changes role)
 
 1. **[HUMAN]** LINE Admin tab: **Reassign** the OA to the new rep, or **Deactivate** it (→ fallback owner). The batch moves ownership.
