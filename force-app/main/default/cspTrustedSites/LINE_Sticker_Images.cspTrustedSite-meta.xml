@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <CspTrustedSite xmlns="http://soap.sforce.com/2006/04/metadata">
+    <canAccessCamera>false</canAccessCamera>
+    <canAccessMicrophone>false</canAccessMicrophone>
     <context>LEX</context>
     <description
   >LINE sticker pictures in the LINE Connect chat panel (DEC-32). Images only; the package never calls this host from Apex.</description>

@@ -106,6 +106,12 @@ Record the [VERIFY] results for stateless tokens, `destination`, and Automated P
   - **Error log** list.
 - `LineAdminController` checks the `LINE_Admin` custom permission.
 - `LineOAConfigTriggerHandler` → `LineReassignBatch` (optional Contact Owner update).
+- **Secret cleanup** (agreed 2026-10-03; 08 "Stale secrets"). The protected setting is unreachable for subscriber admins, so
+  the package must offer the only way out:
+  - **Remove OA** on the LINE Admin page: deletes the channel secret, keeps the OA record and its conversations as inactive.
+  - **Nightly credentials check** in `LineScheduler`: issue a token per active OA; when LINE rejects the credentials (channel
+    deleted or secret reissued), flag the OA on the admin page. Never delete automatically.
+  - **Safety net:** deleting an OA record by any route deletes its secret (`LineOAConfigTrigger`, after delete).
 - **Message quota per OA** (L2). `LineApiClient.getQuota()` and `getQuotaConsumption()` already exist and are
   unused outside the smoke-test script; this is the first place they reach a user.
   - **M8a (do first, no schema commitment):** a *Quota* column on the OA table — `used / allowance` with the
@@ -119,7 +125,8 @@ Record the [VERIFY] results for stateless tokens, `destination`, and Automated P
   - Salesforce replies are **push** messages and always count against the quota; LINE's *reply* messages don't, but
     reply tokens are single-use and short-lived, so the package cannot rely on them (04 §3, L2).
 
-**Done when:** acceptance criterion 5 passes; OA onboarding is done entirely in the UI; an admin can see how many
+**Done when:** acceptance criterion 5 passes; OA onboarding is done entirely in the UI; no secret outlives its OA's
+removal; an admin can see how many
 messages each OA has left this month without leaving Salesforce.
 
 ## M9 — Daily Event sync (2–3 d)

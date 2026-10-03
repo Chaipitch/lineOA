@@ -77,11 +77,13 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
    - **Bug:** an Event can end before its last message. Salesforce keeps Event length in whole minutes and recomputes
      `EndDateTime` from the start, dropping seconds. Fix: round the start down and the end up to the minute.
    - Optional *Sync a date*: rebuild a past day's Events. Today a subscriber can't run the sync for any date but today.
-5. **[VERIFY] same LINE user ID across OAs under one Provider** (D5): auto-link across OAs depends on it. Test in M6
+5. **Secret cleanup (agreed, not built):** today no secret is ever deleted, and subscriber admins can't reach them.
+   Planned in 06 M8: *Remove OA*, a nightly credentials check, and deleting the secret with its OA record.
+6. **[VERIFY] same LINE user ID across OAs under one Provider** (D5): auto-link across OAs depends on it. Test in M6
    with a second OA.
-6. **Business questions** in `08`: managers replying on a rep's behalf, retention period, invite wording, one active OA
+7. **Business questions** in `08`: managers replying on a rep's behalf, retention period, invite wording, one active OA
    per rep enforced or not, Opportunity links.
-7. **Small bug, not fixed:** the OA table's Active/Inactive badge on the LINE Admin page sets a `variant` attribute that
+8. **Small bug, not fixed:** the OA table's Active/Inactive badge on the LINE Admin page sets a `variant` attribute that
    `lightning-badge` doesn't have, so it never shows a colour.
 
 ## 5. Traps already hit (don't rediscover these)
