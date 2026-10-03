@@ -55,6 +55,13 @@ Implemented: M2
 - The token is only in the `Authorization` header and the per-transaction cache; no DTO or return value outside `issueToken()` carries it.
 - `LineLogger` masks bearer tokens, `client_secret=…` and `access_token`/`channelSecret` JSON values before writing (tested).
 
+Implemented (DEC-33, Beta 6): **secrets don't outlive their OA.** Subscriber admins can't see or delete the protected
+setting, and LINE sends no event when a channel is deleted, so the package provides the way out:
+- **Remove OA** (admin page, `LINE_Admin` custom permission) deletes the secret and keeps the OA as inactive *Removed*.
+- Deleting an OA record by any route deletes its secret (`LineOAConfigTrigger`, after delete, bulk).
+- A **nightly credentials check** marks an OA *Rejected* when LINE refuses its credentials, so dead secrets are visible.
+  An outage never counts as a rejection, and nothing is deleted automatically.
+
 ## 4. `without sharing` classes (justification)
 
 From 02 §2. Each class carries a justification comment in code. Filled in as each class is built.
@@ -69,6 +76,7 @@ From 02 §2. Each class carries a justification comment in code. Filled in as ea
 | `LineCalloutQueueable` | Async follow-up; updates conversations and OA configurations the running user may not own | ✅ M3 |
 | `LineOAConfigAdminService` | Writes the secret and OA configurations; the caller (`LineAdminController`) checks the `LINE_Admin` custom permission first | ✅ M3; admin page since DEC-25 |
 | `LineLinkService` | Links and creates Contacts from the inbound path (Automated Process); user-initiated paths will check access in user mode first | ✅ M6 part (auto-link, auto-create; DEC-27) |
+| `LineOAConfigTriggerHandler` | Deletes the protected secrets of deleted OAs for whoever deleted them; the setting is reachable only from package code | ✅ Beta 6 (DEC-33) |
 | `LineDailyEventSyncBatch` | Runs as whichever admin scheduled it, possibly for years; must see every conversation whatever that admin's sharing is. Writes Events owned by reps; nothing is shown to a user | ✅ M9 (DEC-30; queries `WITH SYSTEM_MODE`, DML `AccessLevel.SYSTEM_MODE`, partial success) |
 | `LineOutboundService` | Called after the controller checks access in user mode; writes the message record | ✅ M4 (class-wide `sfge` suppression with reason, DEC-20) |
 | `LineOAConfigTriggerHandler` | Starts the reassignment batch | M8 |
@@ -119,6 +127,7 @@ Run: `npm run scan` (Recommended + Security + AppExchange rules, fails on High/C
 
 | Date | Scope | Critical/High | Notes |
 |---|---|---|---|
+| 2026-10-03 | `force-app` (secret cleanup, credentials check, Event rounding, Beta 6) | 0 | 57 Moderate, 237 Low: no new categories |
 | 2026-09-30 | Sticker pictures (`LineApiClient`, `LineChatController`, `lineChat`, CSP Trusted Site) | 0 | No new categories |
 | 2026-09-29 | `force-app` (M9 daily sync, nightly jobs) | 0 | 58 Moderate, 212 Low. New Moderate: complexity on `LineDailyEventSyncBatch` and `LineAdminController`, justified in DECISIONS §3 |
 | 2026-09-24 | `force-app` (DEC-27 auto-create, Beta 3) | 0 | 51 Moderate, 186 Low: unchanged categories |

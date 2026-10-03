@@ -50,7 +50,14 @@ Register OA: Channel ID + Channel secret + rep. The package does the following, 
 1. Issues a stateless token (checks the ID and secret).
 2. `GET /v2/bot/info` → bot user ID, basic ID, name, picture.
 3. Sets the webhook URL (`<Site_Base_Url__c>/services/apexrest/<ns>/line/webhook`) and runs the webhook test.
-4. Saves `LINE_OA_Configuration__c` and the secret in the protected setting. Shows the result.
+4. Saves `LINE_OA_Configuration__c` and the secret in the protected setting, with Credential Status *Valid*. Shows the result.
+
+Every night the package checks each OA's credentials with LINE. An OA LINE **rejects** (channel deleted, or secret
+reissued) is shown in red on the LINE Admin page: register it again with the new secret, or **Remove** it.
+
+**Remove OA** (LINE Admin tab → OA row → Remove): deletes the channel secret; the OA and its conversations stay as
+inactive history. Do this whenever an OA is retired or deleted in LINE. It is the **only** way to delete a secret: the
+protected setting is invisible to subscriber admins (DEC-33).
 
 ## Part E — Handover (rep leaves or changes role)
 
@@ -58,3 +65,4 @@ Register OA: Channel ID + Channel secret + rep. The package does the following, 
 2. **[HUMAN]** LINE OA Manager: remove the old rep's access; add the new rep if they use the app.
 3. **[HUMAN]** LINE Developers Console: reissue the channel secret → LINE Admin tab → **Rotate secret**.
 4. **[HUMAN]** Optional: rename the OA or change its picture (verified accounts may need LINE review).
+5. **[HUMAN]** If the OA is retired rather than handed over: LINE Admin tab → **Remove**, so its secret is deleted.

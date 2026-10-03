@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-09-30**, after sticker pictures (Beta 5). Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-03**, after secret cleanup and the M9 follow-ups (Beta 6). Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -16,12 +16,12 @@ milestone. For how the system works, read `HOW_IT_WORKS.md`.
 | M5 Chat panel (`lineChat`) | **Done, proven live** on a Contact page in the QA org. |
 | M6 Linking + inbox | **Partly done:** auto-link and auto-create Contact on first message (DEC-27). **Not done:** QR invite codes, manual link, `lineInbox`, `lineInvite`. |
 | M7 Files & images | **Part done:** stickers show as pictures (DEC-32). Images, video, audio and files still show placeholders. |
-| M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29). **Not done:** rotate secret, reassign, deactivate, quota (M8a–c), error log. |
+| M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29), *Remove OA* and the nightly credentials check (DEC-33). **Not done:** rotate secret, reassign, deactivate, quota display (M8a, decided display-only in DEC-35), error log. |
 | **M9 Daily Event sync** | **Done, proven live** in the QA org on Beta 4 (DEC-28–30). Two follow-ups proposed for Beta 5 (§4). |
 | M10–M12 | Not started. |
 
-Checks on 2026-09-30 (after stickers): **189/189 Apex tests** and **28/28 Jest tests** pass, org-wide coverage **93%**,
-Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
+Checks on 2026-10-03 (Beta 6 work): **207/207 Apex tests** and **33/33 Jest tests** pass, org-wide coverage **94%**
+(lowest class `LineAdminController` 87%), Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
 
 **Beta 4 (`0.1.0.4`, `04tgL000000WOs1QAG`)**: M9, the first-message notification fix and the `registerOA` cleanup.
 **Installed in the QA org** by the user on 2026-09-29.
@@ -64,27 +64,19 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
 
 ## 4. Open items
 
-1. **Quota: display only, or block sending?** The BA's TA review document proposes blocking; the plan (06 M8a–c) only
-   displays. Needs a decision before the TA review on **7 Oct 2026**. See `BA_TA_REVIEW_CORRECTIONS.md` section B.
-2. **BA document corrections** (`BA_TA_REVIEW_CORRECTIONS.md`) are with the user to pass on before 7 Oct.
-3. **Reschedule the nightly job in the QA org** (LINE Admin → Nightly jobs → Schedule). It was scheduled while the admin
-   was on New York time, so it fires at 05:00 UTC (noon Bangkok), not 01:00 Bangkok. A schedule keeps the time zone it
-   was created in. The user was told that letting the noon run happen first rebuilds the deleted 29 Sep Event.
-4. **Proposed for Beta 5** (the user is choosing):
-   - (Not in Beta 5, still proposed.) Show the org time zone on the Nightly jobs card, and warn when the admin's differs. On 2026-09-29 the QA org was
-     on Los Angeles time, so Bangkok's evening of the 29th and morning of the 30th fell on the same "day" and one Event
-     held both. Correct per DEC-30, invisible to the admin.
-   - **Bug:** an Event can end before its last message. Salesforce keeps Event length in whole minutes and recomputes
-     `EndDateTime` from the start, dropping seconds. Fix: round the start down and the end up to the minute.
-   - Optional *Sync a date*: rebuild a past day's Events. Today a subscriber can't run the sync for any date but today.
-5. **Secret cleanup (agreed, not built):** today no secret is ever deleted, and subscriber admins can't reach them.
-   Planned in 06 M8: *Remove OA*, a nightly credentials check, and deleting the secret with its OA record.
-6. **[VERIFY] same LINE user ID across OAs under one Provider** (D5): auto-link across OAs depends on it. Test in M6
-   with a second OA.
-7. **Business questions** in `08`: managers replying on a rep's behalf, retention period, invite wording, one active OA
+1. **Before the TA review on 7 Oct 2026:** pass `BA_TA_REVIEW_CORRECTIONS.md` to the BA. Quota is **decided: display
+   only** (DEC-35); section B of that file now says so.
+2. **QA org: schedule the nightly job** (LINE Admin → Nightly jobs → Schedule). It wasn't scheduled after Beta 5 was
+   installed. The card now shows the org time zone and warns if the admin's differs.
+3. **M6 needs, before starting:**
+   - the design for recognising auto-created Contacts (DEC-34: linking to the real Contact deletes an empty stub);
+   - a **second LINE OA** under the same Provider, for the [VERIFY] that a customer has the same LINE user ID in both (D5).
+4. **Optional, not built:** *Sync a date* (rebuild a past day's Events). Today only "today" can be run by hand.
+5. **Business questions** in `08`: managers replying on a rep's behalf, retention period, invite wording, one active OA
    per rep enforced or not, Opportunity links.
-8. **Small bug, not fixed:** the OA table's Active/Inactive badge on the LINE Admin page sets a `variant` attribute that
-   `lightning-badge` doesn't have, so it never shows a colour.
+6. **Small bug, not fixed:** the OA table's Active/Inactive badge sets a `variant` attribute that `lightning-badge`
+   doesn't have, so it never shows a colour.
+7. **Dev Hub:** an unknown active scratch org `test-bdmfveozrgxg@example.com` takes one of the 3 slots (§2).
 
 ## 5. Traps already hit (don't rediscover these)
 
@@ -140,11 +132,11 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
 
 ## 7. Suggested next steps
 
-1. **Reschedule the nightly job** in the QA org (§4 item 3).
-2. **Before the TA review on 7 Oct:** settle quota (display or block) and pass the BA corrections on. The quota answer
-   decides whether M8 needs new packaged fields and a *Blocked* status.
-3. **Beta 5 fixes** (§4 item 4): time zone on the Nightly jobs card, Event end-time rounding; *Sync a date* if wanted.
-4. **Rest of M6**: QR invite codes, manual link, `lineInbox`. Needs a second OA for the cross-OA [VERIFY].
+1. Install **Beta 6** in the QA org, schedule the nightly job, and try *Remove OA* on a throwaway OA.
+2. **M6**: QR invites, manual link with the DEC-34 stub handling, `lineInbox`.
+3. **M7**: customer images, video, audio and files in the chat panel.
+4. **M8 remainder**: rotate secret, reassign/deactivate with `LineReassignBatch`, quota display (M8a), error log.
+5. **M10** retention before any high-volume client; **M11** load tests (2,000-event batch, Site limits) and hardening.
 
 ## 8. Starting a new session
 

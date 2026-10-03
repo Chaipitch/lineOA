@@ -116,4 +116,33 @@ private class LineCredentialStoreTest {
       ]
     );
   }
+
+  @IsTest
+  static void removeAllDeletesSeveralSecretsAtOnce() {
+    LineTestFactory.ensurePackageAccess();
+    LineTestFactory.putTestSecrets();
+    Assert.areEqual(
+      2,
+      [SELECT COUNT() FROM LINE_OA_Credential__c WITH SYSTEM_MODE]
+    );
+
+    Test.startTest();
+    LineCredentialStore.removeAll(
+      new Set<String>{
+        LineTestFactory.CHANNEL_A,
+        LineTestFactory.CHANNEL_B,
+        'not-a-channel',
+        null
+      }
+    );
+    Test.stopTest();
+
+    Assert.areEqual(
+      0,
+      [SELECT COUNT() FROM LINE_OA_Credential__c WITH SYSTEM_MODE]
+    );
+    Assert.isNull(LineCredentialStore.getSecret(LineTestFactory.CHANNEL_A));
+    LineCredentialStore.removeAll(null);
+    LineCredentialStore.removeAll(new Set<String>());
+  }
 }

@@ -60,6 +60,11 @@ public with sharing class LineAdminController {
     public String webhookStatus;
     @AuraEnabled
     public Datetime lastVerifiedAt;
+    /** Valid, Rejected or Removed (DEC-33); blank until first checked. */
+    @AuraEnabled
+    public String credentialStatus;
+    @AuraEnabled
+    public Datetime credentialCheckedAt;
 
     private OaView() {
       this.isActive = true;
@@ -76,6 +81,8 @@ public with sharing class LineAdminController {
       this.isActive = oa.Is_Active__c;
       this.webhookStatus = oa.Webhook_Status__c;
       this.lastVerifiedAt = oa.Last_Verified_At__c;
+      this.credentialStatus = oa.Credential_Status__c;
+      this.credentialCheckedAt = oa.Credential_Checked_At__c;
     }
   }
 
@@ -166,7 +173,9 @@ public with sharing class LineAdminController {
           Assigned_Rep__r.Name,
           Is_Active__c,
           Webhook_Status__c,
-          Last_Verified_At__c
+          Last_Verified_At__c,
+          Credential_Status__c,
+          Credential_Checked_At__c
         FROM LINE_OA_Configuration__c
         WITH USER_MODE
         ORDER BY Name
@@ -216,6 +225,7 @@ public with sharing class LineAdminController {
       registered.botUserId = result.botUserId;
       registered.assignedRepId = repId;
       registered.webhookStatus = result.webhookStatus;
+      registered.credentialStatus = 'Valid';
       return registered;
     } catch (Exception e) {
       throw handled(e, 'registerOA');
@@ -240,6 +250,23 @@ public with sharing class LineAdminController {
     return view;
   }
 
+  /**
+   * Removes an OA (DEC-33): deletes its channel secret; the OA and its conversations stay as inactive history.
+   * Registering the OA again restores it.
+   * @param oaConfigId the OA to remove
+   * @return every registered OA, refreshed
+   */
+  @AuraEnabled
+  public static List<OaView> removeOA(Id oaConfigId) {
+    try {
+      assertAdmin();
+      LineOAConfigAdminService.removeOA(oaConfigId);
+      return getOAs();
+    } catch (Exception e) {
+      throw handled(e, 'removeOA');
+    }
+  }
+
   /** The nightly job and the last daily sync, as shown on the admin page (DEC-29). */
   public class JobsView {
     @AuraEnabled
@@ -254,6 +281,15 @@ public with sharing class LineAdminController {
     public Datetime lastRunAt;
     @AuraEnabled
     public Integer lastRunErrors;
+    /** The zone that defines a "day" for the daily sync (DEC-30), e.g. `Asia/Bangkok`. */
+    @AuraEnabled
+    public String orgTimeZone;
+    /** The admin's own zone, which a new schedule's 01:00 follows. */
+    @AuraEnabled
+    public String userTimeZone;
+    /** True when the two differ, so the page can warn before scheduling. */
+    @AuraEnabled
+    public Boolean timeZonesDiffer;
   }
 
   /**
@@ -317,6 +353,9 @@ public with sharing class LineAdminController {
   private static JobsView currentJobs() {
     JobsView view = new JobsView();
     view.dailySyncEnabled = LineSettings.dailySyncEnabled();
+    view.orgTimeZone = LineDailyEventSyncBatch.orgTimeZone().getID();
+    view.userTimeZone = UserInfo.getTimeZone().getID();
+    view.timeZonesDiffer = view.orgTimeZone != view.userTimeZone;
     CronTrigger job = LineScheduler.current();
     if (job != null) {
       view.scheduled = true;

@@ -44,16 +44,16 @@ Only `LineWebhookResource` is `global`. Everything else is `public`. `@AuraEnabl
 | `LineInboundService` | `without sharing` | message / follow / unfollow. Upserts conversations, messages (idempotent), linking (auto + invite code), unread counts, notifications. Collects follow-up callouts into **one** queueable. |
 | `LineLinkService` | `without sharing` | Linking rules (03 §5): manual, auto, invite code. Generates and validates invite codes. |
 | `LineApiClient` | – | All HTTP to LINE: token, bot info, webhook endpoint set/test, profile, push, reply, content, quota. Per-transaction token cache. Throws `LineApiException`. |
-| `LineCalloutQueueable` | `without sharing`, `Database.AllowsCallouts` | Work items: fetch profile, download content → ContentVersion, send invite confirmation reply. Chains itself if more work remains (respecting callout/heap limits). |
+| `LineCalloutQueueable` | `without sharing`, `Database.AllowsCallouts` | Work items: nightly credentials check (DEC-33), fetch profile, download content → ContentVersion, send invite confirmation reply. Chains itself if more work remains (respecting callout/heap limits). |
 | `LineOutboundService` | `without sharing` | Send text/image/document link. Callout first, then DML. Uses `X-Line-Retry-Key`. |
 | `LineChatController` | `with sharing` | LWC API for reps: conversations for a Contact, message pages, poll since, send, mark read, link, create invite, unlinked list. All queries `WITH USER_MODE`. |
 | `LineAdminController` | `with sharing` | LWC API for the admin page: settings, register OA, rotate secret, reassign, deactivate, test webhook, quota, schedule jobs. Checks the `LINE_Admin` custom permission. |
 | `LineOAConfigAdminService` | `without sharing` | Register, rotate, reassign, deactivate (callouts first, then DML). |
-| `LineOAConfigTriggerHandler` | `without sharing` | On rep or active change → start `LineReassignBatch`. |
+| `LineOAConfigTriggerHandler` | `without sharing` | After delete: deletes the deleted OAs' channel secrets (DEC-33). M8: on rep or active change → start `LineReassignBatch`. |
 | `LineReassignBatch` | | Moves the owner of an OA's conversations; optionally Contact Owner. |
 | `LineDailyEventSyncBatch` | `without sharing` | One Event per conversation per day (03 §3 Event). Runs as whichever admin scheduled it, possibly for years; it must see every conversation whatever that admin's sharing is, or the sync would silently shrink. Nothing it reads is shown to a user (DEC-30). |
 | `LineRetentionBatch` | | Deletes messages older than retention, and their files. |
-| `LineScheduler` | `with sharing` | One `Schedulable` that runs both nightly batches (retention from M10). Scheduled, unscheduled or run now from the admin UI (DEC-29). |
+| `LineScheduler` | `with sharing` | One `Schedulable`, nightly at 01:00: the daily sync batch, the credentials check for every OA not *Removed* (DEC-33), and retention from M10. Scheduled, unscheduled or run now from the admin UI (DEC-29). |
 | `LineLogger` | – | Writes `LINE_Error_Log__c`; never throws. Buffers entries, and `flush()` runs at the end of each entry point. |
 | `LineTriggerHandler` (base) | – | Minimal virtual trigger handler with bypass. |
 

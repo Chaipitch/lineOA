@@ -277,4 +277,51 @@
         <label>การซิงก์รายวันถูกปิดในการตั้งค่า งานประจำคืนจึงไม่ทำอะไร</label>
         <name>LINE_Admin_Jobs_Sync_Off</name>
     </customLabels>
+    <customLabels>
+        <label>ไม่พบบัญชี LINE OA นี้แล้ว</label>
+        <name>LINE_Error_OA_Not_Found</name>
+    </customLabels>
+    <customLabels>
+        <label>ข้อมูลรับรอง</label>
+        <name>LINE_Admin_Credentials</name>
+    </customLabels>
+    <customLabels>
+        <label>ใช้งานได้</label>
+        <name>LINE_Admin_Credential_Valid</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >LINE ปฏิเสธข้อมูลรับรอง: ช่องทางถูกลบหรือมีการออก Channel secret ใหม่ ให้นำ OA ออก หรือลงทะเบียนใหม่ด้วย secret ใหม่</label>
+        <name>LINE_Admin_Credential_Rejected</name>
+    </customLabels>
+    <customLabels>
+        <label>นำออกแล้ว</label>
+        <name>LINE_Admin_Credential_Removed</name>
+    </customLabels>
+    <customLabels>
+        <label>ยังไม่ได้ตรวจสอบ</label>
+        <name>LINE_Admin_Credential_Unchecked</name>
+    </customLabels>
+    <customLabels>
+        <label>นำออก</label>
+        <name>LINE_Admin_Remove</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >นำ {0} ออกหรือไม่? Channel secret จะถูกลบ และจะหยุดรับและส่งข้อความ LINE การสนทนาเดิมยังเก็บไว้เป็นประวัติ ลงทะเบียนใหม่ได้ภายหลัง</label>
+        <name>LINE_Admin_Remove_Confirm</name>
+    </customLabels>
+    <customLabels>
+        <label>นำ {0} ออกแล้ว Channel secret ถูกลบแล้ว</label>
+        <name>LINE_Admin_Removed</name>
+    </customLabels>
+    <customLabels>
+        <label>นับวันตามเขตเวลาขององค์กร (Setup → Company Information):</label>
+        <name>LINE_Admin_Jobs_Day_Zone</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >เขตเวลาของคุณต่างจากองค์กร การตั้งเวลาจะใช้เขตเวลาของคุณ งานจะทำงานเวลา 01:00 ตาม:</label>
+        <name>LINE_Admin_Jobs_Zone_Mismatch</name>
+    </customLabels>
 </Translations>

@@ -20,7 +20,7 @@ built on 2026-09-30.
 | M5 | Chat panel (`lineChat`) | 4–5 | ✅ |
 | M6 | Linking: manual, auto, QR invite + inbox (`lineInbox`) → **Beta 2** | 5–6 | Part: auto-link, auto-create (DEC-27) |
 | M7 | Files and images, in and out | 5–7 | Part: sticker pictures (DEC-32) |
-| M8 | Admin UI (`lineAdmin`) + reassignment batch | 4–5 | Part: settings, register OA, nightly jobs (DEC-25, DEC-29) |
+| M8 | Admin UI (`lineAdmin`) + reassignment batch | 4–5 | Part: settings, register OA, nightly jobs, remove OA + credentials check (DEC-25, DEC-29, DEC-33) |
 | M9 | Daily Event sync | 2–3 | ✅ live in the QA org (Beta 4) |
 | M10 | Retention + error log housekeeping | 1.5–2 | |
 | M11 | Hardening: security review readiness, EN/TH labels, LDV test → **Release candidate** | 4–5 | |
@@ -106,7 +106,7 @@ Record the [VERIFY] results for stateless tokens, `destination`, and Automated P
   - **Error log** list.
 - `LineAdminController` checks the `LINE_Admin` custom permission.
 - `LineOAConfigTriggerHandler` → `LineReassignBatch` (optional Contact Owner update).
-- **Secret cleanup** (agreed 2026-10-03; 08 "Stale secrets"). The protected setting is unreachable for subscriber admins, so
+- **Secret cleanup** (agreed 2026-10-03, DEC-33; ✅ **built ahead of M8, Beta 6**). The protected setting is unreachable for subscriber admins, so
   the package must offer the only way out:
   - **Remove OA** on the LINE Admin page: deletes the channel secret, keeps the OA record and its conversations as inactive.
   - **Nightly credentials check** in `LineScheduler`: issue a token per active OA; when LINE rejects the credentials (channel
@@ -117,7 +117,8 @@ Record the [VERIFY] results for stateless tokens, `destination`, and Automated P
   - **M8a (do first, no schema commitment):** a *Quota* column on the OA table — `used / allowance` with the
     remainder, fetched live on demand, admin only. `type = "none"` means an unlimited plan and shows as such.
     Two callouts per OA, so refresh is a button, never a page-load or a poll.
-  - **M8b (needs a decision first):** store `Quota_Limit__c`, `Quota_Used__c` and `Quota_Checked_At__c` on
+  - **Decided 2026-10-03 (DEC-35): display only.** No blocking of sends.
+  - **M8b (optional, needs a decision first):** store `Quota_Limit__c`, `Quota_Used__c` and `Quota_Checked_At__c` on
     `LINE_OA_Configuration__c`, refreshed by the nightly scheduler (M9), so quota can be reported and alerted on.
     Packaged fields are permanent (09 §4), so this needs a `DECISIONS.md` entry and a schema change to 03 §3.
   - **M8c (optional, decide with M8b):** warn the rep in `lineChat` when their OA is near its limit. More useful

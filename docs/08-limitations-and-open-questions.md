@@ -35,7 +35,7 @@
 | Apex tests create users (up to ~3 per test: Rep A, Rep B, admin). Orgs with no spare "Salesforce"/"Salesforce Platform" licences (a scratch org has 2 + 3, some already used) fail with `LICENSE_LIMIT_EXCEEDED`. Mitigation: `LineTestFactory` uses either licence, tests use the running admin as the admin, and each test creates at most 2 users. Watch this in the package-version build org. | M3 |
 | Platform event triggers get batches of up to 2,000 events by default, and the batch size can't be set without a subscriber-side `PlatformEventSubscriberConfig` (not packageable). `LineInboundService` uses a fixed number of queries and DML statements per batch, and notifications are capped at 100 per batch; confirm CPU/heap headroom with a 2,000-event test in the M11 load check. | M11 |
 | ✅ **Resolved:** the first beta was built after M5 with real metadata, so an empty beta was never needed. | – |
-| **Stale secrets (found 2026-10-03).** LINE sends no event when a channel is deleted, nothing in the package calls `LineCredentialStore.remove()`, and subscriber admins can't reach the protected setting, so a secret stays until the package is uninstalled. A deleted channel's secret is dead (LINE issues no token for it), but a deactivated-yet-live OA keeps a working secret we no longer need. Storage is negligible (<1 KB each). Proposed for M8: a *Remove OA* action that deletes the secret and keeps the history; a nightly credentials check that flags OAs LINE rejects; delete the secret whenever an OA record is deleted. No automatic deletion. **Agreed 2026-10-03; planned in 06 M8.** | M8 |
+| **Stale secrets (found 2026-10-03).** LINE sends no event when a channel is deleted, nothing in the package calls `LineCredentialStore.remove()`, and subscriber admins can't reach the protected setting, so a secret stays until the package is uninstalled. A deleted channel's secret is dead (LINE issues no token for it), but a deactivated-yet-live OA keeps a working secret we no longer need. Storage is negligible (<1 KB each). Proposed for M8: a *Remove OA* action that deletes the secret and keeps the history; a nightly credentials check that flags OAs LINE rejects; delete the secret whenever an OA record is deleted. No automatic deletion. ✅ **Resolved in Beta 6 (DEC-33).** | Beta 6 |
 
 ## Open questions — business (via BA)
 
@@ -60,7 +60,7 @@
 5. ~~Permission-set differences and `Public_Url__c` type~~ **Approved 2026-09-22** (DEC-13, DEC-14).
 6. ~~Should a new LINE user get a Contact automatically?~~ **Answered 2026-09-24**: yes, on the first message, only
    when the LINE user ID is new, on by default (DEC-27).
-7. **Quota (M8): display only, or also block sending?** The plan shows quota: live fetch (M8a), optionally stored on
+7. ~~**Quota (M8): display only, or also block sending?**~~ **Answered 2026-10-03: display only** (DEC-35). The plan shows quota: live fetch (M8a), optionally stored on
    `LINE_OA_Configuration__c` for reports and alerts (M8b, permanent packaged fields) and a warning to reps (M8c). The
    BA's TA review document proposes **blocking** pushes at a threshold instead (`BA_TA_REVIEW_CORRECTIONS.md` section B).
    **Needed before the TA review on 7 Oct 2026.**

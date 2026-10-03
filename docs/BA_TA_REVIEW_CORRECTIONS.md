@@ -192,7 +192,10 @@ This contradicts the document's own 5.2 and 5.3, which correctly say LINE does n
 
 ---
 
-## B. Needs a decision: quota enforcement ("Prevent Paid Messages")
+## B. Quota enforcement: decided 2026-10-03, display only (DEC-35)
+
+**Decision:** the package shows each OA's usage and allowance (M8a) and does **not** block sending. Section 4 of the
+document should be marked "not adopted", or reduced to the display. The analysis below is kept for the record.
 
 **Where:** 2.4 (*Enforce Free Quota*, *Free Quota Threshold*), 2.9, 2.13, 3.2 step 3, 3.2.2, 3.4, section 4 in full,
 6 (*quota toggle*).

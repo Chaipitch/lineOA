@@ -144,6 +144,15 @@
               {labels.jobsNotScheduled}
             </p>
           </template>
+          <!-- Which zone defines a "day", and whether the admin's own zone (used by Schedule) differs (DEC-30) -->
+          <p data-id="org-zone" class="slds-var-m-top_xx-small">
+            {labels.jobsDayZone} <strong>{jobs.orgTimeZone}</strong>
+          </p>
+          <template lwc:if={jobs.timeZonesDiffer}>
+            <p data-id="zone-mismatch" class="slds-text-color_error">
+              {labels.jobsZoneMismatch} <strong>{jobs.userTimeZone}</strong>
+            </p>
+          </template>
           <template lwc:if={showSyncOff}>
             <p class="slds-text-color_weak">{labels.jobsSyncOff}</p>
           </template>
@@ -205,6 +214,8 @@
                 <th scope="col">{labels.channelId}</th>
                 <th scope="col">{labels.assignedRep}</th>
                 <th scope="col">Webhook</th>
+                <th scope="col">{labels.credentials}</th>
+                <th scope="col"></th>
               </tr>
             </thead>
             <tbody>
@@ -223,6 +234,19 @@
                   <td>{oa.channelId}</td>
                   <td>{oa.assignedRepName}</td>
                   <td>{oa.webhookStatus}</td>
+                  <td class={oa.credentialClass} data-id="credential">
+                    {oa.credentialLabel}
+                  </td>
+                  <td>
+                    <lightning-button
+                      label={labels.remove}
+                      variant="destructive-text"
+                      data-id={oa.id}
+                      data-name={oa.name}
+                      disabled={oa.isRemoved}
+                      onclick={handleRemove}
+                    ></lightning-button>
+                  </td>
                 </tr>
               </template>
             </tbody>

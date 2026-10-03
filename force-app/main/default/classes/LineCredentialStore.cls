@@ -63,16 +63,35 @@ public without sharing class LineCredentialStore {
    * @param channelId LINE channel ID
    */
   public static void remove(String channelId) {
-    if (!isValidChannelId(channelId)) {
+    removeAll(new Set<String>{ channelId });
+  }
+
+  /**
+   * Deletes the stored secrets of several channels in one DML statement (bulk-safe for triggers). Unknown or invalid
+   * channel IDs are ignored.
+   * @param channelIds LINE channel IDs
+   */
+  public static void removeAll(Set<String> channelIds) {
+    if (channelIds == null || channelIds.isEmpty()) {
       return;
     }
-    LINE_OA_Credential__c existing = LINE_OA_Credential__c.getInstance(
-      channelId
-    );
-    if (existing != null && existing.Id != null) {
+    List<LINE_OA_Credential__c> existing = new List<LINE_OA_Credential__c>();
+    for (String channelId : channelIds) {
+      if (!isValidChannelId(channelId)) {
+        continue;
+      }
+      // getInstance reads the cached setting: no SOQL per channel.
+      LINE_OA_Credential__c credential = LINE_OA_Credential__c.getInstance(
+        channelId
+      );
+      if (credential != null && credential.Id != null) {
+        existing.add(credential);
+      }
+      writtenThisTransaction.put(channelId, null);
+    }
+    if (!existing.isEmpty()) {
       Database.delete(existing, true, AccessLevel.SYSTEM_MODE);
     }
-    writtenThisTransaction.put(channelId, null);
   }
 
   private static Boolean isValidChannelId(String channelId) {

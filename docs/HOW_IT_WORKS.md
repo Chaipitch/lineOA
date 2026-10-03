@@ -184,7 +184,7 @@ The class carries a file-wide Code Analyzer suppression saying exactly that.
 `FeatureManagement.checkPermission('LINE_Admin')` — the custom permission, not a profile name, because we cannot know
 the subscriber's profiles.
 
-Three jobs today:
+Four jobs today:
 
 - **Settings** — the Site base URL (from which the webhook URL is computed and displayed), the fallback owner, poll
   interval, retention, invite expiry, auto-create-Contact, daily sync.
@@ -193,7 +193,10 @@ Three jobs today:
   and only then writes the OA configuration and stores the secret. Callouts first, DML last, again.
 
 - **Nightly jobs** — shows whether the nightly job is scheduled and how the last daily sync went, with *Schedule*,
-  *Unschedule* and *Sync today now* buttons (section 5.1).
+  *Unschedule* and *Sync today now* buttons (section 5.1). It also says which time zone defines a "day", and warns
+  when the admin's own differs, because *Schedule* runs at 01:00 in the admin's zone.
+- **Remove an OA** — deletes its channel secret and keeps the OA and its conversations as inactive history. The OA
+  table shows each OA's credential status: *Valid*, *Rejected* (LINE refused them in the nightly check) or *Removed*.
 
 Registering is what points a real OA at a particular org — which is why moving from a scratch org to the QA org is
 just a matter of registering the OA there.
@@ -265,6 +268,10 @@ touches it. A secret must never reach a DTO, an LWC, a log, a `System.debug`, an
 Access tokens are stateless: issued on demand from the ID + secret, cached for the transaction, valid ~15 minutes, and
 never stored.
 
+Because nobody outside the package can see or delete the protected setting, the package has to clean up after itself
+(DEC-33): *Remove OA* deletes a secret, deleting an OA record deletes its secret, and the nightly job asks LINE whether
+each OA's credentials still work, flagging any it rejects. Nothing is deleted automatically.
+
 **Sharing.** Every class declares it. User-facing code (`LineChatController`, `LineAdminController`) is
 `with sharing` and runs `WITH USER_MODE`. `without sharing` appears only where `02` §2 lists it — the webhook, inbound
 processing, the queueable, the credential store, the outbound service, the link service — and each one carries a
@@ -298,7 +305,7 @@ The habits that this constraint forces, which are otherwise easy to mistake for 
 
 ## 9. Testing
 
-189 Apex tests and 28 Jest tests, org-wide coverage 93%.
+207 Apex tests and 33 Jest tests, org-wide coverage 94%.
 
 - Callouts are mocked with `LineHttpMock`; test data comes from `LineTestFactory`; no `SeeAllData`.
 - Webhook tests build a genuinely **signed** `RestContext.request` and then `Test.getEventBus().deliver()`, so the

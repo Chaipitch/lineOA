@@ -47,7 +47,7 @@ private class LineAdminControllerTest {
 
     Test.startTest();
     System.runAs(rep()) {
-      for (Integer i = 0; i < 8; i++) {
+      for (Integer i = 0; i < 9; i++) {
         try {
           switch on i {
             when 0 {
@@ -80,6 +80,9 @@ private class LineAdminControllerTest {
             }
             when 6 {
               LineAdminController.runDailySyncNow();
+            }
+            when 7 {
+              LineAdminController.removeOA(UserInfo.getUserId());
             }
             when else {
               LineAdminController.registerOA(
@@ -131,6 +134,12 @@ private class LineAdminControllerTest {
     Assert.isNotNull(scheduled.nextRunAt);
     Assert.isNotNull(afterRun.lastRunStatus, 'The manual run shows up');
     Assert.isFalse(unscheduled.scheduled);
+    Assert.isNotNull(before.orgTimeZone);
+    Assert.isNotNull(before.userTimeZone);
+    Assert.areEqual(
+      before.orgTimeZone != before.userTimeZone,
+      before.timeZonesDiffer
+    );
   }
 
   // ---------- settings ----------
@@ -340,5 +349,46 @@ private class LineAdminControllerTest {
       }
     }
     Assert.areEqual(0, mock.requests.size(), 'No callout without a Site URL');
+  }
+
+  // ---------- remove OA (DEC-33) ----------
+
+  @IsTest
+  static void adminRemovesAnOA() {
+    LineTestFactory.ensurePackageAccess();
+    LINE_OA_Configuration__c oa = LineTestFactory.createOA(
+      LineTestFactory.CHANNEL_A,
+      LineTestFactory.BOT_A,
+      LineTestFactory.SECRET_A,
+      UserInfo.getUserId()
+    );
+    List<LineAdminController.OaView> after;
+
+    Test.startTest();
+    System.runAs(admin()) {
+      after = LineAdminController.removeOA(oa.Id);
+    }
+    Test.stopTest();
+
+    Assert.areEqual(1, after.size());
+    Assert.areEqual('Removed', after[0].credentialStatus);
+    Assert.isFalse(after[0].isActive);
+    Assert.areEqual(
+      0,
+      [SELECT COUNT() FROM LINE_OA_Credential__c WITH SYSTEM_MODE]
+    );
+  }
+
+  @IsTest
+  static void removingAnUnknownOATellsTheAdmin() {
+    LineTestFactory.ensurePackageAccess();
+    System.runAs(admin()) {
+      try {
+        LineAdminController.removeOA(UserInfo.getUserId());
+        Assert.fail('Expected AuraHandledException');
+      } catch (AuraHandledException e) {
+        Assert.areEqual(System.Label.LINE_Error_OA_Not_Found, e.getMessage());
+      }
+    }
   }
 }

@@ -21,6 +21,7 @@ public without sharing class LineDailyEventSyncBatch implements Database.Batchab
   static final Integer DESCRIPTION_LENGTH = 32000;
   private static final Integer SUBJECT_LENGTH = 255;
   private static final String STATUS_FREE = 'Free';
+  private static final Long MINUTE_MS = 60000;
 
   private static TimeZone cachedOrgZone;
 
@@ -230,8 +231,10 @@ public without sharing class LineDailyEventSyncBatch implements Database.Batchab
       WhoId = c.Contact__c,
       WhatId = c.Contact__r.AccountId,
       LINE_Conversation__c = c.Id,
-      StartDateTime = t.firstAt,
-      EndDateTime = t.lastAt,
+      // Salesforce keeps an Event's length in whole minutes and recomputes the end from the start, dropping seconds;
+      // rounding outwards keeps every message of the day inside the Event.
+      StartDateTime = floorToMinute(t.firstAt),
+      EndDateTime = ceilToMinute(t.lastAt),
       Description = t.text(),
       ShowAs = STATUS_FREE,
       LINE_Sync_Key__c = syncKey(c.Id)
@@ -353,6 +356,27 @@ public without sharing class LineDailyEventSyncBatch implements Database.Batchab
   }
 
   // ---------------------------------------------------------------------------------------------------------------
+
+  /**
+   * @param value an instant
+   * @return the start of its minute
+   */
+  @TestVisible
+  static Datetime floorToMinute(Datetime value) {
+    Long ms = value.getTime();
+    return Datetime.newInstance(ms - Math.mod(ms, MINUTE_MS));
+  }
+
+  /**
+   * @param value an instant
+   * @return the instant itself on a whole minute, otherwise the start of the next minute
+   */
+  @TestVisible
+  static Datetime ceilToMinute(Datetime value) {
+    Long ms = value.getTime();
+    Long rest = Math.mod(ms, MINUTE_MS);
+    return rest == 0 ? value : Datetime.newInstance(ms - rest + MINUTE_MS);
+  }
 
   /**
    * @return the org's default time zone (Setup → Company Information), which defines a "day" (DEC-30)

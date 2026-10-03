@@ -1,5 +1,6 @@
 import { LightningElement, track } from "lwc";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import LightningConfirm from "lightning/confirm";
 
 import getSettings from "@salesforce/apex/LineAdminController.getSettings";
 import saveSettings from "@salesforce/apex/LineAdminController.saveSettings";
@@ -9,6 +10,7 @@ import getJobs from "@salesforce/apex/LineAdminController.getJobs";
 import scheduleJobs from "@salesforce/apex/LineAdminController.scheduleJobs";
 import unscheduleJobs from "@salesforce/apex/LineAdminController.unscheduleJobs";
 import runDailySyncNow from "@salesforce/apex/LineAdminController.runDailySyncNow";
+import removeOA from "@salesforce/apex/LineAdminController.removeOA";
 
 import TITLE from "@salesforce/label/c.LINE_Admin_Title";
 import SETTINGS from "@salesforce/label/c.LINE_Admin_Settings";
@@ -38,6 +40,16 @@ import JOBS_UNSCHEDULE from "@salesforce/label/c.LINE_Admin_Jobs_Unschedule";
 import JOBS_RUN_NOW from "@salesforce/label/c.LINE_Admin_Jobs_Run_Now";
 import JOBS_STARTED from "@salesforce/label/c.LINE_Admin_Jobs_Started";
 import JOBS_SYNC_OFF from "@salesforce/label/c.LINE_Admin_Jobs_Sync_Off";
+import JOBS_DAY_ZONE from "@salesforce/label/c.LINE_Admin_Jobs_Day_Zone";
+import JOBS_ZONE_MISMATCH from "@salesforce/label/c.LINE_Admin_Jobs_Zone_Mismatch";
+import CREDENTIALS from "@salesforce/label/c.LINE_Admin_Credentials";
+import CREDENTIAL_VALID from "@salesforce/label/c.LINE_Admin_Credential_Valid";
+import CREDENTIAL_REJECTED from "@salesforce/label/c.LINE_Admin_Credential_Rejected";
+import CREDENTIAL_REMOVED from "@salesforce/label/c.LINE_Admin_Credential_Removed";
+import CREDENTIAL_UNCHECKED from "@salesforce/label/c.LINE_Admin_Credential_Unchecked";
+import REMOVE from "@salesforce/label/c.LINE_Admin_Remove";
+import REMOVE_CONFIRM from "@salesforce/label/c.LINE_Admin_Remove_Confirm";
+import REMOVED from "@salesforce/label/c.LINE_Admin_Removed";
 
 /**
  * LINE Admin app page: org settings, nightly jobs and OA registration.
@@ -82,7 +94,11 @@ export default class LineAdmin extends LightningElement {
     jobsSchedule: JOBS_SCHEDULE,
     jobsUnschedule: JOBS_UNSCHEDULE,
     jobsRunNow: JOBS_RUN_NOW,
-    jobsSyncOff: JOBS_SYNC_OFF
+    jobsSyncOff: JOBS_SYNC_OFF,
+    jobsDayZone: JOBS_DAY_ZONE,
+    jobsZoneMismatch: JOBS_ZONE_MISMATCH,
+    credentials: CREDENTIALS,
+    remove: REMOVE
   };
 
   async connectedCallback() {
@@ -177,6 +193,27 @@ export default class LineAdmin extends LightningElement {
     }
   }
 
+  // ---------- remove OA (DEC-33) ----------
+
+  async handleRemove(event) {
+    const { id, name } = event.target.dataset;
+    const confirmed = await LightningConfirm.open({
+      message: REMOVE_CONFIRM.replace("{0}", name),
+      variant: "header",
+      theme: "warning",
+      label: REMOVE
+    });
+    if (!confirmed) {
+      return;
+    }
+    try {
+      this.oas = await removeOA({ oaConfigId: id });
+      this.toast(REMOVED.replace("{0}", name), "success");
+    } catch (error) {
+      this.toast(this.messageFrom(error), "error");
+    }
+  }
+
   // ---------- registration ----------
 
   handleChannelIdChange(event) {
@@ -251,8 +288,25 @@ export default class LineAdmin extends LightningElement {
     return this.oas.map((oa) => ({
       ...oa,
       statusVariant: oa.isActive ? "success" : "inverse",
-      statusLabel: oa.isActive ? "Active" : "Inactive"
+      statusLabel: oa.isActive ? "Active" : "Inactive",
+      isRemoved: oa.credentialStatus === "Removed",
+      credentialLabel: this.credentialLabel(oa.credentialStatus),
+      credentialClass:
+        oa.credentialStatus === "Rejected" ? "slds-text-color_error" : ""
     }));
+  }
+
+  credentialLabel(status) {
+    switch (status) {
+      case "Valid":
+        return CREDENTIAL_VALID;
+      case "Rejected":
+        return CREDENTIAL_REJECTED;
+      case "Removed":
+        return CREDENTIAL_REMOVED;
+      default:
+        return CREDENTIAL_UNCHECKED;
+    }
   }
 
   toNumber(value) {

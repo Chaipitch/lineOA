@@ -577,4 +577,106 @@
         <value
     >Daily sync is turned off in Settings, so the nightly job does nothing.</value>
     </labels>
+    <labels>
+        <fullName>LINE_Error_OA_Not_Found</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Error: the OA to remove no longer exists</shortDescription>
+        <value>This LINE OA no longer exists.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Credentials</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: OA table column for credential status</shortDescription>
+        <value>Credentials</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Credential_Valid</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: LINE accepts the OA credentials</shortDescription>
+        <value>Valid</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Credential_Rejected</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: LINE rejected the OA credentials</shortDescription>
+        <value
+    >Rejected by LINE: the channel was deleted or its secret reissued. Remove the OA, or register it again with the new secret.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Credential_Removed</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: OA removed, secret deleted</shortDescription>
+        <value>Removed</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Credential_Unchecked</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: credentials not checked yet</shortDescription>
+        <value>Not checked yet</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Remove</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Admin page: remove OA button</shortDescription>
+        <value>Remove</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Remove_Confirm</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Confirm before removing an OA. {0} = OA name</shortDescription>
+        <value
+    >Remove {0}? Its channel secret is deleted, and it stops receiving and sending LINE messages. Its conversations stay as history. You can register it again later.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Removed</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Toast after removing an OA. {0} = OA name</shortDescription>
+        <value>{0} removed. Its channel secret was deleted.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Day_Zone</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: time zone that defines a day; followed by the zone</shortDescription>
+        <value
+    >Days are counted in the org time zone (Setup → Company Information):</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Jobs_Zone_Mismatch</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Admin page: warning that the admin time zone differs; followed by the zone</shortDescription>
+        <value
+    >Your own time zone is different. Schedule uses yours, so the job would run at 01:00 in:</value>
+    </labels>
 </CustomLabels>

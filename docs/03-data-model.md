@@ -54,10 +54,13 @@ OWD: **Public Read Only** (reps need the OA name in the UI). Owner: the admin wh
 | Is_Active__c | Checkbox, default true | Inactive: new/moved conversations go to the fallback owner (`LINE_Settings__c.Fallback_Owner_Id__c`); webhooks still accepted |
 | Webhook_Status__c | Text(255) | Result of the last set/test webhook |
 | Last_Verified_At__c | DateTime | |
+| Credential_Status__c | Picklist: Valid, Rejected, Removed | Set by registration (Valid), the nightly credentials check (Valid/Rejected) and *Remove OA* (Removed). DEC-33 |
+| Credential_Checked_At__c | DateTime | When the nightly check last asked LINE. DEC-33 |
 
 Validation: `Is_Active__c && ISBLANK(Assigned_Rep__c)` → error.
 
-Field history tracking: **on**, for `Assigned_Rep__c`, `Is_Active__c` and `Webhook_Status__c` (DECISIONS DEC-22).
+Field history tracking: **on**, for `Assigned_Rep__c`, `Is_Active__c`, `Webhook_Status__c` (DECISIONS DEC-22) and
+`Credential_Status__c` (DEC-33).
 Reassignment and deactivation move every conversation of the OA, so 01 §5 "admin actions on OAs are logged" needs a record
 of who changed what. Subscribers see it in the record's History related list.
 
@@ -165,8 +168,11 @@ Implemented only in `LineLinkService`.
 3. **Manual link** (`linkToContact(conversationId, contactId)`):
    - Contact has no LINE user ID → set `Contact.LINE_User_Id__c`; set `Contact.LINE_OA_Configuration__c` if blank.
    - Contact already has the **same** ID → link.
-   - Contact has a **different** ID, or another Contact already has this ID → refuse with a message naming the other Contact
-     (only if the user can see it; otherwise a generic message).
+   - Contact has a **different** ID → refuse with a message naming the other Contact (only if the user can see it; otherwise
+     a generic message).
+   - Another Contact already has this ID → refuse as above, **unless the package auto-created that Contact** (DEC-34): then
+     move the ID to this Contact and delete the auto-created one if nothing else is attached to it, otherwise leave it for
+     the rep to merge.
    - The rep needs Edit access to the Contact (checked in user mode).
 4. **Unlink** (admin only): clear `Contact__c`; clear `Contact.LINE_User_Id__c` only if no other conversation still links it.
 5. **Invite generation** (`createInvite(contactId)`): the rep must have Edit on the Contact. Generate a crypto-random code

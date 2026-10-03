@@ -120,4 +120,71 @@ private class LineSchedulerTest {
       .formatGmt('yyyy-MM-dd');
     Assert.areEqual(c.Id + ':' + today, e.LINE_Sync_Key__c, 'Today so far');
   }
+
+  @IsTest
+  static void nightlyCredentialsCheckSkipsRemovedOAs() {
+    LineTestFactory.ensurePackageAccess();
+    LineTestFactory.createOA(
+      LineTestFactory.CHANNEL_A,
+      LineTestFactory.BOT_A,
+      LineTestFactory.SECRET_A,
+      UserInfo.getUserId()
+    );
+    LINE_OA_Configuration__c removed = LineTestFactory.newOAConfig(
+      LineTestFactory.CHANNEL_B,
+      LineTestFactory.BOT_B,
+      UserInfo.getUserId()
+    );
+    removed.Is_Active__c = false;
+    removed.Credential_Status__c = 'Removed';
+    insert as system removed;
+    Test.setMock(HttpCalloutMock.class, new LineHttpMock());
+
+    Test.startTest();
+    Integer queued = LineScheduler.checkCredentials();
+    Test.stopTest();
+
+    Assert.areEqual(1, queued, 'Only the OA that still has a secret');
+    Assert.areEqual(
+      'Valid',
+      [
+        SELECT Credential_Status__c
+        FROM LINE_OA_Configuration__c
+        WHERE Channel_Id__c = :LineTestFactory.CHANNEL_A
+        WITH SYSTEM_MODE
+      ]
+      .Credential_Status__c
+    );
+  }
+
+  @IsTest
+  static void nightlyRunChecksCredentialsEvenWhileDailySyncIsOff() {
+    LineTestFactory.ensurePackageAccess();
+    insert as system new LINE_Settings__c(
+      SetupOwnerId = UserInfo.getOrganizationId(),
+      Daily_Sync_Enabled__c = false
+    );
+    LineTestFactory.createOA(
+      LineTestFactory.CHANNEL_A,
+      LineTestFactory.BOT_A,
+      LineTestFactory.SECRET_A,
+      UserInfo.getUserId()
+    );
+    Test.setMock(HttpCalloutMock.class, new LineHttpMock());
+
+    Test.startTest();
+    new LineScheduler().execute(null);
+    Test.stopTest();
+
+    Assert.areEqual(0, syncRuns());
+    Assert.areEqual(
+      'Valid',
+      [
+        SELECT Credential_Status__c
+        FROM LINE_OA_Configuration__c
+        WITH SYSTEM_MODE
+      ]
+      .Credential_Status__c
+    );
+  }
 }

@@ -3,7 +3,8 @@
  * Carries a work list; each execution makes its callouts first, then its DML, and chains itself for the rest.
  *
  * Work items: `PROFILE` (customer name and picture → conversation), `WEBHOOK_TEST` (LINE calls our webhook →
- * OA webhook status). M6 adds invite replies, M7 content downloads.
+ * OA webhook status), `CREDENTIAL_CHECK` (nightly: does LINE still accept the OA's channel ID and secret? DEC-33).
+ * M6 adds invite replies, M7 content downloads.
  *
  * `without sharing` (02 §2): async follow-up of inbound processing (Automated Process) and of OA registration;
  * updates conversations and OA configurations the running user may not own.
@@ -13,6 +14,12 @@ public without sharing class LineCalloutQueueable implements Queueable, Database
   static final String TYPE_PROFILE = 'PROFILE';
   @TestVisible
   static final String TYPE_WEBHOOK_TEST = 'WEBHOOK_TEST';
+  @TestVisible
+  static final String TYPE_CREDENTIAL_CHECK = 'CREDENTIAL_CHECK';
+  @TestVisible
+  static final String CREDENTIAL_VALID = 'Valid';
+  @TestVisible
+  static final String CREDENTIAL_REJECTED = 'Rejected';
 
   // Stay well under 100 callouts per transaction: each item needs one call, plus one token per channel.
   @TestVisible
@@ -100,6 +107,20 @@ public without sharing class LineCalloutQueueable implements Queueable, Database
   public static WorkItem webhookTestItem(Id oaConfigId, String channelId) {
     WorkItem item = new WorkItem();
     item.type = TYPE_WEBHOOK_TEST;
+    item.recordId = oaConfigId;
+    item.oaConfigId = oaConfigId;
+    item.channelId = channelId;
+    return item;
+  }
+
+  /**
+   * @param oaConfigId the OA whose credentials to check
+   * @param channelId the OA's channel ID
+   * @return a credentials-check work item (DEC-33)
+   */
+  public static WorkItem credentialCheckItem(Id oaConfigId, String channelId) {
+    WorkItem item = new WorkItem();
+    item.type = TYPE_CREDENTIAL_CHECK;
     item.recordId = oaConfigId;
     item.oaConfigId = oaConfigId;
     item.channelId = channelId;
@@ -221,6 +242,11 @@ public without sharing class LineCalloutQueueable implements Queueable, Database
       if (item.type == TYPE_WEBHOOK_TEST) {
         return testWebhook(item);
       }
+      if (item.type == TYPE_CREDENTIAL_CHECK) {
+        // Issuing a token is the cheapest call that proves LINE still accepts the ID and secret.
+        LineApiClient.forChannel(item.channelId).issueToken();
+        return credentialStatus(item.recordId, CREDENTIAL_VALID);
+      }
       LineLogger.error(
         'LineCalloutQueueable.run',
         'Unknown work item type: ' + item.type,
@@ -237,8 +263,23 @@ public without sharing class LineCalloutQueueable implements Queueable, Database
       if (item.type == TYPE_WEBHOOK_TEST) {
         return webhookStatus(item.recordId, 'Failed: ' + e.getMessage());
       }
+      // Only a definite "no" from LINE flags the OA. A timeout or a LINE outage leaves the status as it was.
+      if (item.type == TYPE_CREDENTIAL_CHECK && e.isCredentialError()) {
+        return credentialStatus(item.recordId, CREDENTIAL_REJECTED);
+      }
     }
     return null;
+  }
+
+  private static LINE_OA_Configuration__c credentialStatus(
+    Id oaConfigId,
+    String status
+  ) {
+    return new LINE_OA_Configuration__c(
+      Id = oaConfigId,
+      Credential_Status__c = status,
+      Credential_Checked_At__c = Datetime.now()
+    );
   }
 
   private SObject fetchProfile(WorkItem item) {

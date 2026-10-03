@@ -1,18 +1,21 @@
 /**
- * The package's one scheduled job (02 §2): every night it starts the daily LINE activity sync, and from M10 the
- * retention batch too. Scheduled, unscheduled and run from the LINE Admin page (DEC-29), because a subscriber cannot
- * schedule a non-global class from Setup or anonymous Apex.
+ * The package's one scheduled job (02 §2): every night it starts the daily LINE activity sync and checks every OA's
+ * credentials with LINE (DEC-33); from M10 it starts the retention batch too. Scheduled, unscheduled and run from the
+ * LINE Admin page (DEC-29), because a subscriber cannot schedule a non-global class from Setup or anonymous Apex.
  *
- * `with sharing`: it reads only job metadata; the batches it starts declare their own sharing.
+ * `with sharing`: it reads job metadata and, in system mode, the OA list for the credentials check; the batch and
+ * queueable it starts declare their own sharing.
  */
 public with sharing class LineScheduler implements Schedulable {
   /** One job per org, found again by this name. */
   public static final String JOB_NAME = 'LINE Connect nightly jobs';
+  private static final String CREDENTIAL_REMOVED = 'Removed';
   /** 01:00 every day, in the scheduling user's time zone (DEC-30). */
   public static final String CRON = '0 0 1 * * ?';
 
   /**
-   * Starts tonight's work. Does nothing while daily sync is off in LINE Settings.
+   * Starts tonight's work: the daily sync (unless it's off in LINE Settings) and the credentials check, which always
+   * runs. Each is guarded on its own, so one failing never skips the other.
    * @param context schedulable context
    */
   public void execute(SchedulableContext context) {
@@ -25,9 +28,39 @@ public with sharing class LineScheduler implements Schedulable {
       }
     } catch (Exception e) {
       LineLogger.error('LineScheduler.execute', e);
+    }
+    try {
+      checkCredentials();
+    } catch (Exception e) {
+      LineLogger.error('LineScheduler.checkCredentials', e);
     } finally {
       LineLogger.flush();
     }
+  }
+
+  /**
+   * Queues a credentials check for every OA that still has a secret, i.e. every OA not marked *Removed* (DEC-33).
+   * One queueable carries them all and chains itself; a schedulable can't make callouts itself.
+   * @return the number of OAs queued
+   */
+  @TestVisible
+  static Integer checkCredentials() {
+    List<LineCalloutQueueable.WorkItem> items = new List<LineCalloutQueueable.WorkItem>();
+    for (LINE_OA_Configuration__c oa : [
+      SELECT Id, Channel_Id__c
+      FROM LINE_OA_Configuration__c
+      WHERE
+        Credential_Status__c = NULL
+        OR Credential_Status__c != :CREDENTIAL_REMOVED
+      WITH SYSTEM_MODE
+      ORDER BY Name
+    ]) {
+      items.add(
+        LineCalloutQueueable.credentialCheckItem(oa.Id, oa.Channel_Id__c)
+      );
+    }
+    LineCalloutQueueable.enqueue(items);
+    return items.size();
   }
 
   /**

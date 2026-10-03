@@ -550,4 +550,39 @@ private class LineDailyEventSyncBatchTest {
       'Summer time on the day clocks go back'
     );
   }
+
+  // ---------- Event length (whole minutes) ----------
+
+  @IsTest
+  static void eventCoversItsMessagesToTheWholeMinute() {
+    LineTestFactory.ensurePackageAccess();
+    LINE_Conversation__c c = theConversation();
+    insert as system new List<LINE_Message__c>{
+      inbound(c.Id, 'first', at(yesterday(), 10, 1).addSeconds(30)),
+      inbound(c.Id, 'last', at(yesterday(), 10, 8).addSeconds(20))
+    };
+
+    run(yesterday());
+
+    Event e = lineEvents()[0];
+    Assert.areEqual(at(yesterday(), 10, 1), e.StartDateTime, 'Rounded down');
+    Assert.areEqual(
+      at(yesterday(), 10, 9),
+      e.EndDateTime,
+      'Rounded up, so the last message is inside the Event'
+    );
+  }
+
+  @IsTest
+  static void roundingLeavesWholeMinutesAlone() {
+    Datetime whole = Datetime.newInstanceGmt(2026, 9, 30, 2, 2, 0);
+    Assert.areEqual(whole, LineDailyEventSyncBatch.floorToMinute(whole));
+    Assert.areEqual(whole, LineDailyEventSyncBatch.ceilToMinute(whole));
+    Datetime part = whole.addSeconds(33);
+    Assert.areEqual(whole, LineDailyEventSyncBatch.floorToMinute(part));
+    Assert.areEqual(
+      whole.addMinutes(1),
+      LineDailyEventSyncBatch.ceilToMinute(part)
+    );
+  }
 }

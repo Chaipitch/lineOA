@@ -1,5 +1,7 @@
 /**
  * OA administration (05 Part D). Callouts first, then DML (hard rule 6).
+ * `removeOA` (DEC-33) is the only way a subscriber can get rid of a channel secret: the protected setting is unreachable
+ * for them, and LINE sends no event when a channel is deleted.
  * M3: `registerOA` (callable from anonymous Apex). M8 adds rotate, reassign and deactivate, and the
  * `LineAdminController` entry point that checks the `LINE_Admin` custom permission before calling this class.
  *
@@ -9,6 +11,10 @@
 public without sharing class LineOAConfigAdminService {
   private static final Integer NAME_LENGTH = 80;
   private static final Integer URL_LENGTH = 255;
+  @TestVisible
+  static final String CREDENTIAL_VALID = 'Valid';
+  @TestVisible
+  static final String CREDENTIAL_REMOVED = 'Removed';
 
   /** Registration outcome. Never contains the secret or a token. */
   public class RegistrationResult {
@@ -83,7 +89,10 @@ public without sharing class LineOAConfigAdminService {
       Assigned_Rep__c = repId,
       Is_Active__c = true,
       Webhook_Status__c = System.Label.LINE_Webhook_Test_Pending,
-      Last_Verified_At__c = Datetime.now()
+      Last_Verified_At__c = Datetime.now(),
+      // A token was just issued with these credentials, so LINE accepts them. Also restores a removed OA.
+      Credential_Status__c = CREDENTIAL_VALID,
+      Credential_Checked_At__c = Datetime.now()
     );
     Database.upsert(
       oa,
@@ -108,5 +117,41 @@ public without sharing class LineOAConfigAdminService {
     result.webhookUrl = webhookUrl;
     result.webhookStatus = oa.Webhook_Status__c;
     return result;
+  }
+
+  /**
+   * Removes an OA (DEC-33): deletes its channel secret and keeps the OA record, inactive and marked *Removed*, so its
+   * conversations and messages stay as history. Afterwards the webhook rejects that OA's calls (no secret, so no valid
+   * signature) and nothing can be sent through it. Registering the OA again restores it.
+   *
+   * No callouts. Conversations keep their current owner; new ones would go to the fallback owner.
+   *
+   * @param oaConfigId the OA to remove
+   * @throws AdminException when the OA doesn't exist
+   */
+  public static void removeOA(Id oaConfigId) {
+    List<LINE_OA_Configuration__c> found = oaConfigId == null
+      ? new List<LINE_OA_Configuration__c>()
+      : [
+          SELECT Id, Channel_Id__c
+          FROM LINE_OA_Configuration__c
+          WHERE Id = :oaConfigId
+          WITH SYSTEM_MODE
+        ];
+    if (found.isEmpty()) {
+      throw new AdminException(System.Label.LINE_Error_OA_Not_Found);
+    }
+    LINE_OA_Configuration__c oa = found[0];
+    Database.update(
+      new LINE_OA_Configuration__c(
+        Id = oa.Id,
+        Is_Active__c = false,
+        Credential_Status__c = CREDENTIAL_REMOVED,
+        Credential_Checked_At__c = Datetime.now()
+      ),
+      true,
+      AccessLevel.SYSTEM_MODE
+    );
+    LineCredentialStore.remove(oa.Channel_Id__c);
   }
 }

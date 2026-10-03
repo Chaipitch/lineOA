@@ -235,4 +235,96 @@ private class LineCalloutQueueableTest {
     );
     new LineCalloutQueueable(null).execute(null);
   }
+
+  // ---------- credentials check (DEC-33) ----------
+
+  private static LINE_OA_Configuration__c credentials() {
+    return [
+      SELECT Credential_Status__c, Credential_Checked_At__c
+      FROM LINE_OA_Configuration__c
+      WITH SYSTEM_MODE
+    ];
+  }
+
+  private static void runCredentialCheck() {
+    LINE_OA_Configuration__c o = oa();
+    Test.startTest();
+    LineCalloutQueueable.enqueue(
+      new List<LineCalloutQueueable.WorkItem>{
+        LineCalloutQueueable.credentialCheckItem(o.Id, o.Channel_Id__c)
+      }
+    );
+    Test.stopTest();
+  }
+
+  @IsTest
+  static void credentialCheckMarksAcceptedCredentialsValid() {
+    LineTestFactory.ensurePackageAccess();
+    Test.setMock(HttpCalloutMock.class, new LineHttpMock());
+
+    runCredentialCheck();
+
+    Assert.areEqual('Valid', credentials().Credential_Status__c);
+    Assert.isNotNull(credentials().Credential_Checked_At__c);
+  }
+
+  @IsTest
+  static void credentialCheckFlagsCredentialsLineRejects() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    mock.stub(
+      'POST',
+      '/oauth2/v3/token',
+      400,
+      '{"error":"invalid_client","error_description":"invalid client"}'
+    );
+    Test.setMock(HttpCalloutMock.class, mock);
+
+    runCredentialCheck();
+
+    Assert.areEqual('Rejected', credentials().Credential_Status__c);
+    Assert.areEqual(
+      1,
+      [
+        SELECT COUNT()
+        FROM LINE_Error_Log__c
+        WHERE Source__c = 'LineCalloutQueueable.CREDENTIAL_CHECK'
+        WITH SYSTEM_MODE
+      ],
+      'Also logged for the admin'
+    );
+  }
+
+  @IsTest
+  static void credentialCheckLeavesTheStatusAloneWhenLineCannotBeReached() {
+    LineTestFactory.ensurePackageAccess();
+    LINE_OA_Configuration__c o = oa();
+    update as system new LINE_OA_Configuration__c(
+      Id = o.Id,
+      Credential_Status__c = 'Valid'
+    );
+    LineHttpMock mock = new LineHttpMock();
+    mock.stubCalloutException('POST', '/oauth2/v3/token');
+    Test.setMock(HttpCalloutMock.class, mock);
+
+    runCredentialCheck();
+
+    Assert.areEqual(
+      'Valid',
+      credentials().Credential_Status__c,
+      'An outage is not a rejection'
+    );
+    Assert.isNull(credentials().Credential_Checked_At__c);
+  }
+
+  @IsTest
+  static void credentialCheckFlagsAnOAWithNoStoredSecret() {
+    LineTestFactory.ensurePackageAccess();
+    LineCredentialStore.remove(LineTestFactory.CHANNEL_A);
+    Test.setMock(HttpCalloutMock.class, new LineHttpMock());
+
+    runCredentialCheck();
+
+    Assert.areEqual('Rejected', credentials().Credential_Status__c);
+  }
 }

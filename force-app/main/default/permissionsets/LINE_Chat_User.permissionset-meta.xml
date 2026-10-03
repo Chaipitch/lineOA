@@ -177,6 +177,16 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>LINE_OA_Configuration__c.Credential_Checked_At__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>LINE_OA_Configuration__c.Credential_Status__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>LINE_OA_Configuration__c.Last_Verified_At__c</field>
         <readable>true</readable>
     </fieldPermissions>
