@@ -26,10 +26,13 @@ Checks on 2026-10-03 (Beta 6 work): **207/207 Apex tests** and **33/33 Jest test
 **Beta 4 (`0.1.0.4`, `04tgL000000WOs1QAG`)**: M9, the first-message notification fix and the `registerOA` cleanup.
 **Installed in the QA org** by the user on 2026-09-29.
 
-**Beta 5 (`0.1.0.5`, `04tgL000000WjGXQA0`) built 2026-09-30**, 94% coverage: Beta 4 plus sticker pictures (DEC-32). The CSP
-Trusted Site packaged without problems. **Not yet installed in the QA org.** Install link:
-`https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000WjGXQA0`. Before uninstalling Beta 4, remove
-`lineChat` from the Contact page and the guest permission set assignment (§5), then put both back.
+**Beta 5 (`0.1.0.5`, `04tgL000000WjGXQA0`)**: Beta 4 plus sticker pictures (DEC-32). Installed in the QA org.
+
+**Beta 6 (`0.1.0.6`, `04tgL000000X7AnQAK`) built 2026-10-03**, 94% coverage: Beta 5 plus secret cleanup and the
+credentials check (DEC-33), Event minute rounding, and time zones on the Nightly jobs card. **Not yet installed in the QA
+org.** Install link: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000X7AnQAK`. Before
+uninstalling Beta 5, remove `lineChat` from the Contact page and the guest permission set assignment (§5), then put both
+back.
 
 ## 2. Orgs and access
 
