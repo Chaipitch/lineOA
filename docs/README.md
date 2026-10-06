@@ -31,12 +31,13 @@ Claude Code does all of the implementation; its working rules are in [../CLAUDE.
 | [KICKOFF_PROMPT.md](KICKOFF_PROMPT.md) | First prompt for a new Claude Code session |
 | `DECISIONS.md`, `SECURITY_NOTES.md` | Created in M0 and kept current during the build |
 
-## Status (2026-10-03)
+## Status (2026-10-06)
 
 - Package **LINE Connect**, namespace `tsthlineoa`, Dev Hub `sf-line-dev`. Beta 5 (`0.1.0.5`) is installed in the QA org
   `chaipitch-devhub` and working end to end with a real LINE OA.
 - M0–M5 and M9 done; parts of M6, M7 (sticker pictures) and M8 (incl. secret cleanup) done. Beta 6 (`0.1.0.6`) is built
   and waiting to be installed.
   The full picture is in [HANDOFF.md](HANDOFF.md).
-- Before the TA review on 7 Oct 2026: send the BA document corrections. Quota is decided: display only (DEC-35).
+- TA review on 7 Oct 2026: the BA document is corrected (tracked changes), and a slide deck and one-page cheat sheet
+  defend the architecture (HANDOFF §4). Quota is decided: display only (DEC-35).
 - MVP estimate: **40–54 person-days** + 15–20% contingency (06).

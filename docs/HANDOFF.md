@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-10-03**, after secret cleanup and the M9 follow-ups (Beta 6). Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-06**, after preparing the TA review (no code changes since Beta 6). Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -17,8 +17,8 @@ milestone. For how the system works, read `HOW_IT_WORKS.md`.
 | M6 Linking + inbox | **Partly done:** auto-link and auto-create Contact on first message (DEC-27). **Not done:** QR invite codes, manual link, `lineInbox`, `lineInvite`. |
 | M7 Files & images | **Part done:** stickers show as pictures (DEC-32). Images, video, audio and files still show placeholders. |
 | M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29), *Remove OA* and the nightly credentials check (DEC-33). **Not done:** rotate secret, reassign, deactivate, quota display (M8a, decided display-only in DEC-35), error log. |
-| **M9 Daily Event sync** | **Done, proven live** in the QA org on Beta 4 (DEC-28–30). Two follow-ups proposed for Beta 5 (§4). |
-| M10–M12 | Not started. |
+| **M9 Daily Event sync** | **Done, proven live** in the QA org on Beta 4 (DEC-28–30). Follow-ups (minute rounding, time zones on the jobs card) shipped in Beta 6. |
+| M10–M12 | Not started. M11 now also includes evaluating a no-authentication Named Credential as the callout endpoint (06 M11, 08 "Callout allowlist"). |
 
 Checks on 2026-10-03 (Beta 6 work): **207/207 Apex tests** and **33/33 Jest tests** pass, org-wide coverage **94%**
 (lowest class `LineAdminController` 87%), Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
@@ -39,7 +39,7 @@ back.
 | Alias | What it is | Notes |
 |---|---|---|
 | `sf-line-dev` | **Dev Hub** (Enterprise Edition trial, expires 2027-09-22). Owns the package and the namespace link | Never deploy source here. Limits: 3 active scratch orgs, 6 package versions a day. |
-| `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **Beta 4 (0.1.0.4) installed** | Real LINE OA **TS Chaipitch** (`@803ctlbv`, channel `2011659553`) registered, webhook OK. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Org and admin time zone **Asia/Bangkok** (changed 2026-09-30). Nightly job scheduled, but still at the old time (§4). Contact "Chaipitch" auto-created from a real message. |
+| `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **Beta 5 (0.1.0.5) installed**; Beta 6 not yet | Real LINE OA **TS Chaipitch** (`@803ctlbv`, channel `2011659553`) registered, webhook OK. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Org and admin time zone **Asia/Bangkok** (changed 2026-09-30). Nightly job **not scheduled** since the Beta 5 install (§4). Contact "Chaipitch" auto-created from a real message. |
 | `line-dev` | **The one scratch org** (namespaced `tsthlineoa`, user `test-egv3lqxcpg7t@example.com`); the project default | Expires **2026-10-22**. Rebuild: `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev`. Holds seed data from `scripts/apex/seed-daily-sync.apex`. Until 2026-09-29 this org was aliased `line-ns`; the old non-namespaced `line-dev` was deleted that day. |
 
 **Another active scratch org** is listed in the Dev Hub, `test-bdmfveozrgxg@example.com`, which this machine has no login
@@ -67,10 +67,22 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
 
 ## 4. Open items
 
-1. **Before the TA review on 7 Oct 2026:** pass `BA_TA_REVIEW_CORRECTIONS.md` to the BA. Quota is **decided: display
-   only** (DEC-35); section B of that file now says so.
-2. **QA org: schedule the nightly job** (LINE Admin → Nightly jobs → Schedule). It wasn't scheduled after Beta 5 was
-   installed. The card now shows the org time zone and warns if the admin's differs.
+1. **TA review on 7 Oct 2026.** Materials prepared 2026-10-04/06 (outside the repo):
+   - **BA document corrected** with tracked changes and comments: `~/Downloads/LINE_OA_Salesforce_Architecture_Design_TA_Review_corrected.docx`
+     (see the "Applied" note in `BA_TA_REVIEW_CORRECTIONS.md`). The user sends it to the BA.
+   - **Slide deck** (14 slides: constraints, message flow, 7 decisions each with the likely challenge and our answer,
+     Remote Site Settings, capacity in transactions, our own limits, live proof): https://claude.ai/artifact/3WPayEDLjNJ32dMYy8dCE9
+   - **One-page cheat sheet**: https://claude.ai/artifact/VxPVQZu3mppMePWrrZu5eT, printable copy
+     `~/Downloads/LINE_Connect_TA_cheat_sheet.html`.
+   - Both artifacts are shared "anyone with the link". Speaker notes hold the long answers.
+   - Positions taken: **we stay on Remote Site Settings** (Named Credential as endpoint only *evaluated* in M11);
+     **capacity is answered in transactions** (HOW_IT_WORKS §3.6): fixed cost per transaction, no per-rep limit.
+   - Weak spot: CPU/heap for a full 2,000-event transaction is **unmeasured**. Offered to the user: run the M11 load test
+     early in `line-dev` (push 2,000 messages in one transaction, record CPU, heap, time; ~half a day). Not answered yet.
+   - Before the demo (deck "Proof" notes): Beta 6 installed, OA credentials show Valid, nightly job scheduled, `lineChat`
+     on the Contact page, phone with the OA added.
+2. **QA org: install Beta 6, then schedule the nightly job** (LINE Admin → Nightly jobs → Schedule). It wasn't scheduled
+   after Beta 5 was installed. The card shows the org time zone and warns if the admin's differs.
 3. **M6 needs, before starting:**
    - the design for recognising auto-created Contacts (DEC-34: linking to the real Contact deletes an empty stub);
    - a **second LINE OA** under the same Provider, for the [VERIFY] that a customer has the same LINE user ID in both (D5).
@@ -136,7 +148,8 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
 ## 7. Suggested next steps
 
 1. Install **Beta 6** in the QA org, schedule the nightly job, and try *Remove OA* on a throwaway OA.
-2. **M6**: QR invites, manual link with the DEC-34 stub handling, `lineInbox`.
+   Optionally, before 7 Oct, the early 2,000-message load test (§4 item 1).
+2. **M6** (confirm first: a new "created by LINE Connect" Contact field for the DEC-34 stub handling): QR invites, manual link with the DEC-34 stub handling, `lineInbox`.
 3. **M7**: customer images, video, audio and files in the chat panel.
 4. **M8 remainder**: rotate secret, reassign/deactivate with `LineReassignBatch`, quota display (M8a), error log.
 5. **M10** retention before any high-volume client; **M11** load tests (2,000-event batch, Site limits) and hardening.

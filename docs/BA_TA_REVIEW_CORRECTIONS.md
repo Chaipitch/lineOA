@@ -7,6 +7,10 @@ unless the business wants to change the specification, in which case that become
 
 Checked on 28 September 2026 against the specification and the code as built (Beta 3, version 0.1.0.3).
 
+**Applied (2026-10-04):** the BA's revised .docx was checked again and these corrections were made in it as Word tracked
+changes with comments, author "Chaipitch Wongwangpaisarn" (239 insertions, 320 deletions, 8 comments). The file is
+`LINE_OA_Salesforce_Architecture_Design_TA_Review_corrected.docx`, sent to the user (not in this repo).
+
 ---
 
 ## Summary

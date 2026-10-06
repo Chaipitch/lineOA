@@ -12,6 +12,11 @@ Status per section: what is designed (from the spec) and what is **implemented a
 
 No other callouts. No AI/LLM services. The QR library is a static resource.
 
+**Why Remote Site Settings, not Named Credentials (D4, DEC-16):** two fixed hosts, the same for every subscriber, approved
+by the admin in the install wizard; authentication is per OA and issued at runtime, so it can't be stored as endpoint
+configuration. The base URLs are literals in `LineApiClient` only, HTTPS, never built from user input. A no-authentication
+Named Credential as the endpoint is evaluated in M11 and adopted only if it needs no subscriber setup.
+
 **One browser-side load (DEC-32):** `lineChat` shows sticker pictures from `https://stickershop.line-scdn.net`, allowed by the
 packaged CSP Trusted Site `LINE_Sticker_Images` for **img-src only** in Lightning Experience. Apex never calls it. The URL is
 built server-side (`LineApiClient.stickerImageUrl`) from an all-digit sticker ID, so nothing a customer types can reach it

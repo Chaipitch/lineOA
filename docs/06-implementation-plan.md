@@ -151,6 +151,12 @@ Partial-success DML with logging.
 - LDV check in a scratch org: load 200k messages across 500 conversations with a script. Check message paging, poll query and batch times,
   and record the numbers in DECISIONS.
 - Coverage ≥ 85% overall, every class ≥ 75%.
+- **Evaluate a Named Credential as the callout endpoint** (08 risk "Callout allowlist"). Today packaged Remote Site Settings
+  allowlist `api.line.me` and `api-data.line.me`, and Apex sets the per-OA token itself (D4). Option: a packaged Named
+  Credential with **no authentication**, used only as the endpoint (`callout:…`), Apex still setting the `Authorization`
+  header. Prove first, in an installed package: callout access through the External Credential's principal (permission
+  set) for reps, admins **and the Automated Process user** that runs inbound follow-up callouts. Adopt only if it works
+  with no extra subscriber setup; record the outcome in DECISIONS.
 - A beta version with `--code-coverage` → QA.
 
 ## M12 — QA, upgrade, docs (3–5 d)

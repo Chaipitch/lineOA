@@ -85,7 +85,10 @@ send custom notifications and enqueue callout queueables; if not, document an op
 - Callouts use packaged **Remote Site Settings** (`api.line.me`, `api-data.line.me`), and Apex sets the `Authorization` header itself.
 - Sticker pictures are the one browser-side load: `lineChat` shows them from `stickershop.line-scdn.net`, allowed by a packaged
   CSP Trusted Site for images only (DEC-32). Apex never calls that host.
-  No Named Credentials: a principal per OA would need subscriber metadata for every OA.
+  No Named Credentials for authentication: a principal per OA would need subscriber metadata for every OA.
+  The plan stays on Remote Site Settings. M11 only *evaluates* a packaged **no-authentication** Named Credential used as
+  the endpoint, with Apex still setting the token; it is adopted only if it needs no subscriber setup, including for
+  Automated Process (08 risk "Callout allowlist").
 
 ### D5 — Customer identity: the Contact holds the LINE user ID, conversations are per OA
 All OAs of a client are under one LINE Provider, so a customer's user ID is the same in every OA [VERIFY].

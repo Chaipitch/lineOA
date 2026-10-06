@@ -135,6 +135,27 @@ validation rule we know nothing about — Account required, a custom field requi
 conversation stays unlinked, and **the message is still stored**. That asymmetry is hard rule 7, and it is the single
 most important rule for surviving in an unknown org: *nothing about Contacts or Events may cost us a message.*
 
+### 3.6 Capacity, counted in transactions
+
+"How many messages can a rep receive?" is best answered per transaction, because that is where Salesforce's limits
+apply (100 queries, 150 DML statements, 100 callouts each):
+
+| Transaction | Runs when | Handles | Cost each |
+|---|---|---|---|
+| Webhook (Site guest) | LINE posts; one post can carry several events | Every event in that post | 1 query, 1 `EventBus.publish`, no record writes |
+| Processing (Automated Process) | Platform event trigger | Up to 2,000 messages | About 5–8 queries and 3 DML (2 upserts + 1 log), **the same for 1 or 2,000** |
+| Follow-up (`LineCalloutQueueable`) | New customer or first message only | 40 customers, then it chains | 1 callout each, then the writes |
+| Rep reply | Rep presses Send | 1 message | 2 callouts (token, push), then 2 writes |
+| Daily sync batch | Nightly | 20 conversations per execute | Fixed per execute |
+
+So cost per transaction does not grow with volume, and there is no per-rep limit: the capacity is the org's, shared by
+all reps. LINE doesn't meter messages customers send. Measured once in the scratch org (2026-09-19): one inbound message
+= 5 queries, 2 upserts, about 100 ms. Worked example: 50 reps × 200 messages a day = 10,000 a day, each transaction far
+inside the limits; the long-term constraint is storage (about 2 KB a message, roughly 7 GB a year), hence retention (M10).
+
+**Not yet measured (M11):** CPU time and heap for a full 2,000-event transaction, and each edition's daily Site and hourly
+platform event allowances.
+
 ---
 
 ## 4. Outbound: a rep replies
