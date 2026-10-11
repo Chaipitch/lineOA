@@ -37,7 +37,7 @@ log "Deploying source"
 deploy_dirs=()
 has_source force-app && deploy_dirs+=(--source-dir force-app)
 has_source unpackaged && deploy_dirs+=(--source-dir unpackaged)
-sf project deploy start "${deploy_dirs[@]}" --target-org "$ALIAS" --wait 20
+sf project deploy start "${deploy_dirs[@]}" --target-org "$ALIAS" --wait 20 --ignore-conflicts
 
 log "Creating the LineWebhook Site"
 ADMIN_USERNAME="$(sf org display --target-org "$ALIAS" --json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).result.username))')"

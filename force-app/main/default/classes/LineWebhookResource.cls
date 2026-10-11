@@ -2,9 +2,10 @@
  * LINE webhook endpoint: POST /services/apexrest/<ns>/line/webhook (D1–D3).
  *
  * Runs as the Site guest user, whose only access is this class and Create on `LINE_Webhook_Event__e`.
- * Order: resolve the OA by `destination` (403 if unknown) → verify `X-Line-Signature` over the raw body (401 if bad
- * or missing) → publish one platform event per LINE event → 200. No business DML, no callouts, and no logging
- * (junk traffic must not be able to write records).
+ * Order: resolve the OA by `destination` → verify `X-Line-Signature` over the raw body → publish one platform event
+ * per LINE event → 200. An unknown OA and a bad or missing signature both get 401, so the response never reveals which
+ * OAs are registered here (DEC-38, TA review R8). No business DML, no callouts, and no logging (junk traffic must not
+ * be able to write records).
  *
  * `global` is required by @RestResource in a managed package; it is the only global class (hard rule 2).
  * `without sharing` (02 §2): the guest user has no access to OA configurations; system mode lets it look up the
@@ -54,8 +55,9 @@ global without sharing class LineWebhookResource {
         new Set<String>{ destination }
       )
       .get(destination);
+    // Same answer as a bad signature (DEC-38): a distinct code would let anyone probe which bot IDs are registered.
     if (oa == null) {
-      return 403;
+      return 401;
     }
     String secret = LineCredentialStore.getSecret(oa.Channel_Id__c);
     if (

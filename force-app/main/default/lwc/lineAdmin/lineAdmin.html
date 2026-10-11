@@ -41,6 +41,23 @@
           class="slds-var-m-top_x-small"
         ></lightning-record-picker>
 
+        <lightning-record-picker
+          label={labels.defaultAccount}
+          object-api-name="Account"
+          value={settings.defaultAccountId}
+          field-level-help={labels.defaultAccountHelp}
+          onchange={handleDefaultAccountChange}
+          class="slds-var-m-top_x-small"
+        ></lightning-record-picker>
+        <template lwc:if={showDefaultAccountWarning}>
+          <div
+            class="slds-text-color_error slds-text-body_small slds-var-m-top_xx-small"
+            data-id="default-account-warning"
+          >
+            {labels.defaultAccountWarning}
+          </div>
+        </template>
+
         <div class="slds-grid slds-gutters slds-wrap slds-var-m-top_x-small">
           <div class="slds-col slds-size_1-of-2">
             <lightning-input
@@ -280,12 +297,21 @@
           class="slds-var-m-top_x-small"
         ></lightning-input>
         <lightning-record-picker
+          data-id="rep-picker"
           label={labels.assignedRep}
           object-api-name="User"
           value={repId}
           onchange={handleRepChange}
           class="slds-var-m-top_x-small"
         ></lightning-record-picker>
+        <lightning-input
+          type="checkbox"
+          data-id="same-provider"
+          label={labels.sameProvider}
+          checked={sameProviderConfirmed}
+          onchange={handleSameProviderChange}
+          class="slds-var-m-top_x-small"
+        ></lightning-input>
         <div class="slds-var-m-top_small">
           <lightning-button
             variant="brand"

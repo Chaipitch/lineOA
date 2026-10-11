@@ -39,11 +39,13 @@ Test.getEventBus().deliver();   // runs the PE trigger
 | Area | Case |
 |---|---|
 | Signature | valid → 200 + PE; wrong → 401, nothing published; missing header → 401; lowercase header name → accepted |
-| Routing | destination A → owner Rep A; unknown destination → 403 |
+| Routing | destination A → owner Rep A; unknown destination → 401, same as a bad signature (DEC-38) |
 | Events | empty events → 200; many events in one body; 200 PEs in one trigger batch (bulk); group source ignored |
 | Idempotency | same `webhookEventId` twice → one message |
 | Follow/unfollow | follow creates a conversation + a profile job; unfollow → Unfollowed; re-follow → Following |
 | Inactive OA | owner = fallback owner; no notification when the owner is a queue |
+| Send authorization (DEC-37) | assigned rep sends; a user who can see the conversation but isn't the rep gets `LINE_Chat_Not_Assigned_Rep`, no callout, panel read-only; inactive OA → fallback owner and fallback-queue member send, the former rep can't |
+| Default Account (DEC-36) | created Contact gets the default Account; deleted default → logged, Contact created without one; an existing Contact is never moved |
 | Linking — manual | sets Contact__c + Contact.LINE_User_Id__c + primary OA if blank; conflicts refused; no Edit on Contact → refused |
 | Linking — auto | second OA conversation auto-links by LINE user ID |
 | Linking — auto-create (DEC-27) | first message from an unknown LINE user → Contact created (LastName = LINE display name, `LINE_User_Id__c`, primary OA, owner = rep) and linked; an existing Contact with that ID → linked, no new Contact; same person on two OAs → one Contact; follow without a message → no Contact; setting off → none; display name over 80 chars → cut; Contact insert rejected → logged, conversation unlinked, message still stored |

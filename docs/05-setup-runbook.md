@@ -40,7 +40,7 @@ This is the install guide we give clients. Keep it this short: every extra step 
 | C2 | Setup → Sites: register a site domain if none exists; create site `LineWebhook` (active; any home page) |
 | C3 | Site → Public Access Settings → guest user → assign permission set **LINE_Webhook_Guest** |
 | C4 | Assign **LINE_Admin** to admins and **LINE_Chat_User** to reps and managers |
-| C5 | App Launcher → LINE Chat → **LINE Admin** tab → Settings: paste the site base URL, pick the fallback owner, and review retention, invite expiry and daily sync. Then, on the same page, **Nightly jobs → Schedule** (01:00 in the admin's time zone). Without it no daily Events are created. |
+| C5 | App Launcher → LINE Chat → **LINE Admin** tab → Settings: paste the site base URL, pick the fallback owner, **pick an Account for new Contacts** (create one such as "LINE Unassigned" first; required in practice when Contact sharing is *Controlled by Parent*, and the page warns if so, DEC-36), and review retention, invite expiry and daily sync. Then, on the same page, **Nightly jobs → Schedule** (01:00 in the admin's time zone). Without it no daily Events are created. |
 | C6 | Lightning App Builder → Contact record page → add **lineChat** → activate. Optionally add **lineInbox** to the Home page. |
 | C7 | Optional: create a queue that supports LINE Conversation and use it as the fallback owner |
 
@@ -53,7 +53,8 @@ Register OA: Channel ID + Channel secret + rep. The package does the following, 
 4. Saves `LINE_OA_Configuration__c` and the secret in the protected setting, with Credential Status *Valid*. Shows the result.
 
 Every night the package checks each OA's credentials with LINE. An OA LINE **rejects** (channel deleted, or secret
-reissued) is shown in red on the LINE Admin page: register it again with the new secret, or **Remove** it.
+reissued) is shown in red on the LINE Admin page: register it again with the new secret, or **Remove** it. Registering requires ticking "same LINE Provider as all our
+other OAs" (DEC-39): OAs under different Providers can't share a Contact.
 
 **Remove OA** (LINE Admin tab → OA row → Remove): deletes the channel secret; the OA and its conversations stay as
 inactive history. Do this whenever an OA is retired or deleted in LINE. It is the **only** way to delete a secret: the

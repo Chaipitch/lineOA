@@ -476,6 +476,144 @@ private class LineChatControllerTest {
     );
   }
 
+  // ---------- who may send (DEC-37, TA review R1) ----------
+
+  // Lets another user see the conversation, as a manager with View All or a sharing rule would.
+  private static void shareWith(Id conversationId, Id userId) {
+    insert as system new LINE_Conversation__Share(
+      ParentId = conversationId,
+      UserOrGroupId = userId,
+      AccessLevel = 'Read'
+    );
+  }
+
+  private static void setOaActive(Boolean active) {
+    LINE_OA_Configuration__c oa = [
+      SELECT Id
+      FROM LINE_OA_Configuration__c
+      WITH SYSTEM_MODE
+      LIMIT 1
+    ];
+    oa.Is_Active__c = active;
+    update as system oa;
+  }
+
+  private static void setFallbackOwner(Id ownerId) {
+    upsert as system new LINE_Settings__c(
+      SetupOwnerId = UserInfo.getOrganizationId(),
+      Fallback_Owner_Id__c = ownerId
+    );
+    LineSettings.reset();
+  }
+
+  @IsTest
+  static void seeingAConversationIsNotEnoughToSend() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    Test.setMock(HttpCalloutMock.class, mock);
+    Contact contact = linkContact(true);
+    Id conversationId = conversationId();
+    User other = repB();
+    shareWith(conversationId, other.Id);
+
+    List<LineChatController.ConversationView> views;
+    String message;
+    Test.startTest();
+    System.runAs(other) {
+      views = LineChatController.getConversations(contact.Id);
+      try {
+        LineChatController.sendText(conversationId, 'sent as someone else');
+      } catch (AuraHandledException e) {
+        message = e.getMessage();
+      }
+    }
+    Test.stopTest();
+
+    Assert.areEqual(1, views.size(), 'The shared conversation is readable');
+    Assert.isFalse(views[0].canSend, 'The panel shows it read-only');
+    Assert.areEqual(System.Label.LINE_Chat_Not_Assigned_Rep, message);
+    Assert.areEqual(0, mock.requests.size(), 'No callout to LINE');
+    Assert.areEqual(0, [SELECT COUNT() FROM LINE_Message__c WITH SYSTEM_MODE]);
+  }
+
+  @IsTest
+  static void assignedRepCanSend() {
+    LineTestFactory.ensurePackageAccess();
+    Contact contact = linkContact(true);
+
+    List<LineChatController.ConversationView> views;
+    System.runAs(repA()) {
+      views = LineChatController.getConversations(contact.Id);
+    }
+
+    Assert.isTrue(views[0].canSend);
+  }
+
+  @IsTest
+  static void fallbackOwnerCanSendForAnInactiveOa() {
+    LineTestFactory.ensurePackageAccess();
+    Test.setMock(HttpCalloutMock.class, new LineHttpMock());
+    Id conversationId = conversationId();
+    User fallback = repB();
+    setOaActive(false);
+    setFallbackOwner(fallback.Id);
+    shareWith(conversationId, fallback.Id);
+
+    LineChatController.MessageView sent;
+    String assignedRepError;
+    Test.startTest();
+    System.runAs(fallback) {
+      sent = LineChatController.sendText(
+        conversationId,
+        'covering for my colleague'
+      );
+    }
+    System.runAs(repA()) {
+      try {
+        LineChatController.sendText(conversationId, 'I was moved off this OA');
+      } catch (AuraHandledException e) {
+        assignedRepError = e.getMessage();
+      }
+    }
+    Test.stopTest();
+
+    Assert.areEqual('Sent', sent.status);
+    Assert.areEqual(
+      System.Label.LINE_Chat_Not_Assigned_Rep,
+      assignedRepError,
+      'Once the OA is inactive its conversations belong to the fallback owner'
+    );
+  }
+
+  @IsTest
+  static void fallbackQueueMemberCanSendForAnInactiveOa() {
+    LineTestFactory.ensurePackageAccess();
+    Test.setMock(HttpCalloutMock.class, new LineHttpMock());
+    Id conversationId = conversationId();
+    User member = repB();
+    Group queue = new Group(Name = 'LINE fallback test', Type = 'Queue');
+    // Setup objects in their own context, away from the non-setup DML of this test.
+    System.runAs(new User(Id = UserInfo.getUserId())) {
+      insert as system queue;
+      insert as system new GroupMember(
+        GroupId = queue.Id,
+        UserOrGroupId = member.Id
+      );
+    }
+    setOaActive(false);
+    setFallbackOwner(queue.Id);
+    shareWith(conversationId, member.Id);
+
+    LineChatController.MessageView sent;
+    Test.startTest();
+    System.runAs(member) {
+      sent = LineChatController.sendText(conversationId, 'from the queue');
+    }
+    Test.stopTest();
+
+    Assert.areEqual('Sent', sent.status);
+  }
+
   @IsTest
   static void nullConversationIsRefused() {
     LineTestFactory.ensurePackageAccess();

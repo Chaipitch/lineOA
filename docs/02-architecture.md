@@ -68,7 +68,7 @@ Adding an OA needs no code or deployment. The URL includes the namespace: `https
 
 ### D2 — Verify the signature in the webhook, synchronously
 Resolve the OA by `destination`, then compute `Base64(HMAC-SHA256(rawBody, secret))` and compare it with `X-Line-Signature`.
-An unknown destination → 403; a bad or missing signature → 401. Nothing is published in either case.
+An unknown destination and a bad or missing signature both → 401, so the response doesn't reveal which OAs are registered (DEC-38). Nothing is published in either case.
 
 ### D3 — The webhook only publishes platform events; processing runs as Automated Process
 The guest context does minimal work. It publishes **one PE per LINE event**, which keeps each payload small.
@@ -99,6 +99,8 @@ A second OA's conversation auto-links to the same Contact.
 `LINE_Conversation__c` OWD **Private**, owner = the OA's assigned rep (or the fallback owner). `LINE_Message__c` is
 **master-detail** (Controlled by Parent). Reassignment updates only conversations. Managers see through the role hierarchy.
 OWD is set in the object metadata and is part of the package.
+**Reading is not sending (DEC-37):** anyone who can see a conversation can read it, but only the OA's assigned rep (or,
+for an inactive OA, the fallback owner or a member of the fallback queue) can reply.
 
 ### D7 — Chat refresh by polling, not streaming
 Streaming (empApi/CDC) counts each delivery per subscribed tab against the subscriber's daily event delivery allocation, and we can't
@@ -137,7 +139,7 @@ This needs no web page, LIFF app or LINE Login channel, and it works in every su
 
 ### Inbound message
 1. LINE → `POST /services/apexrest/<ns>/line/webhook`.
-2. Resolve the OA by `destination` (403 if unknown) → `LineCredentialStore.getSecret` → verify (401 if invalid).
+2. Resolve the OA by `destination` (401 if unknown, DEC-38) → `LineCredentialStore.getSecret` → verify (401 if invalid).
 3. Publish `LINE_Webhook_Event__e(OA_Configuration_Id__c, Webhook_Event_Id__c, Event_Json__c)` for each event → return 200 (also for empty `events`).
 4. PE trigger → `LineInboundService`:
    - upsert the conversation by `Unique_Key__c`. Owner = the rep, or the fallback owner if the OA is inactive.

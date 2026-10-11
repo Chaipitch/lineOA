@@ -106,6 +106,9 @@ public with sharing class LineChatController {
     public String oaName;
     @AuraEnabled
     public Boolean isPrimaryOa;
+    /** Whether the running user may reply in this conversation (DEC-37); the panel is read-only otherwise. */
+    @AuraEnabled
+    public Boolean canSend = false;
 
     private ConversationView(LINE_Conversation__c c, Id primaryOaId) {
       this.id = c.Id;
@@ -162,6 +165,14 @@ public with sharing class LineChatController {
         LIMIT 50
       ]) {
         result.add(new ConversationView(c, primaryOaId));
+      }
+      Set<Id> oaIds = new Set<Id>();
+      for (ConversationView view : result) {
+        oaIds.add(view.oaConfigurationId);
+      }
+      Set<Id> sendable = sendableOaIds(oaIds, UserInfo.getUserId());
+      for (ConversationView view : result) {
+        view.canSend = sendable.contains(view.oaConfigurationId);
       }
       // The Contact's primary OA opens first (03 §2); the rest keep their most-recent-first order.
       for (Integer i = 1; i < result.size(); i++) {
@@ -361,13 +372,71 @@ public with sharing class LineChatController {
     }
   }
 
+  /**
+   * The OAs the user may send through (DEC-37, TA review R1). Seeing a conversation is not enough: a message goes out
+   * under the rep's OA, and the customer can't tell who typed it. An active OA sends only as its assigned rep; an
+   * inactive OA's conversations belong to the fallback owner (03 §2), so that user, or a member of that queue, may reply.
+   *
+   * Reads the OA's routing fields in system mode on purpose: the decision must not depend on whether a subscriber has
+   * narrowed OA sharing, and nothing read here is returned except the yes/no.
+   */
+  @TestVisible
+  private static Set<Id> sendableOaIds(Set<Id> oaIds, Id userId) {
+    Set<Id> result = new Set<Id>();
+    oaIds.remove(null);
+    if (oaIds.isEmpty() || userId == null) {
+      return result;
+    }
+    Boolean isFallback;
+    for (LINE_OA_Configuration__c oa : [
+      SELECT Id, Assigned_Rep__c, Is_Active__c
+      FROM LINE_OA_Configuration__c
+      WHERE Id IN :oaIds
+      WITH SYSTEM_MODE
+    ]) {
+      if (oa.Is_Active__c) {
+        if (oa.Assigned_Rep__c == userId) {
+          result.add(oa.Id);
+        }
+        continue;
+      }
+      if (isFallback == null) {
+        isFallback = isFallbackOwner(userId);
+      }
+      if (isFallback) {
+        result.add(oa.Id);
+      }
+    }
+    return result;
+  }
+
+  // Direct queue members only; a fallback queue is a small, admin-chosen group.
+  private static Boolean isFallbackOwner(Id userId) {
+    Id fallback = LineSettings.fallbackOwnerId();
+    if (fallback == null) {
+      return false;
+    }
+    if (fallback == userId) {
+      return true;
+    }
+    if (fallback.getSObjectType() != Group.SObjectType) {
+      return false;
+    }
+    return [
+        SELECT COUNT()
+        FROM GroupMember
+        WHERE GroupId = :fallback AND UserOrGroupId = :userId
+        WITH SYSTEM_MODE
+      ] > 0;
+  }
+
   // The rep must see the conversation (sharing) and be able to create messages (object/field access), in user mode.
   private static void assertCanSend(Id conversationId) {
     if (conversationId == null) {
       throw asAuraException(System.Label.LINE_Error_No_Access);
     }
     List<LINE_Conversation__c> conversations = [
-      SELECT Id, Status__c
+      SELECT Id, Status__c, LINE_OA_Configuration__c
       FROM LINE_Conversation__c
       WHERE Id = :conversationId
       WITH USER_MODE
@@ -375,6 +444,15 @@ public with sharing class LineChatController {
     ];
     if (conversations.isEmpty()) {
       throw asAuraException(System.Label.LINE_Error_No_Access);
+    }
+    if (
+      !sendableOaIds(
+          new Set<Id>{ conversations[0].LINE_OA_Configuration__c },
+          UserInfo.getUserId()
+        )
+        .contains(conversations[0].LINE_OA_Configuration__c)
+    ) {
+      throw asAuraException(System.Label.LINE_Chat_Not_Assigned_Rep);
     }
     // Object level only: the message is written in system mode by LineOutboundService, and the permission sets
     // deliberately keep message fields read-only for reps (03 §6), so a field-level create check would never pass.

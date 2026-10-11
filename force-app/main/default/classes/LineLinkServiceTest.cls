@@ -48,6 +48,107 @@ private class LineLinkServiceTest {
     LineSettings.reset();
   }
 
+  private static void setDefaultAccount(Id accountId) {
+    LINE_Settings__c settings = new LINE_Settings__c(
+      SetupOwnerId = UserInfo.getOrganizationId(),
+      Auto_Create_Contact__c = true,
+      Default_Account_Id__c = accountId
+    );
+    upsert as system settings;
+    LineSettings.reset();
+  }
+
+  @IsTest
+  static void createsContactUnderTheDefaultAccount() {
+    LineTestFactory.ensurePackageAccess();
+    Account placeholder = new Account(Name = 'LINE Unassigned');
+    insert as system placeholder;
+    setDefaultAccount(placeholder.Id);
+    Id conversationId = conversationFor(USER_1).Id;
+
+    Test.startTest();
+    Map<Id, Id> result = LineLinkService.resolveContacts(
+      new Set<Id>{ conversationId },
+      new Map<Id, String>{ conversationId => 'Somchai' }
+    );
+    Test.stopTest();
+
+    Contact created = [
+      SELECT AccountId
+      FROM Contact
+      WHERE Id = :result.get(conversationId)
+      WITH SYSTEM_MODE
+    ];
+    Assert.areEqual(
+      placeholder.Id,
+      created.AccountId,
+      'With an Account the Contact is shared like the Account, not private to its owner (DEC-36)'
+    );
+  }
+
+  @IsTest
+  static void deletedDefaultAccountIsLoggedAndContactCreatedWithoutOne() {
+    LineTestFactory.ensurePackageAccess();
+    Account placeholder = new Account(Name = 'LINE Unassigned');
+    insert as system placeholder;
+    setDefaultAccount(placeholder.Id);
+    delete as system placeholder;
+    Id conversationId = conversationFor(USER_1).Id;
+
+    Test.startTest();
+    Map<Id, Id> result = LineLinkService.resolveContacts(
+      new Set<Id>{ conversationId },
+      new Map<Id, String>{ conversationId => 'Somchai' }
+    );
+    LineLogger.flush();
+    Test.stopTest();
+
+    Assert.isNull(
+      [
+        SELECT AccountId
+        FROM Contact
+        WHERE Id = :result.get(conversationId)
+        WITH SYSTEM_MODE
+      ]
+      .AccountId,
+      'A missing default Account must not stop the Contact being created'
+    );
+    Assert.areEqual(
+      1,
+      [
+        SELECT COUNT()
+        FROM LINE_Error_Log__c
+        WHERE Source__c = 'LineLinkService.createContacts'
+        WITH SYSTEM_MODE
+      ],
+      'The admin is told the setting points at a deleted Account'
+    );
+  }
+
+  @IsTest
+  static void linkingNeverMovesAnExistingContactToTheDefaultAccount() {
+    LineTestFactory.ensurePackageAccess();
+    Account placeholder = new Account(Name = 'LINE Unassigned');
+    insert as system placeholder;
+    setDefaultAccount(placeholder.Id);
+    Contact existing = new Contact(
+      LastName = 'Existing',
+      LINE_User_Id__c = USER_1
+    );
+    insert as system existing;
+    Id conversationId = conversationFor(USER_1).Id;
+
+    Test.startTest();
+    LineLinkService.resolveContacts(new Set<Id>{ conversationId }, null);
+    Test.stopTest();
+
+    Assert.isNull(
+      [SELECT AccountId FROM Contact WHERE Id = :existing.Id WITH SYSTEM_MODE]
+      .AccountId,
+      'Only Contacts we create get the default Account'
+    );
+  }
+
   @IsTest
   static void createsContactNamedAfterTheLineDisplayName() {
     LineTestFactory.ensurePackageAccess();

@@ -314,6 +314,16 @@
         <value>This customer has blocked or removed the LINE account.</value>
     </labels>
     <labels>
+        <fullName>LINE_Chat_Not_Assigned_Rep</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Read-only notice and send error when the user is not the OA's assigned rep</shortDescription>
+        <value
+    >Only the rep assigned to this LINE account can reply here.</value>
+    </labels>
+    <labels>
         <fullName>LINE_Admin_Title</fullName>
         <categories>LINE Connect</categories>
         <language>en_US</language>
@@ -361,6 +371,43 @@
         <protected>false</protected>
         <shortDescription>Fallback owner field</shortDescription>
         <value>Fallback owner</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Default_Account</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Default Account field</shortDescription>
+        <value>Account for new Contacts</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Default_Account_Help</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Help text for the default Account field</shortDescription>
+        <value
+    >Contacts that LINE Connect creates automatically are placed under this Account. Leave blank to create them without an Account.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Default_Account_Warning</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Warning when Contact sharing follows the Account and no default Account is set</shortDescription>
+        <value
+    >Contact sharing in this org is Controlled by Parent, so a Contact without an Account is visible only to its owner. Choose an Account for new Contacts, or other reps will not be able to open customers they share.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Default_Account_Invalid</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Error when the default Account value is not an Account</shortDescription>
+        <value>The default for new Contacts must be an Account.</value>
     </labels>
     <labels>
         <fullName>LINE_Admin_Save</fullName>
@@ -452,6 +499,16 @@
         <shortDescription>Help text above the register form</shortDescription>
         <value
     >Registering checks the credentials with LINE, reads the OA details and points its webhook at this org.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Same_Provider_Confirm</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Required confirmation at OA registration that all OAs share one LINE Provider</shortDescription>
+        <value
+    >This OA is under the same LINE Provider as all our other OAs. (Otherwise the same customer gets a different LINE ID per OA and becomes a duplicate Contact.)</value>
     </labels>
     <labels>
         <fullName>LINE_Error_Admin_Only</fullName>

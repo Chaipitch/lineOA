@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-10-06**, after preparing the TA review (no code changes since Beta 6). Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-11**, after the TA review feedback, the D5 Provider check and the default Account (DEC-36, in the scratch org, not yet in a beta). Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -14,7 +14,7 @@ milestone. For how the system works, read `HOW_IT_WORKS.md`.
 | M3 Registration + inbound | **Done, proven live** in a scratch org and in the installed package. |
 | M4 Outbound text | **Done, proven live**: a reply sent from Salesforce reached a real phone. |
 | M5 Chat panel (`lineChat`) | **Done, proven live** on a Contact page in the QA org. |
-| M6 Linking + inbox | **Partly done:** auto-link and auto-create Contact on first message (DEC-27). **Not done:** QR invite codes, manual link, `lineInbox`, `lineInvite`. |
+| M6 Linking + inbox | **Partly done:** auto-link and auto-create Contact on first message (DEC-27), default Account for created Contacts (DEC-36, scratch only); D5 proven live (DECISIONS §2). **Not done:** QR invite codes, manual link, `lineInbox`, `lineInvite`. |
 | M7 Files & images | **Part done:** stickers show as pictures (DEC-32). Images, video, audio and files still show placeholders. |
 | M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29), *Remove OA* and the nightly credentials check (DEC-33). **Not done:** rotate secret, reassign, deactivate, quota display (M8a, decided display-only in DEC-35), error log. |
 | **M9 Daily Event sync** | **Done, proven live** in the QA org on Beta 4 (DEC-28–30). Follow-ups (minute rounding, time zones on the jobs card) shipped in Beta 6. |
@@ -40,10 +40,9 @@ back.
 |---|---|---|
 | `sf-line-dev` | **Dev Hub** (Enterprise Edition trial, expires 2027-09-22). Owns the package and the namespace link | Never deploy source here. Limits: 3 active scratch orgs, 6 package versions a day. |
 | `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **Beta 5 (0.1.0.5) installed**; Beta 6 not yet | Real LINE OA **TS Chaipitch** (`@803ctlbv`, channel `2011659553`) registered, webhook OK. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Org and admin time zone **Asia/Bangkok** (changed 2026-09-30). Nightly job **not scheduled** since the Beta 5 install (§4). Contact "Chaipitch" auto-created from a real message. |
-| `line-dev` | **The one scratch org** (namespaced `tsthlineoa`, user `test-egv3lqxcpg7t@example.com`); the project default | Expires **2026-10-22**. Rebuild: `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev`. Holds seed data from `scripts/apex/seed-daily-sync.apex`. Until 2026-09-29 this org was aliased `line-ns`; the old non-namespaced `line-dev` was deleted that day. |
+| `line-dev` | **The one scratch org** (namespaced `tsthlineoa`, user `test-e8dratclzthk@example.com`); the project default | Created **2026-10-11**, expires **2026-11-10**. Rebuild: `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev`, then `sf apex run --file scripts/apex/seed-daily-sync.apex`. Holds that seed data (OA "May Sales OA", Rep A, Somchai, Niran). Org time zone America/Los_Angeles (scratch default). The previous org (`test-egv3lqxcpg7t`) was deleted the same day. |
 
-**Another active scratch org** is listed in the Dev Hub, `test-bdmfveozrgxg@example.com`, which this machine has no login
-for. It takes one of the 3 slots. The user was asked whether they recognise it; don't delete it without asking.
+The unknown scratch org `test-bdmfveozrgxg@example.com` had expired by 2026-10-11. Only `line-dev` is active now.
 
 The OA is on the **free LINE plan (300 push messages a month)**. Don't run bulk-send tests against it.
 
@@ -56,7 +55,7 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
   message stored → rep notified. Verified in a scratch org and in the installed package in the QA org.
 - Profile callout names the conversation; auto-create makes the Contact (QA org, 2026-09-24).
 - Reply from the chat panel delivered to the phone.
-- Fake signature → 401, unknown OA → 403, junk → 400, and nothing is stored.
+- Fake signature → 401, unknown OA → 403 (401 since DEC-38, scratch only), junk → 400, and nothing is stored.
 - In the installed package, the protected setting `LINE_OA_Credential__c` is invisible to a subscriber System
   Administrator (SOQL returns "not supported").
 - Registering an OA from the LINE Admin page sets the webhook URL at LINE.
@@ -66,6 +65,19 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
   **scheduled from the LINE Admin page by a subscriber admin**, which only an installed package could prove.
 
 ## 4. Open items
+
+0. **TA review feedback (received 2026-10-07):** no Required findings; 10 Recommended, 3 Optional, 6 At your discretion.
+   Source files `~/Downloads/LINE_OA_Architecture_Review.pptx` and `LINE_OA_Review_Findings.xlsx`; our draft answers in
+   `~/Downloads/LINE_OA_Review_Findings_draft_responses.xlsx`; BA summary doc
+   https://claude.ai/artifact/Du5nL5FvDpa55q3FffPzLr. The TA asked that the feedback be addressed before development continues.
+   - **Built in the scratch org, not yet in a beta (user said not to build a package yet, 2026-10-11):** DEC-36
+     default Account (TA R4 direction), DEC-37 only the assigned rep (or, for an inactive OA, the fallback owner/queue)
+     can send (R1), DEC-38 unknown OA → 401 (R8), DEC-39 same-Provider checkbox at registration (R3).
+   - **Next:** when the user says so, build Beta 7 with all four, then the QA reinstall (uninstall deletes LINE data,
+     including `Contact.LINE_User_Id__c`, so existing Contacts would be duplicated on the next message).
+   - **GTM (Thai team):** licence, R4 auto-create default, R15 error log object, S1 chat panel scope, R6 app replies.
+   - **QA org data (2026-10-11):** Account "Chaipitch (test)" created and Contact "Chaipitch" put under it by hand, so
+     Rep Sales2 can open it. OAs: TS Chaipitch, TS SalesRep1 (other Provider), SalesRep2 (same Provider as TS Chaipitch).
 
 1. **TA review on 7 Oct 2026.** Materials prepared 2026-10-04/06 (outside the repo):
    - **BA document corrected** with tracked changes and comments: `~/Downloads/LINE_OA_Salesforce_Architecture_Design_TA_Review_corrected.docx`
@@ -85,13 +97,13 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
    after Beta 5 was installed. The card shows the org time zone and warns if the admin's differs.
 3. **M6 needs, before starting:**
    - the design for recognising auto-created Contacts (DEC-34: linking to the real Contact deletes an empty stub);
-   - a **second LINE OA** under the same Provider, for the [VERIFY] that a customer has the same LINE user ID in both (D5).
+   - ✅ The D5 [VERIFY] is done (2026-10-11, QA org): OA *SalesRep2* under the same Provider as *TS Chaipitch* gave the same user ID and
+     auto-linked to the existing Contact; *TS SalesRep1*, under a different Provider, gave a new ID and a duplicate Contact (DECISIONS §2).
 4. **Optional, not built:** *Sync a date* (rebuild a past day's Events). Today only "today" can be run by hand.
 5. **Business questions** in `08`: managers replying on a rep's behalf, retention period, invite wording, one active OA
    per rep enforced or not, Opportunity links.
 6. **Small bug, not fixed:** the OA table's Active/Inactive badge sets a `variant` attribute that `lightning-badge`
    doesn't have, so it never shows a colour.
-7. **Dev Hub:** an unknown active scratch org `test-bdmfveozrgxg@example.com` takes one of the 3 slots (§2).
 
 ## 5. Traps already hit (don't rediscover these)
 
@@ -133,6 +145,9 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
 - **`--json` output from `sf` can start with a CLI-update warning line**, which breaks JSON parsing. Check the text, not
   just the parser.
 - **Running Apex tests makes source tracking report conflicts**; `--ignore-conflicts` is safe in our scratch orgs.
+- **Never pipe `setup-scratch.sh` (or a deploy) into `head`.** When `head` exits, the script dies of SIGPIPE half-way. On
+  2026-10-11 that left an org whose permission sets were deployed before the Activity fields existed, so the admin had no
+  access to `Event.LINE_Conversation__c` ("No such column"). Fix: redeploy `permissionsets`. Redirect to a file instead.
 - **Salesforce's docs site refuses automated fetches.** Use LINE's OpenAPI specs at `github.com/line/line-openapi`, and
   check Salesforce behaviour with a `--dry-run` deploy to a scratch org.
 

@@ -22,7 +22,7 @@
 | Risk | Checked in |
 |---|---|
 | Stateless token issuance works with Channel ID + secret | ✅ Verified live (DECISIONS §2) |
-| Same LINE user ID across OAs under one Provider (auto-link depends on it) | M6 |
+| ✅ **Resolved (2026-10-11):** same Provider gives the same LINE user ID and auto-links to one Contact; different Providers give different IDs and a duplicate Contact (DECISIONS §2). Remaining: enforce "one Provider per client" in setup and as a reminder at OA registration (TA review R3). | M6 |
 | `line.me/R/oaMessage` pre-fill works for users who haven't added the OA yet (iOS/Android) | M6 |
 | Automated Process user can send custom notifications and run callout queueables | ✅ Verified live, also in the installed package (DECISIONS §2) |
 | CustomNotificationType is packageable and resolvable in subscriber orgs | ✅ Verified in Beta 1 (DECISIONS §2) |
@@ -37,6 +37,7 @@
 | ✅ **Resolved:** the first beta was built after M5 with real metadata, so an empty beta was never needed. | – |
 | **Stale secrets (found 2026-10-03).** LINE sends no event when a channel is deleted, nothing in the package calls `LineCredentialStore.remove()`, and subscriber admins can't reach the protected setting, so a secret stays until the package is uninstalled. A deleted channel's secret is dead (LINE issues no token for it), but a deactivated-yet-live OA keeps a working secret we no longer need. Storage is negligible (<1 KB each). Proposed for M8: a *Remove OA* action that deletes the secret and keeps the history; a nightly credentials check that flags OAs LINE rejects; delete the secret whenever an OA record is deleted. No automatic deletion. ✅ **Resolved in Beta 6 (DEC-33).** | Beta 6 |
 | **Callout allowlist (raised preparing the TA review, 2026-10-04).** Callouts are allowlisted by packaged Remote Site Settings for the two LINE hosts; Salesforce's recommended route is Named Credentials. Our authentication is per OA and issued at runtime, so it can't live in a Named Credential's authentication, but a **no-authentication Named Credential used only as the endpoint** is a valid hardening step. Risk: it needs callout access through an External Credential principal in a permission set, including for the Automated Process user; unproven in an installed package. | M11 |
+| **Private Contacts (found live 2026-10-11).** With Contact sharing *Controlled by Parent*, a Contact without an Account is visible only to its owner, so a second rep whose conversation auto-linked to it couldn't open it. ✅ **Fixed in the scratch org (DEC-36):** an admin-chosen default Account for auto-created Contacts, with a warning on the admin page. Contacts created before the setting existed must be given an Account by hand. Whether auto-create stays on by default is still a GTM question (TA R4). | Beta 7 |
 
 ## Open questions — business (via BA)
 

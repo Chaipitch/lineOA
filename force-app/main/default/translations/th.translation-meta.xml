@@ -150,6 +150,11 @@
         <name>LINE_Chat_Unfollowed</name>
     </customLabels>
     <customLabels>
+        <label
+    >เฉพาะพนักงานขายที่รับผิดชอบบัญชี LINE นี้เท่านั้นที่ตอบกลับได้</label>
+        <name>LINE_Chat_Not_Assigned_Rep</name>
+    </customLabels>
+    <customLabels>
         <label>การจัดการ LINE Connect</label>
         <name>LINE_Admin_Title</name>
     </customLabels>
@@ -173,6 +178,24 @@
     <customLabels>
         <label>ผู้รับผิดชอบสำรอง</label>
         <name>LINE_Admin_Fallback_Owner</name>
+    </customLabels>
+    <customLabels>
+        <label>บัญชี (Account) สำหรับผู้ติดต่อใหม่</label>
+        <name>LINE_Admin_Default_Account</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >ผู้ติดต่อที่ LINE Connect สร้างอัตโนมัติจะอยู่ภายใต้บัญชีนี้ เว้นว่างไว้หากไม่ต้องการกำหนดบัญชี</label>
+        <name>LINE_Admin_Default_Account_Help</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >การแชร์ผู้ติดต่อในองค์กรนี้ขึ้นอยู่กับบัญชี (Controlled by Parent) ผู้ติดต่อที่ไม่มีบัญชีจะเห็นได้เฉพาะเจ้าของ โปรดเลือกบัญชีสำหรับผู้ติดต่อใหม่ มิฉะนั้นพนักงานขายคนอื่นจะเปิดดูลูกค้าที่ใช้ร่วมกันไม่ได้</label>
+        <name>LINE_Admin_Default_Account_Warning</name>
+    </customLabels>
+    <customLabels>
+        <label>ค่าเริ่มต้นสำหรับผู้ติดต่อใหม่ต้องเป็นบัญชี (Account)</label>
+        <name>LINE_Admin_Default_Account_Invalid</name>
     </customLabels>
     <customLabels>
         <label>บันทึกการตั้งค่า</label>
@@ -219,6 +242,11 @@
         <label
     >การลงทะเบียนจะตรวจสอบข้อมูลกับ LINE อ่านรายละเอียด OA และตั้งค่า webhook มาที่องค์กรนี้</label>
         <name>LINE_Admin_Register_Help</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >OA นี้อยู่ภายใต้ LINE Provider เดียวกับ OA อื่นทั้งหมดขององค์กร (หากไม่ใช่ ลูกค้าคนเดียวกันจะได้ LINE ID ต่างกันในแต่ละ OA และจะเกิดผู้ติดต่อซ้ำ)</label>
+        <name>LINE_Admin_Same_Provider_Confirm</name>
     </customLabels>
     <customLabels>
         <label>เฉพาะผู้ดูแล LINE เท่านั้นที่เปิดหน้านี้ได้</label>

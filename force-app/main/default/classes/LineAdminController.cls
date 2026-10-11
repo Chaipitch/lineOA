@@ -36,6 +36,12 @@ public with sharing class LineAdminController {
     public Boolean dailySyncEnabled;
     @AuraEnabled
     public Boolean updateContactOwnerOnReassign;
+    /** Account that automatically created Contacts go under (DEC-36). */
+    @AuraEnabled
+    public Id defaultAccountId;
+    /** Read-only: Contact sharing is Controlled by Parent, so a Contact without an Account is private (DEC-36). */
+    @AuraEnabled
+    public Boolean contactsFollowAccount;
   }
 
   /** One registered OA. Never carries the channel secret. */
@@ -111,6 +117,7 @@ public with sharing class LineAdminController {
    * @param autoCreateContact whether a new LINE user's first message creates a Contact
    * @param dailySyncEnabled whether the nightly Event sync runs
    * @param updateContactOwnerOnReassign whether reassigning an OA also moves Contact ownership
+   * @param defaultAccountId Account that automatically created Contacts go under; null for none
    * @return the saved settings
    */
   @AuraEnabled
@@ -123,10 +130,17 @@ public with sharing class LineAdminController {
     Integer messageRetentionMonths,
     Boolean autoCreateContact,
     Boolean dailySyncEnabled,
-    Boolean updateContactOwnerOnReassign
+    Boolean updateContactOwnerOnReassign,
+    Id defaultAccountId
   ) {
     try {
       assertAdmin();
+      if (
+        defaultAccountId != null &&
+        defaultAccountId.getSObjectType() != Account.SObjectType
+      ) {
+        throw asAuraException(System.Label.LINE_Admin_Default_Account_Invalid);
+      }
       LINE_Settings__c settings = LINE_Settings__c.getOrgDefaults();
       if (settings == null || settings.Id == null) {
         settings = new LINE_Settings__c(
@@ -145,6 +159,7 @@ public with sharing class LineAdminController {
       settings.Daily_Sync_Enabled__c = dailySyncEnabled == true;
       settings.Update_Contact_Owner_On_Reassign__c =
         updateContactOwnerOnReassign == true;
+      settings.Default_Account_Id__c = defaultAccountId;
       // Custom settings carry no sharing or field-level security of their own; the admin check above is the gate.
       upsert as system settings;
       LineSettings.reset();
@@ -247,7 +262,25 @@ public with sharing class LineAdminController {
     view.autoCreateContact = LineSettings.autoCreateContact();
     view.dailySyncEnabled = LineSettings.dailySyncEnabled();
     view.updateContactOwnerOnReassign = LineSettings.updateContactOwnerOnReassign();
+    view.defaultAccountId = LineSettings.defaultAccountId();
+    view.contactsFollowAccount = contactsFollowAccount();
     return view;
+  }
+
+  // Organization is readable by every user; a failure only hides the hint, never the settings.
+  private static Boolean contactsFollowAccount() {
+    try {
+      List<Organization> org = [
+        SELECT DefaultContactAccess
+        FROM Organization
+        WITH USER_MODE
+        LIMIT 1
+      ];
+      return !org.isEmpty() &&
+        org[0].DefaultContactAccess == 'ControlledByParent';
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   /**

@@ -74,6 +74,24 @@ public inherited sharing class LineSettings {
   }
 
   /**
+   * @return the Account that automatically created Contacts go under (DEC-36), or null if blank or not an Account Id
+   */
+  public static Id defaultAccountId() {
+    String value = record().Default_Account_Id__c;
+    if (String.isBlank(value)) {
+      return null;
+    }
+    try {
+      Id accountId = Id.valueOf(value.trim());
+      return accountId.getSObjectType() == Account.SObjectType
+        ? accountId
+        : null;
+    } catch (StringException e) {
+      return null;
+    }
+  }
+
+  /**
    * @return seconds between chat panel polls (default 5, minimum 2)
    */
   public static Integer pollIntervalSeconds() {

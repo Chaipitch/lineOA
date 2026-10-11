@@ -28,7 +28,7 @@ If the image fails, the panel shows `[Sticker]`.
 - One Site guest user per subscriber org, holding only the `LINE_Webhook_Guest` permission set:
   Apex class `LineWebhookResource` and Create on `LINE_Webhook_Event__e`. No object read access.
 - Endpoint: `POST /services/apexrest/<ns>/line/webhook`.
-- Order of checks: resolve the OA by `destination` (unknown → 403) → verify `X-Line-Signature`
+- Order of checks: resolve the OA by `destination` (unknown → 401, DEC-38) → verify `X-Line-Signature`
   (HMAC-SHA256 over the raw body with that OA's channel secret; bad or missing → 401) → publish one platform event per LINE event.
 - No business DML and no callouts in the guest context. Processing runs later in the PE trigger as Automated Process.
 - The permission set also holds **Read** on `LINE_Webhook_Event__e`, because the platform won't grant Create without it. Read on a
@@ -38,7 +38,7 @@ Implemented (M3), tested and verified live with LINE:
 - `LINE_Webhook_Guest` = Apex class `LineWebhookResource` + `LINE_Webhook_Event__e` Create/Read. No objects, no fields.
 - Input limits before authentication: body ≤ 1 MB, and only the top-level `destination` is read (streaming parser) to pick the secret.
 - Signature: HMAC-SHA256 over the raw body; Base64 compared **case-sensitively in constant time** (`LineSignatureVerifier`). Missing, wrong-case or wrong signatures → 401 (tests).
-- Unknown destination → 403; malformed → 400; nothing is published or stored in any rejected case (tests).
+- Unknown destination → 401, the same as a bad signature, so registered OAs can't be enumerated (DEC-38); malformed → 400; nothing is published or stored in any rejected case (tests).
 - The webhook writes no records at all, not even error logs, so unauthenticated traffic can't create data. Its only output after authentication is `EventBus.publish`.
 - Code Analyzer's graph engine flags the system-mode OA lookup on this path (High). It is suppressed at `LineOAConfigSelector.byBotUserIds` with the reason above (DECISIONS DEC-18).
 
@@ -83,6 +83,7 @@ From 02 §2. Each class carries a justification comment in code. Filled in as ea
 | `LineLinkService` | Links and creates Contacts from the inbound path (Automated Process); user-initiated paths will check access in user mode first | ✅ M6 part (auto-link, auto-create; DEC-27) |
 | `LineOAConfigTriggerHandler` | Deletes the protected secrets of deleted OAs for whoever deleted them; the setting is reachable only from package code | ✅ Beta 6 (DEC-33) |
 | `LineDailyEventSyncBatch` | Runs as whichever admin scheduled it, possibly for years; must see every conversation whatever that admin's sharing is. Writes Events owned by reps; nothing is shown to a user | ✅ M9 (DEC-30; queries `WITH SYSTEM_MODE`, DML `AccessLevel.SYSTEM_MODE`, partial success) |
+| Send authorization (DEC-37) | `LineChatController.assertCanSend`: seeing a conversation is not enough; only the OA's assigned rep (inactive OA: fallback owner or fallback-queue member) may send. OA routing fields read in system mode so OA sharing can't widen who may send | ✅ |
 | `LineOutboundService` | Called after the controller checks access in user mode; writes the message record | ✅ M4 (class-wide `sfge` suppression with reason, DEC-20) |
 | `LineOAConfigTriggerHandler` | Starts the reassignment batch | M8 |
 

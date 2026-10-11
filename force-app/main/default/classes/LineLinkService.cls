@@ -95,6 +95,7 @@ public without sharing class LineLinkService {
     Map<Id, Id> result = new Map<Id, Id>();
     Map<String, Contact> newByLineUserId = new Map<String, Contact>();
     Map<String, List<Id>> conversationsByLineUserId = new Map<String, List<Id>>();
+    Id accountId = defaultAccountId();
 
     for (LINE_Conversation__c c : conversations) {
       String lineUserId = c.LINE_User_Id__c;
@@ -108,7 +109,8 @@ public without sharing class LineLinkService {
       Contact contact = new Contact(
         LastName = lastNameFor(c, displayNames.get(c.Id)),
         LINE_User_Id__c = lineUserId,
-        LINE_OA_Configuration__c = c.LINE_OA_Configuration__c
+        LINE_OA_Configuration__c = c.LINE_OA_Configuration__c,
+        AccountId = accountId
       );
       // The rep who owns the conversation owns the Contact; a queue-owned conversation leaves the default owner.
       if (c.OwnerId != null && c.OwnerId.getSObjectType() == User.SObjectType) {
@@ -138,6 +140,33 @@ public without sharing class LineLinkService {
       }
     }
     return result;
+  }
+
+  // DEC-36: with Contact sharing Controlled by Parent, a Contact without an Account is visible only to its owner, so a
+  // second rep whose conversation auto-links to it could never open it. A deleted default Account is logged and the
+  // Contact is created without one, rather than failing the insert.
+  private static Id defaultAccountId() {
+    Id accountId = LineSettings.defaultAccountId();
+    if (accountId == null) {
+      return null;
+    }
+    List<Account> found = [
+      SELECT Id
+      FROM Account
+      WHERE Id = :accountId
+      WITH SYSTEM_MODE
+      LIMIT 1
+    ];
+    if (found.isEmpty()) {
+      LineLogger.error(
+        'LineLinkService.createContacts',
+        'The default Account in LINE settings no longer exists; Contacts are created without an Account.',
+        null,
+        accountId
+      );
+      return null;
+    }
+    return accountId;
   }
 
   // LINE gives us a display name and nothing else, so it becomes the last name. Never blank: Contact requires one.

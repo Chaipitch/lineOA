@@ -52,7 +52,8 @@ const CONVERSATION = {
   status: "Following",
   unreadCount: 2,
   oaName: "OA A",
-  isPrimaryOa: true
+  isPrimaryOa: true,
+  canSend: true
 };
 
 function inboundMessage(id, text, sentAt = "2026-09-22T03:00:00.000Z") {
@@ -251,6 +252,33 @@ describe("c-line-chat", () => {
       text: "Hello"
     });
     expect(element.shadowRoot.querySelectorAll(".line-bubble").length).toBe(2);
+  });
+
+  it("is read-only for someone who is not the OA's assigned rep", async () => {
+    getConversations.mockResolvedValue([{ ...CONVERSATION, canSend: false }]);
+    const element = createComponent();
+    await flush();
+
+    expect(
+      element.shadowRoot.querySelector('[data-id="read-only-notice"]')
+    ).not.toBeNull();
+    const textarea = element.shadowRoot.querySelector("lightning-textarea");
+    textarea.value = "Hello";
+    textarea.dispatchEvent(new CustomEvent("change"));
+    await flush();
+    const sendButton = [
+      ...element.shadowRoot.querySelectorAll("lightning-button")
+    ].pop();
+    expect(sendButton.disabled).toBe(true);
+  });
+
+  it("shows no read-only notice to the assigned rep", async () => {
+    const element = createComponent();
+    await flush();
+
+    expect(
+      element.shadowRoot.querySelector('[data-id="read-only-notice"]')
+    ).toBeNull();
   });
 
   it("shows an error toast when sending fails", async () => {

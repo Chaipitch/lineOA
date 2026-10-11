@@ -64,6 +64,18 @@
           </div>
         </template>
 
+        <template lwc:if={showReadOnlyNotice}>
+          <div class="slds-var-m-bottom_x-small" data-id="read-only-notice">
+            <lightning-icon
+              icon-name="utility:lock"
+              size="x-small"
+            ></lightning-icon>
+            <span class="slds-var-m-left_xx-small slds-text-color_weak"
+              >{labels.notAssignedRep}</span
+            >
+          </div>
+        </template>
+
         <div class="line-messages slds-scrollable_y" onscroll={handleScroll}>
           <template lwc:if={hasMore}>
             <div class="slds-align_absolute-center slds-var-m-bottom_x-small">

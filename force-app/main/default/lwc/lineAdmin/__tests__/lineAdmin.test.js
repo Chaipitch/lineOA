@@ -118,6 +118,15 @@ function inputByLabel(element, label) {
   );
 }
 
+// DEC-39: registration needs the same-Provider confirmation.
+function confirmSameProvider(element) {
+  const box = element.shadowRoot.querySelector(
+    'lightning-input[data-id="same-provider"]'
+  );
+  box.checked = true;
+  box.dispatchEvent(new CustomEvent("change"));
+}
+
 function buttonByLabel(element, label) {
   return [...element.shadowRoot.querySelectorAll("lightning-button")].find(
     (b) => b.label === label
@@ -185,6 +194,63 @@ describe("c-line-admin", () => {
     );
   });
 
+  it("warns when Contacts follow the Account and no default Account is set", async () => {
+    getSettings.mockResolvedValue({
+      ...SETTINGS,
+      autoCreateContact: true,
+      contactsFollowAccount: true
+    });
+    const element = createComponent();
+    await flush();
+
+    expect(
+      element.shadowRoot.querySelector('[data-id="default-account-warning"]')
+    ).not.toBeNull();
+  });
+
+  it("saves the default Account and hides the warning once one is chosen", async () => {
+    getSettings.mockResolvedValue({
+      ...SETTINGS,
+      autoCreateContact: true,
+      contactsFollowAccount: true
+    });
+    const element = createComponent();
+    await flush();
+
+    const picker = [
+      ...element.shadowRoot.querySelectorAll("lightning-record-picker")
+    ].find((p) => p.label === "c.LINE_Admin_Default_Account");
+    picker.dispatchEvent(
+      new CustomEvent("change", { detail: { recordId: "001000000000001" } })
+    );
+    await flush();
+    expect(
+      element.shadowRoot.querySelector('[data-id="default-account-warning"]')
+    ).toBeNull();
+
+    buttonByLabel(element, "c.LINE_Admin_Save").dispatchEvent(
+      new CustomEvent("click")
+    );
+    await flush();
+    expect(saveSettings.mock.calls[0][0].defaultAccountId).toBe(
+      "001000000000001"
+    );
+  });
+
+  it("does not warn when Contact sharing is independent of the Account", async () => {
+    getSettings.mockResolvedValue({
+      ...SETTINGS,
+      autoCreateContact: true,
+      contactsFollowAccount: false
+    });
+    const element = createComponent();
+    await flush();
+
+    expect(
+      element.shadowRoot.querySelector('[data-id="default-account-warning"]')
+    ).toBeNull();
+  });
+
   it("keeps the register button disabled until every field is filled", async () => {
     const element = createComponent();
     await flush();
@@ -204,10 +270,13 @@ describe("c-line-admin", () => {
     expect(buttonByLabel(element, "c.LINE_Admin_Register").disabled).toBe(true);
 
     element.shadowRoot
-      .querySelectorAll("lightning-record-picker")[1]
+      .querySelector('lightning-record-picker[data-id="rep-picker"]')
       .dispatchEvent(
         new CustomEvent("change", { detail: { recordId: "005000000000002" } })
       );
+    await flush();
+    expect(buttonByLabel(element, "c.LINE_Admin_Register").disabled).toBe(true);
+    confirmSameProvider(element);
     await flush();
 
     expect(buttonByLabel(element, "c.LINE_Admin_Register").disabled).toBe(
@@ -226,10 +295,11 @@ describe("c-line-admin", () => {
     secret.value = "fake_secret";
     secret.dispatchEvent(new CustomEvent("change"));
     element.shadowRoot
-      .querySelectorAll("lightning-record-picker")[1]
+      .querySelector('lightning-record-picker[data-id="rep-picker"]')
       .dispatchEvent(
         new CustomEvent("change", { detail: { recordId: "005000000000002" } })
       );
+    confirmSameProvider(element);
     await flush();
 
     buttonByLabel(element, "c.LINE_Admin_Register").dispatchEvent(
@@ -263,10 +333,11 @@ describe("c-line-admin", () => {
     secret.value = "wrong";
     secret.dispatchEvent(new CustomEvent("change"));
     element.shadowRoot
-      .querySelectorAll("lightning-record-picker")[1]
+      .querySelector('lightning-record-picker[data-id="rep-picker"]')
       .dispatchEvent(
         new CustomEvent("change", { detail: { recordId: "005000000000002" } })
       );
+    confirmSameProvider(element);
     await flush();
     buttonByLabel(element, "c.LINE_Admin_Register").dispatchEvent(
       new CustomEvent("click")

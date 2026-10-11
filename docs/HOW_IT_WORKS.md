@@ -62,7 +62,7 @@ everywhere else). It is also the only code an anonymous internet user can reach,
 
 ```
 body empty, oversized, or unparsable        → 400
-destination is not an OA we know            → 403
+destination is not an OA we know            → 401  (same as a bad signature: DEC-38)
 X-Line-Signature missing or wrong           → 401
 otherwise: publish one platform event per   → 200
 LINE event, and nothing else
@@ -126,7 +126,12 @@ After the profile callout, a conversation with no Contact gets one (DEC-27):
 - A Contact **already holding that LINE user ID** always wins. One person who chats with two reps' OAs has two
   conversations and **one** Contact.
 - Otherwise, while `Auto_Create_Contact__c` is on (the default), a Contact is created: `LastName` = the LINE display
-  name, `LINE_User_Id__c` and the originating OA set, owner = the rep who owns the conversation.
+  name, `LINE_User_Id__c` and the originating OA set, owner = the rep who owns the conversation, under the
+  admin's **default Account** if one is set (DEC-36).
+
+Why the default Account matters: in an org whose Contact sharing is *Controlled by Parent*, a Contact without an
+Account is visible only to its owner. When a second rep's conversation links to the first rep's Contact, the second rep
+couldn't open it. We saw exactly this in the QA org.
 
 It runs *after* the profile callout precisely so the Contact is named "สมชาย" and not `U4a6a0e38…`.
 
@@ -179,6 +184,9 @@ Timers are cleared in `disconnectedCallback`.
 Everything a rep can reach goes through this class, and it is the only place where user permissions are enforced:
 `with sharing`, every query `WITH USER_MODE`. If the rep cannot see the conversation, the query returns nothing —
 there is no separate access check to forget.
+
+Sending has one more check (DEC-37): seeing a conversation is not enough to reply. Only the OA's assigned rep can
+send; for an inactive OA, the fallback owner (or a member of the fallback queue). Anyone else gets the panel read-only.
 
 Reads use **keyset pagination** on (`Sent_At__c`, `Id`), never `OFFSET` (D12), so the millionth message pages as fast
 as the first.

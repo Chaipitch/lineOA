@@ -139,7 +139,7 @@ Event values (DEC-28, DEC-30):
 |---|---|
 | Platform event `LINE_Webhook_Event__e` | Publish Immediately. Fields: `OA_Configuration_Id__c` Text(18), `Webhook_Event_Id__c` Text(40), `Event_Json__c` Long Text(131072). One event per LINE event. Subscriber: `LineWebhookEventTrigger` (runs as Automated Process; no subscriber config). |
 | **Protected** list custom setting `LINE_OA_Credential__c` | `Name` = Channel ID (≤ 38 chars), `Channel_Secret__c` Text(255). Visibility **Protected**. Only `LineCredentialStore` reads or writes it. Never exposed to LWC, logs or debug. |
-| Hierarchy custom setting `LINE_Settings__c` (org-level record; Visibility Public) | `Site_Base_Url__c` Text(255); `Fallback_Owner_Id__c` Text(18); `Poll_Interval_Seconds__c` Number (default 5); `Max_Download_Bytes__c` Number (default 10,000,000); `Public_Link_Expiry_Days__c` Number (7); `Invite_Code_Expiry_Days__c` Number (7); `Message_Retention_Months__c` Number (0 = keep forever); `Daily_Sync_Enabled__c` Checkbox (true); `Update_Contact_Owner_On_Reassign__c` Checkbox (false); `Auto_Create_Contact__c` Checkbox (true, DEC-27). `LineSettings` supplies code defaults when blank; edited through `lineAdmin`. |
+| Hierarchy custom setting `LINE_Settings__c` (org-level record; Visibility Public) | `Site_Base_Url__c` Text(255); `Fallback_Owner_Id__c` Text(18); `Poll_Interval_Seconds__c` Number (default 5); `Max_Download_Bytes__c` Number (default 10,000,000); `Public_Link_Expiry_Days__c` Number (7); `Invite_Code_Expiry_Days__c` Number (7); `Message_Retention_Months__c` Number (0 = keep forever); `Daily_Sync_Enabled__c` Checkbox (true); `Update_Contact_Owner_On_Reassign__c` Checkbox (false); `Auto_Create_Contact__c` Checkbox (true, DEC-27); `Default_Account_Id__c` Text(18), the Account auto-created Contacts go under, blank = none (DEC-36). `LineSettings` supplies code defaults when blank; edited through `lineAdmin`. |
 | Object `LINE_Error_Log__c` | `Source__c` Text(100), `Message__c` Long Text(32000), `Stack_Trace__c` Long Text(32000), `LINE_OA_Configuration__c` Lookup, `Related_Record_Id__c` Text(18), `Http_Status__c` Number(3,0). OWD Private; visible to `LINE_Admin`. Kept 90 days by the retention batch. |
 | Custom permission `LINE_Admin` | Checked by `LineAdminController` (in addition to object permissions) |
 | CustomNotificationType `LINE_New_Message` (desktop + mobile) | New inbound message alert. Look up by DeveloperName + namespace. [VERIFY packageable] |
@@ -162,7 +162,9 @@ Implemented only in `LineLinkService`.
 2. **Auto-link**: `Contact.LINE_User_Id__c` = the conversation's `LINE_User_Id__c` → set `Contact__c`.
    - **Auto-create** (DEC-27): on the customer's **first message**, if no Contact holds that LINE user ID and
      `Auto_Create_Contact__c` is on (default), create one: `LastName` = LINE display name (falling back to the LINE
-     user ID), `LINE_User_Id__c`, `LINE_OA_Configuration__c`, owner = the conversation's owner when that is a user.
+     user ID), `LINE_User_Id__c`, `LINE_OA_Configuration__c`, owner = the conversation's owner when that is a user,
+     `AccountId` = `Default_Account_Id__c` when set (DEC-36: with Contact sharing *Controlled by Parent* a Contact without
+     an Account is private to its owner, so a second rep linked to it could not open it).
      One Contact per LINE user, shared by every OA's conversation with them. Runs after the profile callout, in
      `LineCalloutQueueable`. A failed insert is logged and leaves the conversation unlinked.
 3. **Manual link** (`linkToContact(conversationId, contactId)`):

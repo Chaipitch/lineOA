@@ -94,7 +94,8 @@ private class LineWebhookResourceTest {
   }
 
   @IsTest
-  static void unknownDestinationIs403() {
+  // DEC-38: the same answer as a bad signature, so a caller can't tell which OAs are registered.
+  static void unknownDestinationIs401LikeABadSignature() {
     LineTestFactory.ensurePackageAccess();
     String raw = LineTestFactory.webhookBody(
       'Uunknown',
@@ -103,8 +104,13 @@ private class LineWebhookResourceTest {
       }
     );
     Assert.areEqual(
-      403,
+      401,
       LineTestFactory.callWebhook(raw, LineTestFactory.SECRET_A)
+    );
+    Assert.areEqual(
+      0,
+      [SELECT COUNT() FROM LINE_Conversation__c WITH SYSTEM_MODE],
+      'Nothing is stored for an unknown OA'
     );
   }
 

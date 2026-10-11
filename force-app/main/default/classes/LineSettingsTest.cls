@@ -93,4 +93,33 @@ private class LineSettingsTest {
 
     Assert.isNull(LineSettings.fallbackOwnerId());
   }
+
+  @IsTest
+  static void defaultAccountMustBeAnAccount() {
+    LineTestFactory.ensurePackageAccess();
+    Assert.isNull(LineSettings.defaultAccountId(), 'Blank by default');
+
+    LINE_Settings__c settings = new LINE_Settings__c(
+      SetupOwnerId = UserInfo.getOrganizationId(),
+      Default_Account_Id__c = UserInfo.getUserId()
+    );
+    insert as system settings;
+    LineSettings.reset();
+    Assert.isNull(
+      LineSettings.defaultAccountId(),
+      'A user Id is not an Account'
+    );
+
+    settings.Default_Account_Id__c = 'not-an-id';
+    update as system settings;
+    LineSettings.reset();
+    Assert.isNull(LineSettings.defaultAccountId(), 'Garbage is ignored');
+
+    Account placeholder = new Account(Name = 'LINE Unassigned');
+    insert as system placeholder;
+    settings.Default_Account_Id__c = placeholder.Id;
+    update as system settings;
+    LineSettings.reset();
+    Assert.areEqual(placeholder.Id, LineSettings.defaultAccountId());
+  }
 }

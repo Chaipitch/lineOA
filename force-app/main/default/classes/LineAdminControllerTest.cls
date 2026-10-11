@@ -66,7 +66,8 @@ private class LineAdminControllerTest {
                 null,
                 true,
                 true,
-                false
+                false,
+                null
               );
             }
             when 3 {
@@ -167,7 +168,8 @@ private class LineAdminControllerTest {
         6,
         false,
         false,
-        true
+        true,
+        null
       );
     }
     Test.stopTest();
@@ -203,7 +205,8 @@ private class LineAdminControllerTest {
         null,
         true,
         true,
-        false
+        false,
+        null
       );
     }
 
@@ -213,6 +216,65 @@ private class LineAdminControllerTest {
     Assert.areEqual(7, saved.publicLinkExpiryDays);
     Assert.areEqual(0, saved.messageRetentionMonths);
     Assert.isNull(saved.fallbackOwnerId);
+    Assert.isNull(saved.defaultAccountId, 'No default Account unless chosen');
+  }
+
+  @IsTest
+  static void savesTheDefaultAccountForNewContacts() {
+    LineTestFactory.ensurePackageAccess();
+    Account placeholder = new Account(Name = 'LINE Unassigned');
+    insert as system placeholder;
+    LineAdminController.SettingsView saved;
+
+    System.runAs(admin()) {
+      saved = LineAdminController.saveSettings(
+        SITE,
+        null,
+        null,
+        null,
+        null,
+        null,
+        true,
+        true,
+        false,
+        placeholder.Id
+      );
+    }
+
+    Assert.areEqual(placeholder.Id, saved.defaultAccountId);
+    Assert.areEqual(placeholder.Id, LineSettings.defaultAccountId());
+    Assert.isNotNull(
+      saved.contactsFollowAccount,
+      'The page needs to know whether Contact sharing follows the Account'
+    );
+  }
+
+  @IsTest
+  static void rejectsADefaultThatIsNotAnAccount() {
+    LineTestFactory.ensurePackageAccess();
+    String message;
+
+    System.runAs(admin()) {
+      try {
+        LineAdminController.saveSettings(
+          SITE,
+          null,
+          null,
+          null,
+          null,
+          null,
+          true,
+          true,
+          false,
+          UserInfo.getUserId()
+        );
+      } catch (AuraHandledException e) {
+        message = e.getMessage();
+      }
+    }
+
+    Assert.areEqual(System.Label.LINE_Admin_Default_Account_Invalid, message);
+    Assert.isNull(LineSettings.defaultAccountId(), 'Nothing was saved');
   }
 
   // ---------- registration ----------

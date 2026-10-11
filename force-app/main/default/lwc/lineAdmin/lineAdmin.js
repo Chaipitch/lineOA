@@ -18,6 +18,9 @@ import SITE_BASE_URL from "@salesforce/label/c.LINE_Admin_Site_Base_Url";
 import SITE_BASE_URL_HELP from "@salesforce/label/c.LINE_Admin_Site_Base_Url_Help";
 import WEBHOOK_URL from "@salesforce/label/c.LINE_Admin_Webhook_Url";
 import FALLBACK_OWNER from "@salesforce/label/c.LINE_Admin_Fallback_Owner";
+import DEFAULT_ACCOUNT from "@salesforce/label/c.LINE_Admin_Default_Account";
+import DEFAULT_ACCOUNT_HELP from "@salesforce/label/c.LINE_Admin_Default_Account_Help";
+import DEFAULT_ACCOUNT_WARNING from "@salesforce/label/c.LINE_Admin_Default_Account_Warning";
 import SAVE from "@salesforce/label/c.LINE_Admin_Save";
 import SAVED from "@salesforce/label/c.LINE_Admin_Saved";
 import OAS from "@salesforce/label/c.LINE_Admin_OAs";
@@ -29,6 +32,7 @@ import CHANNEL_SECRET_HELP from "@salesforce/label/c.LINE_Admin_Channel_Secret_H
 import ASSIGNED_REP from "@salesforce/label/c.LINE_Admin_Assigned_Rep";
 import REGISTERED from "@salesforce/label/c.LINE_Admin_Registered";
 import REGISTER_HELP from "@salesforce/label/c.LINE_Admin_Register_Help";
+import SAME_PROVIDER from "@salesforce/label/c.LINE_Admin_Same_Provider_Confirm";
 import GENERIC_ERROR from "@salesforce/label/c.LINE_Error_Generic";
 import JOBS from "@salesforce/label/c.LINE_Admin_Jobs";
 import JOBS_HELP from "@salesforce/label/c.LINE_Admin_Jobs_Help";
@@ -69,6 +73,7 @@ export default class LineAdmin extends LightningElement {
   channelId = "";
   channelSecret = "";
   repId;
+  sameProviderConfirmed = false;
 
   labels = {
     title: TITLE,
@@ -77,6 +82,9 @@ export default class LineAdmin extends LightningElement {
     siteBaseUrlHelp: SITE_BASE_URL_HELP,
     webhookUrl: WEBHOOK_URL,
     fallbackOwner: FALLBACK_OWNER,
+    defaultAccount: DEFAULT_ACCOUNT,
+    defaultAccountHelp: DEFAULT_ACCOUNT_HELP,
+    defaultAccountWarning: DEFAULT_ACCOUNT_WARNING,
     save: SAVE,
     oas: OAS,
     noOas: NO_OAS,
@@ -86,6 +94,7 @@ export default class LineAdmin extends LightningElement {
     channelSecretHelp: CHANNEL_SECRET_HELP,
     assignedRep: ASSIGNED_REP,
     registerHelp: REGISTER_HELP,
+    sameProvider: SAME_PROVIDER,
     jobs: JOBS,
     jobsHelp: JOBS_HELP,
     jobsScheduled: JOBS_SCHEDULED,
@@ -138,6 +147,22 @@ export default class LineAdmin extends LightningElement {
     };
   }
 
+  handleDefaultAccountChange(event) {
+    this.settings = {
+      ...this.settings,
+      defaultAccountId: event.detail.recordId
+    };
+  }
+
+  // DEC-36: a Contact without an Account is private when Contact sharing follows the Account.
+  get showDefaultAccountWarning() {
+    return (
+      this.settings?.contactsFollowAccount === true &&
+      this.settings?.autoCreateContact === true &&
+      !this.settings?.defaultAccountId
+    );
+  }
+
   async handleSave() {
     this.isSaving = true;
     try {
@@ -153,7 +178,8 @@ export default class LineAdmin extends LightningElement {
         autoCreateContact: this.settings.autoCreateContact === true,
         dailySyncEnabled: this.settings.dailySyncEnabled === true,
         updateContactOwnerOnReassign:
-          this.settings.updateContactOwnerOnReassign === true
+          this.settings.updateContactOwnerOnReassign === true,
+        defaultAccountId: this.settings.defaultAccountId || null
       });
       this.toast(SAVED, "success");
       this.errorMessage = undefined;
@@ -228,6 +254,11 @@ export default class LineAdmin extends LightningElement {
     this.repId = event.detail.recordId;
   }
 
+  // DEC-39: OAs under different LINE Providers see a customer under different user IDs, so they never share a Contact.
+  handleSameProviderChange(event) {
+    this.sameProviderConfirmed = event.target.checked;
+  }
+
   async handleRegister() {
     if (!this.canRegister) {
       return;
@@ -244,6 +275,7 @@ export default class LineAdmin extends LightningElement {
       this.channelSecret = "";
       this.channelId = "";
       this.repId = undefined;
+      this.sameProviderConfirmed = false;
       await this.refresh();
     } catch (error) {
       this.toast(this.messageFrom(error), "error");
@@ -276,6 +308,7 @@ export default class LineAdmin extends LightningElement {
       this.channelId.trim() &&
       this.channelSecret &&
       this.repId &&
+      this.sameProviderConfirmed &&
       !this.isRegistering
     );
   }

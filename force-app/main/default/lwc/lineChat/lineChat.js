@@ -18,6 +18,7 @@ import LOAD_OLDER from "@salesforce/label/c.LINE_Chat_Load_Older";
 import SEND_HINT from "@salesforce/label/c.LINE_Chat_Send_Hint";
 import FAILED_BADGE from "@salesforce/label/c.LINE_Chat_Failed_Badge";
 import UNFOLLOWED from "@salesforce/label/c.LINE_Chat_Unfollowed";
+import NOT_ASSIGNED_REP from "@salesforce/label/c.LINE_Chat_Not_Assigned_Rep";
 import GENERIC_ERROR from "@salesforce/label/c.LINE_Error_Generic";
 import PREVIEW_IMAGE from "@salesforce/label/c.LINE_Preview_Image";
 import PREVIEW_VIDEO from "@salesforce/label/c.LINE_Preview_Video";
@@ -67,7 +68,8 @@ export default class LineChat extends LightningElement {
     send: SEND,
     loadOlder: LOAD_OLDER,
     sendHint: SEND_HINT,
-    unfollowed: UNFOLLOWED
+    unfollowed: UNFOLLOWED,
+    notAssignedRep: NOT_ASSIGNED_REP
   };
 
   async connectedCallback() {
@@ -355,9 +357,18 @@ export default class LineChat extends LightningElement {
     return !!conversation && conversation.status === "Unfollowed";
   }
 
+  // DEC-37: only the OA's assigned rep (or the fallback owner of an inactive OA) may reply; others can read.
+  get showReadOnlyNotice() {
+    const conversation = this.selectedConversation;
+    return !!conversation && conversation.canSend !== true;
+  }
+
   get isSendDisabled() {
     return (
-      this.isSending || !(this.draft || "").trim() || this.showUnfollowedBanner
+      this.isSending ||
+      !(this.draft || "").trim() ||
+      this.showUnfollowedBanner ||
+      this.showReadOnlyNotice
     );
   }
 
