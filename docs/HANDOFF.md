@@ -34,6 +34,13 @@ org.** Install link: `https://login.salesforce.com/packaging/installPackage.apex
 uninstalling Beta 5, remove `lineChat` from the Contact page and the guest permission set assignment (§5), then put both
 back.
 
+**Beta 7 (`0.1.0.7`, `04tgL000000YbWbQAK`) built 2026-10-11**, 94% coverage: Beta 6 plus the TA review fixes: default
+Account for created Contacts (DEC-36), only the assigned rep (or, for an inactive OA, the fallback owner/queue) can send
+(DEC-37), 401 for an unknown OA (DEC-38), same-Provider confirmation at registration (DEC-39). **Not yet installed in the
+QA org.** Install link: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000YbWbQAK`. Skip Beta 6.
+Uninstalling Beta 5 deletes all LINE data, including `Contact.LINE_User_Id__c`, so delete or note the test Contacts
+(Chaipitch ×2, Meng) first, or the next message duplicates them.
+
 ## 2. Orgs and access
 
 | Alias | What it is | Notes |
@@ -73,7 +80,7 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
    - **Built in the scratch org, not yet in a beta (user said not to build a package yet, 2026-10-11):** DEC-36
      default Account (TA R4 direction), DEC-37 only the assigned rep (or, for an inactive OA, the fallback owner/queue)
      can send (R1), DEC-38 unknown OA → 401 (R8), DEC-39 same-Provider checkbox at registration (R3).
-   - **Next:** when the user says so, build Beta 7 with all four, then the QA reinstall (uninstall deletes LINE data,
+   - **Beta 7 built 2026-10-11** with all four (§1). Next: the QA reinstall (uninstall deletes LINE data,
      including `Contact.LINE_User_Id__c`, so existing Contacts would be duplicated on the next message).
    - **GTM (Thai team):** licence, R4 auto-create default, R15 error log object, S1 chat panel scope, R6 app replies.
    - **QA org data (2026-10-11):** Account "Chaipitch (test)" created and Contact "Chaipitch" put under it by hand, so
