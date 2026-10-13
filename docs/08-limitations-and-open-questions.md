@@ -8,7 +8,7 @@
 | L2 | Each OA has its own LINE plan and monthly message allowance; Salesforce replies are push messages and count | The client sizes plans; a clear "monthly limit" error today; `lineAdmin` shows each OA's quota in **M8a**, with stored fields and rep-facing warnings as M8b/M8c |
 | L3 | Per-rep OA setup in the LINE consoles is manual (~20–30 min per rep) | The Salesforce side is one form in `lineAdmin` |
 | L4 | One OA = one rep; splitting a rep's customers means customers must add the new rep's OA | Reassign the whole OA; generic OA names |
-| L5 | Chat refresh is polling (~5 s), not instant | Custom notifications for instant alerts |
+| L5 | Chat refresh is polling (~2 s, DEC-40), not instant | Custom notifications for instant alerts |
 | L6 | Inbound files limited to ~10 MB by Apex heap/callout limits | "Too large, view in LINE" |
 | L7 | LINE bots can't send file attachments; documents go as expiring links | ContentDistribution with expiry |
 | L8 | 1:1 chats only | Groups out of scope |

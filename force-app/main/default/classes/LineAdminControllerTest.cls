@@ -63,7 +63,6 @@ private class LineAdminControllerTest {
                 null,
                 null,
                 null,
-                null,
                 true,
                 true,
                 false,
@@ -157,12 +156,10 @@ private class LineAdminControllerTest {
       LineAdminController.SettingsView before = LineAdminController.getSettings();
       Assert.isNull(before.siteBaseUrl, 'Nothing configured yet');
       Assert.isNull(before.webhookUrl);
-      Assert.areEqual(5, before.pollIntervalSeconds, 'Code default');
 
       saved = LineAdminController.saveSettings(
         SITE + '/',
         UserInfo.getUserId(),
-        8,
         3,
         2,
         6,
@@ -181,7 +178,6 @@ private class LineAdminControllerTest {
       'Webhook URL includes the namespace path'
     );
     Assert.areEqual(admin().Id, saved.fallbackOwnerId, 'The running admin');
-    Assert.areEqual(8, saved.pollIntervalSeconds);
     Assert.areEqual(3, saved.inviteCodeExpiryDays);
     Assert.areEqual(2, saved.publicLinkExpiryDays);
     Assert.areEqual(6, saved.messageRetentionMonths);
@@ -202,7 +198,6 @@ private class LineAdminControllerTest {
         null,
         null,
         null,
-        null,
         true,
         true,
         false,
@@ -210,7 +205,6 @@ private class LineAdminControllerTest {
       );
     }
 
-    Assert.areEqual(5, saved.pollIntervalSeconds);
     Assert.isTrue(saved.autoCreateContact, 'On by default');
     Assert.areEqual(7, saved.inviteCodeExpiryDays);
     Assert.areEqual(7, saved.publicLinkExpiryDays);
@@ -229,7 +223,6 @@ private class LineAdminControllerTest {
     System.runAs(admin()) {
       saved = LineAdminController.saveSettings(
         SITE,
-        null,
         null,
         null,
         null,
@@ -258,7 +251,6 @@ private class LineAdminControllerTest {
       try {
         LineAdminController.saveSettings(
           SITE,
-          null,
           null,
           null,
           null,

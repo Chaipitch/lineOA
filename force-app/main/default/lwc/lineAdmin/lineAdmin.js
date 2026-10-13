@@ -169,7 +169,6 @@ export default class LineAdmin extends LightningElement {
       this.settings = await saveSettings({
         siteBaseUrl: this.settings.siteBaseUrl,
         fallbackOwnerId: this.settings.fallbackOwnerId,
-        pollIntervalSeconds: this.toNumber(this.settings.pollIntervalSeconds),
         inviteCodeExpiryDays: this.toNumber(this.settings.inviteCodeExpiryDays),
         publicLinkExpiryDays: this.toNumber(this.settings.publicLinkExpiryDays),
         messageRetentionMonths: this.toNumber(

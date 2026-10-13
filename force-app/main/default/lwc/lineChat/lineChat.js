@@ -27,7 +27,7 @@ import PREVIEW_STICKER from "@salesforce/label/c.LINE_Preview_Sticker";
 import PREVIEW_UNSUPPORTED from "@salesforce/label/c.LINE_Preview_Unsupported";
 
 const MAX_TEXT_LENGTH = 5000;
-const DEFAULT_POLL_SECONDS = 5;
+const DEFAULT_POLL_SECONDS = 2;
 // Within this many pixels of the top counts as "at the top" on trackpads and touch screens.
 const SCROLL_TOP_THRESHOLD_PX = 40;
 

@@ -176,7 +176,8 @@ from LINE's sticker CDN, loaded by the browser (DEC-32). The server builds the U
 Trusted Site allows that one host for images only. If LINE ever moves the pictures, the bubble shows `[Sticker]`.
 
 It **polls** rather than streams: every few seconds, `getMessagesSince`, and **only while
-`document.visibilityState === 'visible'`**, so a background tab costs nothing. The interval comes from settings.
+`document.visibilityState === 'visible'`**, so a background tab costs nothing. The interval is 2 seconds, the minimum
+(DEC-40); it isn't on the admin page, though `Poll_Interval_Seconds__c` in Setup → Custom Settings still overrides it.
 Timers are cleared in `disconnectedCallback`.
 
 ### 4.2 `LineChatController` — the user-mode gate
@@ -215,8 +216,8 @@ the subscriber's profiles.
 
 Four jobs today:
 
-- **Settings** — the Site base URL (from which the webhook URL is computed and displayed), the fallback owner, poll
-  interval, retention, invite expiry, auto-create-Contact, daily sync.
+- **Settings** — the Site base URL (from which the webhook URL is computed and displayed), the fallback owner, the
+  default Account for new Contacts, retention, auto-create-Contact, daily sync.
 - **Register an OA** — Channel ID + secret + rep. `LineOAConfigAdminService` then issues a token (which proves the
   credentials), reads `/v2/bot/info` for the bot user ID, **sets the webhook URL at LINE**, runs LINE's webhook test,
   and only then writes the OA configuration and stores the secret. Callouts first, DML last, again.
@@ -365,7 +366,7 @@ actions — rotate secret, reassign, deactivate, quota display, error log (M8), 
 `HANDOFF.md` is the current state.
 
 **Known product limits**, all in `08`: replies sent from the LINE OA Manager app never reach Salesforce; polling is
-~5 s, not instant; inbound files are capped near 10 MB by Apex heap; LINE bots cannot send file attachments, so
+~2 s, not instant; inbound files are capped near 10 MB by Apex heap; LINE bots cannot send file attachments, so
 documents go as expiring links; 1:1 chats only; Contact record pages only.
 
 ---

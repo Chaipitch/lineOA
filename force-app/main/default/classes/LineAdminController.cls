@@ -23,8 +23,6 @@ public with sharing class LineAdminController {
     @AuraEnabled
     public Id fallbackOwnerId;
     @AuraEnabled
-    public Integer pollIntervalSeconds;
-    @AuraEnabled
     public Integer inviteCodeExpiryDays;
     @AuraEnabled
     public Integer publicLinkExpiryDays;
@@ -110,7 +108,6 @@ public with sharing class LineAdminController {
    *
    * @param siteBaseUrl public Site base URL, including any path prefix
    * @param fallbackOwnerId user or queue owning conversations of inactive OAs
-   * @param pollIntervalSeconds chat panel poll interval
    * @param inviteCodeExpiryDays QR invite lifetime
    * @param publicLinkExpiryDays outbound file link lifetime
    * @param messageRetentionMonths months to keep messages, 0 = forever
@@ -124,7 +121,6 @@ public with sharing class LineAdminController {
   public static SettingsView saveSettings(
     String siteBaseUrl,
     Id fallbackOwnerId,
-    Integer pollIntervalSeconds,
     Integer inviteCodeExpiryDays,
     Integer publicLinkExpiryDays,
     Integer messageRetentionMonths,
@@ -151,7 +147,6 @@ public with sharing class LineAdminController {
         ? null
         : siteBaseUrl.trim().removeEnd('/');
       settings.Fallback_Owner_Id__c = fallbackOwnerId;
-      settings.Poll_Interval_Seconds__c = pollIntervalSeconds;
       settings.Invite_Code_Expiry_Days__c = inviteCodeExpiryDays;
       settings.Public_Link_Expiry_Days__c = publicLinkExpiryDays;
       settings.Message_Retention_Months__c = messageRetentionMonths;
@@ -255,7 +250,6 @@ public with sharing class LineAdminController {
     view.siteBaseUrl = LineSettings.siteBaseUrl();
     view.webhookUrl = LineSettings.webhookUrl();
     view.fallbackOwnerId = LineSettings.fallbackOwnerId();
-    view.pollIntervalSeconds = LineSettings.pollIntervalSeconds();
     view.inviteCodeExpiryDays = LineSettings.inviteCodeExpiryDays();
     view.publicLinkExpiryDays = LineSettings.publicLinkExpiryDays();
     view.messageRetentionMonths = LineSettings.messageRetentionMonths();

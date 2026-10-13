@@ -414,7 +414,7 @@ private class LineChatControllerTest {
   static void pollIntervalComesFromSettings() {
     LineTestFactory.ensurePackageAccess();
     System.runAs(repA()) {
-      Assert.areEqual(5, LineChatController.getPollIntervalSeconds());
+      Assert.areEqual(2, LineChatController.getPollIntervalSeconds());
     }
     insert as system new LINE_Settings__c(
       SetupOwnerId = UserInfo.getOrganizationId(),

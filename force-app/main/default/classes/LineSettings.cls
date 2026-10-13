@@ -4,7 +4,8 @@
  */
 public inherited sharing class LineSettings {
   @TestVisible
-  static final Integer DEFAULT_POLL_INTERVAL_SECONDS = 5;
+  // DEC-40: the fastest allowed refresh; no longer set on the admin page.
+  static final Integer DEFAULT_POLL_INTERVAL_SECONDS = 2;
   @TestVisible
   static final Integer MIN_POLL_INTERVAL_SECONDS = 2;
   @TestVisible
@@ -92,7 +93,8 @@ public inherited sharing class LineSettings {
   }
 
   /**
-   * @return seconds between chat panel polls (default 5, minimum 2)
+   * @return seconds between chat panel polls (default and minimum 2, DEC-40). `Poll_Interval_Seconds__c` is no longer on
+   *         the admin page but still overrides the default when set in Setup → Custom Settings.
    */
   public static Integer pollIntervalSeconds() {
     Decimal value = record().Poll_Interval_Seconds__c;

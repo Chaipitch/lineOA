@@ -6,7 +6,7 @@ private class LineSettingsTest {
     Assert.isNull(LineSettings.siteBaseUrl());
     Assert.isNull(LineSettings.webhookUrl());
     Assert.isNull(LineSettings.fallbackOwnerId());
-    Assert.areEqual(5, LineSettings.pollIntervalSeconds());
+    Assert.areEqual(2, LineSettings.pollIntervalSeconds());
     Assert.areEqual(10000000, LineSettings.maxDownloadBytes());
     Assert.areEqual(7, LineSettings.publicLinkExpiryDays());
     Assert.areEqual(7, LineSettings.inviteCodeExpiryDays());

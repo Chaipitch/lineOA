@@ -62,7 +62,6 @@ const SETTINGS = {
   webhookUrl:
     "https://acme.my.salesforce-sites.com/linewebhook/services/apexrest/tsthlineoa/line/webhook",
   fallbackOwnerId: "005000000000001",
-  pollIntervalSeconds: 5,
   inviteCodeExpiryDays: 7,
   publicLinkExpiryDays: 7,
   messageRetentionMonths: 0,
