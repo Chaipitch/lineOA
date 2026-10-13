@@ -41,6 +41,11 @@ QA org.** Install link: `https://login.salesforce.com/packaging/installPackage.a
 Uninstalling Beta 5 deletes all LINE data, including `Contact.LINE_User_Id__c`, so delete or note the test Contacts
 (Chaipitch ×2, Meng) first, or the next message duplicates them.
 
+**Beta 8 (`0.1.0.8`, `04tgL000000Z5BJQA0`) built 2026-10-13**, 92% coverage: Beta 7 plus the 2-second refresh (DEC-40),
+the LINE Inbox with manual linking and placeholder clean-up (DEC-34, DEC-41), QR invites (DEC-42) and files and images
+(DEC-43). **This is the one to install in the QA org** (skip Betas 6 and 7). Install link:
+`https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000Z5BJQA0`.
+
 ## 2. Orgs and access
 
 | Alias | What it is | Notes |
