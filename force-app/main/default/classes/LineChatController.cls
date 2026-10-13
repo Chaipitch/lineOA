@@ -18,6 +18,9 @@ public with sharing class LineChatController {
   // A poll returns only what arrived since the last one; this cap is a safety net, not a normal case.
   @TestVisible
   static final Integer MAX_NEW_MESSAGES = 200;
+  @TestVisible
+  static final Integer INBOX_PAGE_SIZE = 50;
+  private static final Integer MAX_INVITE_ATTEMPTS = 5;
   // The last error turned into a generic message, so tests can show what really happened.
   @TestVisible
   static Exception lastUnexpectedError;
@@ -52,6 +55,9 @@ public with sharing class LineChatController {
     public String publicUrl;
     @AuraEnabled
     public String contentDocumentId;
+    /** The file's latest version, for its thumbnail (M7); null when the user can't see the file. */
+    @AuraEnabled
+    public String contentVersionId;
     @AuraEnabled
     public String stickerPackageId;
     @AuraEnabled
@@ -109,6 +115,13 @@ public with sharing class LineChatController {
     /** Whether the running user may reply in this conversation (DEC-37); the panel is read-only otherwise. */
     @AuraEnabled
     public Boolean canSend = false;
+    /** The linked Contact, or null while the conversation is unlinked. */
+    @AuraEnabled
+    public Id contactId;
+    @AuraEnabled
+    public String contactName;
+    @AuraEnabled
+    public String lastMessagePreview;
 
     private ConversationView(LINE_Conversation__c c, Id primaryOaId) {
       this.id = c.Id;
@@ -122,7 +135,43 @@ public with sharing class LineChatController {
       this.isPrimaryOa =
         primaryOaId != null &&
         primaryOaId == c.LINE_OA_Configuration__c;
+      this.contactId = c.Contact__c;
+      this.contactName = c.Contact__r?.Name;
+      this.lastMessagePreview = c.Last_Message_Preview__c;
     }
+  }
+
+  /** One page of the inbox, most recent first (keyset on `Last_Message_At__c`, `Id`). */
+  public class InboxPage {
+    @AuraEnabled
+    public List<ConversationView> conversations = new List<ConversationView>();
+    @AuraEnabled
+    public Boolean hasMore = false;
+    /** Admins may unlink (03 §5 rule 4). */
+    @AuraEnabled
+    public Boolean isAdmin = false;
+  }
+
+  /** A QR invite for a Contact (03 §5 rule 5). */
+  public class InviteView {
+    @AuraEnabled
+    public String url;
+    @AuraEnabled
+    public String code;
+    @AuraEnabled
+    public Datetime expiresAt;
+    @AuraEnabled
+    public String oaName;
+  }
+
+  /** What linking did, for the rep's confirmation. */
+  public class LinkView {
+    @AuraEnabled
+    public ConversationView conversation;
+    @AuraEnabled
+    public Boolean placeholderDeleted = false;
+    @AuraEnabled
+    public Boolean placeholderKept = false;
   }
 
   /** One page of messages, oldest first. */
@@ -157,7 +206,10 @@ public with sharing class LineChatController {
           Unread_Count__c,
           Last_Message_At__c,
           LINE_OA_Configuration__c,
-          LINE_OA_Configuration__r.Name
+          LINE_OA_Configuration__r.Name,
+          Contact__c,
+          Contact__r.Name,
+          Last_Message_Preview__c
         FROM LINE_Conversation__c
         WHERE Contact__c = :contactId
         WITH USER_MODE
@@ -188,6 +240,383 @@ public with sharing class LineChatController {
     } catch (Exception e) {
       throw handled(e, 'getConversations', contactId);
     }
+  }
+
+  /**
+   * One conversation, for the chat panel opened from the inbox.
+   *
+   * @param conversationId the conversation
+   * @return the conversation, including whether the user may reply
+   */
+  @AuraEnabled
+  public static ConversationView getConversation(Id conversationId) {
+    try {
+      List<ConversationView> found = conversationViews(
+        new Set<Id>{ conversationId }
+      );
+      if (found.isEmpty()) {
+        throw asAuraException(System.Label.LINE_Error_No_Access);
+      }
+      return found[0];
+    } catch (Exception e) {
+      throw handled(e, 'getConversation', conversationId);
+    }
+  }
+
+  /**
+   * The running user's own conversations, most recent first (01 inbox; 02 §2).
+   *
+   * @param filter `unread`, `unlinked`, or anything else for all
+   * @param beforeLastMessageAt `lastMessageAt` of the last row held, or null for the first page
+   * @param beforeId Id of that same row
+   * @return one page of up to 50
+   */
+  @AuraEnabled
+  public static InboxPage getInbox(
+    String filter,
+    Datetime beforeLastMessageAt,
+    Id beforeId
+  ) {
+    try {
+      Datetime before = beforeLastMessageAt == null
+        ? Datetime.newInstance(4000, 1, 1)
+        : beforeLastMessageAt;
+      Id beforeRecordId = beforeId == null
+        ? (Id) '000000000000000AAA'
+        : beforeId;
+      List<LINE_Conversation__c> rows = inboxRows(
+        filter,
+        before,
+        beforeRecordId,
+        INBOX_PAGE_SIZE + 1
+      );
+      InboxPage page = new InboxPage();
+      page.isAdmin = FeatureManagement.checkPermission('LINE_Admin');
+      page.hasMore = rows.size() > INBOX_PAGE_SIZE;
+      if (page.hasMore) {
+        rows.remove(rows.size() - 1);
+      }
+      List<Id> ordered = new List<Id>();
+      for (LINE_Conversation__c row : rows) {
+        ordered.add(row.Id);
+      }
+      Map<Id, ConversationView> byId = new Map<Id, ConversationView>();
+      for (ConversationView view : conversationViews(new Set<Id>(ordered))) {
+        byId.put(view.id, view);
+      }
+      for (Id rowId : ordered) {
+        if (byId.containsKey(rowId)) {
+          page.conversations.add(byId.get(rowId));
+        }
+      }
+      return page;
+    } catch (Exception e) {
+      throw handled(e, 'getInbox', null);
+    }
+  }
+
+  /**
+   * Links a conversation to a Contact (03 §5 rule 3, DEC-34). The rep must be able to read the conversation and edit
+   * the Contact; the rules themselves live in `LineLinkService`.
+   *
+   * @param conversationId the conversation
+   * @param contactId the Contact chosen by the rep
+   * @return the linked conversation and what happened to an auto-created placeholder
+   */
+  @AuraEnabled
+  public static LinkView linkToContact(Id conversationId, Id contactId) {
+    try {
+      assertCanRead(conversationId);
+      assertCanEditContact(contactId);
+      LineLinkService.LinkResult result;
+      try {
+        result = LineLinkService.linkToContact(conversationId, contactId);
+      } catch (LineLinkService.LinkException refused) {
+        throw asAuraException(refusalMessage(refused));
+      }
+      LinkView view = new LinkView();
+      view.conversation = getConversation(conversationId);
+      view.placeholderDeleted = result.placeholderDeleted;
+      view.placeholderKept = result.placeholderKeptId != null;
+      return view;
+    } catch (Exception e) {
+      throw handled(e, 'linkToContact', conversationId);
+    } finally {
+      LineLogger.flush();
+    }
+  }
+
+  /**
+   * Creates a one-time QR invite for a Contact (03 §5 rule 5, D10): a fresh code replaces any earlier one, and the
+   * link opens the rep's OA. The rep must be able to edit the Contact and own an active OA.
+   *
+   * @param contactId the Contact to invite
+   * @return the link to show as a QR code, its code and expiry
+   */
+  @AuraEnabled
+  public static InviteView createInvite(Id contactId) {
+    try {
+      assertCanEditContact(contactId);
+      LINE_OA_Configuration__c oa = inviteOa(contactId);
+      if (oa == null || String.isBlank(oa.Basic_Id__c)) {
+        throw asAuraException(System.Label.LINE_Invite_No_OA);
+      }
+      Datetime expiresAt = Datetime.now()
+        .addDays(LineSettings.inviteCodeExpiryDays());
+      String code = saveNewInviteCode(contactId, expiresAt);
+      InviteView view = new InviteView();
+      view.code = code;
+      view.expiresAt = expiresAt;
+      view.oaName = oa.Name;
+      view.url = LineApiClient.oaMessageUrl(
+        oa.Basic_Id__c,
+        String.format(
+          System.Label.LINE_Invite_Message,
+          new List<Object>{ code }
+        )
+      );
+      return view;
+    } catch (Exception e) {
+      throw handled(e, 'createInvite', contactId);
+    }
+  }
+
+  // The Contact's primary OA when this rep runs it, otherwise the rep's own active OA (03 §5 rule 5).
+  private static LINE_OA_Configuration__c inviteOa(Id contactId) {
+    Id me = UserInfo.getUserId();
+    List<Contact> contacts = [
+      SELECT LINE_OA_Configuration__c
+      FROM Contact
+      WHERE Id = :contactId
+      WITH USER_MODE
+      LIMIT 1
+    ];
+    Id primaryOaId = contacts.isEmpty()
+      ? null
+      : contacts[0].LINE_OA_Configuration__c;
+    LINE_OA_Configuration__c fallback;
+    for (LINE_OA_Configuration__c oa : [
+      SELECT Id, Name, Basic_Id__c
+      FROM LINE_OA_Configuration__c
+      WHERE Assigned_Rep__c = :me AND Is_Active__c = TRUE
+      WITH USER_MODE
+      ORDER BY CreatedDate
+      LIMIT 50
+    ]) {
+      if (oa.Id == primaryOaId) {
+        return oa;
+      }
+      if (fallback == null) {
+        fallback = oa;
+      }
+    }
+    return fallback;
+  }
+
+  // The code is unique: on the rare collision, draw again (03 §5 rule 5). Saved as the user, who holds Edit on the
+  // invite fields through LINE_Chat_User.
+  private static String saveNewInviteCode(Id contactId, Datetime expiresAt) {
+    for (Integer attempt = 0; attempt < MAX_INVITE_ATTEMPTS; attempt++) {
+      String code = LineLinkService.newInviteCode();
+      Database.SaveResult saved = Database.update(
+        new Contact(
+          Id = contactId,
+          LINE_Invite_Code__c = code,
+          LINE_Invite_Expires_At__c = expiresAt
+        ),
+        false,
+        AccessLevel.USER_MODE
+      );
+      if (saved.isSuccess()) {
+        return code;
+      }
+      if (saved.getErrors()[0].getStatusCode() != StatusCode.DUPLICATE_VALUE) {
+        throw asAuraException(
+          String.format(
+            System.Label.LINE_Link_Failed,
+            new List<Object>{ saved.getErrors()[0].getMessage() }
+          )
+        );
+      }
+    }
+    throw asAuraException(System.Label.LINE_Error_Generic);
+  }
+
+  /**
+   * Unlinks a conversation from its Contact (03 §5 rule 4). Admins only.
+   *
+   * @param conversationId the conversation
+   * @return the conversation, now unlinked
+   */
+  @AuraEnabled
+  public static ConversationView unlinkConversation(Id conversationId) {
+    try {
+      if (!FeatureManagement.checkPermission('LINE_Admin')) {
+        throw asAuraException(System.Label.LINE_Error_Admin_Only);
+      }
+      assertCanRead(conversationId);
+      LineLinkService.unlink(conversationId);
+      return getConversation(conversationId);
+    } catch (Exception e) {
+      throw handled(e, 'unlinkConversation', conversationId);
+    }
+  }
+
+  // Owner-filtered, so a manager's inbox shows their own chats rather than the whole team's. One static query per
+  // filter keeps every query selective (OwnerId) and avoids dynamic SOQL.
+  private static List<LINE_Conversation__c> inboxRows(
+    String filter,
+    Datetime before,
+    Id beforeId,
+    Integer queryLimit
+  ) {
+    Id me = UserInfo.getUserId();
+    if (filter == 'unread') {
+      return [
+        SELECT Id
+        FROM LINE_Conversation__c
+        WHERE
+          OwnerId = :me
+          AND Unread_Count__c > 0
+          AND (Last_Message_At__c < :before
+          OR (Last_Message_At__c = :before
+          AND Id < :beforeId))
+        WITH USER_MODE
+        ORDER BY Last_Message_At__c DESC, Id DESC
+        LIMIT :queryLimit
+      ];
+    }
+    if (filter == 'unlinked') {
+      return [
+        SELECT Id
+        FROM LINE_Conversation__c
+        WHERE
+          OwnerId = :me
+          AND Contact__c = NULL
+          AND (Last_Message_At__c < :before
+          OR (Last_Message_At__c = :before
+          AND Id < :beforeId))
+        WITH USER_MODE
+        ORDER BY Last_Message_At__c DESC, Id DESC
+        LIMIT :queryLimit
+      ];
+    }
+    return [
+      SELECT Id
+      FROM LINE_Conversation__c
+      WHERE
+        OwnerId = :me
+        AND (Last_Message_At__c < :before
+        OR (Last_Message_At__c = :before
+        AND Id < :beforeId))
+      WITH USER_MODE
+      ORDER BY Last_Message_At__c DESC, Id DESC
+      LIMIT :queryLimit
+    ];
+  }
+
+  // Thumbnails need a version Id; read as the user, so a file they can't see shows no picture.
+  private static void addFileVersions(List<MessageView> views) {
+    Set<Id> documentIds = new Set<Id>();
+    for (MessageView view : views) {
+      if (String.isNotBlank(view.contentDocumentId)) {
+        documentIds.add(Id.valueOf(view.contentDocumentId));
+      }
+    }
+    if (documentIds.isEmpty()) {
+      return;
+    }
+    Map<Id, ContentDocument> documents = new Map<Id, ContentDocument>(
+      [
+        SELECT Id, LatestPublishedVersionId
+        FROM ContentDocument
+        WHERE Id IN :documentIds
+        WITH USER_MODE
+      ]
+    );
+    for (MessageView view : views) {
+      ContentDocument d = String.isBlank(view.contentDocumentId)
+        ? null
+        : documents.get(Id.valueOf(view.contentDocumentId));
+      view.contentVersionId = d?.LatestPublishedVersionId;
+    }
+  }
+
+  // Views for conversations the user can see, with canSend filled in.
+  private static List<ConversationView> conversationViews(Set<Id> ids) {
+    List<ConversationView> result = new List<ConversationView>();
+    if (ids.isEmpty()) {
+      return result;
+    }
+    for (LINE_Conversation__c c : [
+      SELECT
+        Id,
+        Name,
+        Picture_Url__c,
+        Status__c,
+        Unread_Count__c,
+        Last_Message_At__c,
+        LINE_OA_Configuration__c,
+        LINE_OA_Configuration__r.Name,
+        Contact__c,
+        Contact__r.Name,
+        Last_Message_Preview__c
+      FROM LINE_Conversation__c
+      WHERE Id IN :ids
+      WITH USER_MODE
+    ]) {
+      result.add(new ConversationView(c, null));
+    }
+    Set<Id> oaIds = new Set<Id>();
+    for (ConversationView view : result) {
+      oaIds.add(view.oaConfigurationId);
+    }
+    Set<Id> sendable = sendableOaIds(oaIds, UserInfo.getUserId());
+    for (ConversationView view : result) {
+      view.canSend = sendable.contains(view.oaConfigurationId);
+    }
+    return result;
+  }
+
+  // Edit on the Contact, by sharing and by object permission, checked as the user.
+  private static void assertCanEditContact(Id contactId) {
+    if (
+      contactId == null ||
+      contactId.getSObjectType() != Contact.SObjectType ||
+      !Schema.SObjectType.Contact.isUpdateable()
+    ) {
+      throw asAuraException(System.Label.LINE_Link_No_Edit);
+    }
+    List<UserRecordAccess> access = [
+      SELECT RecordId, HasEditAccess
+      FROM UserRecordAccess
+      WHERE UserId = :UserInfo.getUserId() AND RecordId = :contactId
+      WITH USER_MODE
+      LIMIT 1
+    ];
+    if (access.isEmpty() || !access[0].HasEditAccess) {
+      throw asAuraException(System.Label.LINE_Link_No_Edit);
+    }
+  }
+
+  // Names the Contact already holding the LINE user ID only when the user may see it (03 §5 rule 3).
+  private static String refusalMessage(LineLinkService.LinkException refused) {
+    if (refused.holderId == null) {
+      return refused.getMessage();
+    }
+    List<Contact> visible = [
+      SELECT Name
+      FROM Contact
+      WHERE Id = :refused.holderId
+      WITH USER_MODE
+      LIMIT 1
+    ];
+    return visible.isEmpty()
+      ? refused.getMessage()
+      : String.format(
+          System.Label.LINE_Link_Held_By,
+          new List<Object>{ visible[0].Name }
+        );
   }
 
   /**
@@ -259,6 +688,7 @@ public with sharing class LineChatController {
       for (Integer i = rows.size() - 1; i >= 0; i--) {
         page.messages.add(new MessageView(rows[i]));
       }
+      addFileVersions(page.messages);
       return page;
     } catch (Exception e) {
       throw handled(e, 'getMessages', conversationId);
@@ -317,6 +747,7 @@ public with sharing class LineChatController {
       ]) {
         result.add(new MessageView(m));
       }
+      addFileVersions(result);
       return result;
     } catch (Exception e) {
       throw handled(e, 'getMessagesSince', conversationId);
@@ -428,6 +859,61 @@ public with sharing class LineChatController {
         WHERE GroupId = :fallback AND UserOrGroupId = :userId
         WITH SYSTEM_MODE
       ] > 0;
+  }
+
+  /**
+   * Step 1 of sending a file (M7): gives the uploaded file an expiring public link. Called by the panel right after
+   * the upload, then `sendFile`; two calls because the link is a write and the push must come before any write.
+   *
+   * @param conversationId the open conversation the file was uploaded to
+   * @param contentDocumentId the uploaded file
+   */
+  @AuraEnabled
+  public static void prepareFile(Id conversationId, Id contentDocumentId) {
+    try {
+      assertCanSend(conversationId);
+      assertCanSeeFile(contentDocumentId);
+      LineOutboundService.createPublicLink(conversationId, contentDocumentId);
+    } catch (Exception e) {
+      throw handled(e, 'prepareFile', conversationId);
+    }
+  }
+
+  /**
+   * Step 2 of sending a file (M7): pushes it to the customer, as a picture or as a link (DEC-43).
+   *
+   * @param conversationId the open conversation
+   * @param contentDocumentId the uploaded file
+   * @return the stored message
+   */
+  @AuraEnabled
+  public static MessageView sendFile(Id conversationId, Id contentDocumentId) {
+    try {
+      assertCanSend(conversationId);
+      assertCanSeeFile(contentDocumentId);
+      MessageView view = new MessageView(
+        LineOutboundService.sendFile(conversationId, contentDocumentId)
+      );
+      addFileVersions(new List<MessageView>{ view });
+      return view;
+    } catch (Exception e) {
+      throw handled(e, 'sendFile', conversationId);
+    }
+  }
+
+  private static void assertCanSeeFile(Id contentDocumentId) {
+    if (contentDocumentId == null) {
+      throw asAuraException(System.Label.LINE_Error_No_Access);
+    }
+    Integer visible = [
+      SELECT COUNT()
+      FROM ContentDocument
+      WHERE Id = :contentDocumentId
+      WITH USER_MODE
+    ];
+    if (visible == 0) {
+      throw asAuraException(System.Label.LINE_Error_No_Access);
+    }
   }
 
   // The rep must see the conversation (sharing) and be able to create messages (object/field access), in user mode.

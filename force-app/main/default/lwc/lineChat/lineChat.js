@@ -1,11 +1,16 @@
 import { LightningElement, api, track } from "lwc";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import { NavigationMixin } from "lightning/navigation";
+import LineInvite from "c/lineInvite";
 
 import getConversations from "@salesforce/apex/LineChatController.getConversations";
+import getConversation from "@salesforce/apex/LineChatController.getConversation";
 import getMessages from "@salesforce/apex/LineChatController.getMessages";
 import getMessagesSince from "@salesforce/apex/LineChatController.getMessagesSince";
 import markRead from "@salesforce/apex/LineChatController.markRead";
 import sendText from "@salesforce/apex/LineChatController.sendText";
+import prepareFile from "@salesforce/apex/LineChatController.prepareFile";
+import sendFile from "@salesforce/apex/LineChatController.sendFile";
 import getPollIntervalSeconds from "@salesforce/apex/LineChatController.getPollIntervalSeconds";
 
 import TITLE from "@salesforce/label/c.LINE_Chat_Title";
@@ -25,19 +30,51 @@ import PREVIEW_VIDEO from "@salesforce/label/c.LINE_Preview_Video";
 import PREVIEW_AUDIO from "@salesforce/label/c.LINE_Preview_Audio";
 import PREVIEW_STICKER from "@salesforce/label/c.LINE_Preview_Sticker";
 import PREVIEW_UNSUPPORTED from "@salesforce/label/c.LINE_Preview_Unsupported";
+import FILE_DOWNLOADING from "@salesforce/label/c.LINE_File_Downloading";
+import FILE_TOO_LARGE from "@salesforce/label/c.LINE_File_Too_Large";
+import FILE_DOWNLOAD_FAILED from "@salesforce/label/c.LINE_File_Download_Failed";
+import FILE_OPEN from "@salesforce/label/c.LINE_File_Open";
+import ATTACH from "@salesforce/label/c.LINE_Chat_Attach";
 
 const MAX_TEXT_LENGTH = 5000;
 const DEFAULT_POLL_SECONDS = 2;
 // Within this many pixels of the top counts as "at the top" on trackpads and touch screens.
 const SCROLL_TOP_THRESHOLD_PX = 40;
+// Salesforce's own thumbnail of a file version (M7). A relative platform path, the same in every org.
+const THUMBNAIL_PATH =
+  "/sfc/servlet.shepherd/version/renditionDownload?rendition=THUMB720BY480&versionId=";
+// Inbound files still being fetched from LINE; the poll picks up the finished file.
+const STATUS_TEXT = {
+  Downloading: FILE_DOWNLOADING,
+  "Too Large": FILE_TOO_LARGE,
+  "Download Failed": FILE_DOWNLOAD_FAILED
+};
 
 /**
  * Chat panel for the Contact record page: history, polling and sending text.
  * Stickers show as pictures from LINE's sticker CDN (DEC-32), falling back to a placeholder if one won't load.
- * Media and the invite flow arrive in M6/M7; other non-text messages show as placeholders for now.
+ * With no conversation yet, *Invite via LINE* opens the QR invite (`lineInvite`). Media arrives in M7; other non-text
+ * messages show as placeholders for now.
  */
-export default class LineChat extends LightningElement {
+export default class LineChat extends NavigationMixin(LightningElement) {
   @api recordId;
+
+  /**
+   * Opens one conversation instead of a Contact's conversations, for `lineInbox` (M6). Changing it switches the panel.
+   */
+  @api
+  get conversationId() {
+    return this._conversationId;
+  }
+  set conversationId(value) {
+    const changed = value !== this._conversationId;
+    this._conversationId = value;
+    if (changed && this.connected) {
+      this.loadConversations();
+    }
+  }
+  _conversationId;
+  connected = false;
 
   // Sticker pictures that failed to load; those show the placeholder instead.
   brokenStickerIds = [];
@@ -69,17 +106,21 @@ export default class LineChat extends LightningElement {
     loadOlder: LOAD_OLDER,
     sendHint: SEND_HINT,
     unfollowed: UNFOLLOWED,
-    notAssignedRep: NOT_ASSIGNED_REP
+    notAssignedRep: NOT_ASSIGNED_REP,
+    openFile: FILE_OPEN,
+    attach: ATTACH
   };
 
   async connectedCallback() {
     this.visibilityHandler = () => this.onVisibilityChange();
     document.addEventListener("visibilitychange", this.visibilityHandler);
+    this.connected = true;
     await this.loadPollInterval();
     await this.loadConversations();
   }
 
   disconnectedCallback() {
+    this.connected = false;
     this.stopPolling();
     if (this.visibilityHandler) {
       document.removeEventListener("visibilitychange", this.visibilityHandler);
@@ -103,8 +144,18 @@ export default class LineChat extends LightningElement {
 
   async loadConversations() {
     this.isLoading = true;
+    this.stopPolling();
     try {
-      this.conversations = await getConversations({ contactId: this.recordId });
+      if (this._conversationId) {
+        const conversation = await getConversation({
+          conversationId: this._conversationId
+        });
+        this.conversations = conversation ? [conversation] : [];
+      } else {
+        this.conversations = await getConversations({
+          contactId: this.recordId
+        });
+      }
       if (this.conversations.length) {
         await this.selectConversation(this.conversations[0].id);
       }
@@ -262,6 +313,7 @@ export default class LineChat extends LightningElement {
           }
         }
       }
+      await this.refreshPendingFiles();
     } catch (error) {
       // A failed poll is transient; the next one may work, so don't shout at the rep.
       this.stopPolling();
@@ -269,9 +321,31 @@ export default class LineChat extends LightningElement {
     }
   }
 
+  // A customer's file arrives as "Downloading" and is saved a few seconds later (M7). New-message polling never
+  // re-reads it, so while any is pending the newest page is fetched again and those messages are swapped in.
+  async refreshPendingFiles() {
+    if (!this.messages.some((m) => m.status === "Downloading")) {
+      return;
+    }
+    const page = await getMessages({
+      conversationId: this.selectedConversationId,
+      beforeSentAt: null,
+      beforeId: null,
+      pageSize: null
+    });
+    const fresh = new Map(page.messages.map((m) => [m.id, m]));
+    this.messages = this.messages.map((m) => fresh.get(m.id) || m);
+  }
+
   async markConversationRead() {
     try {
       await markRead({ conversationId: this.selectedConversationId });
+      // Lets the inbox clear its unread badge without waiting for its next refresh.
+      this.dispatchEvent(
+        new CustomEvent("read", {
+          detail: { conversationId: this.selectedConversationId }
+        })
+      );
       this.conversations = this.conversations.map((c) => {
         return c.id === this.selectedConversationId
           ? { ...c, unreadCount: 0 }
@@ -322,6 +396,45 @@ export default class LineChat extends LightningElement {
     }
   }
 
+  /**
+   * M7: the upload already saved the file on the conversation; give it a public link, then send it. Two calls,
+   * because the link is a write and LINE's push has to come before any write in a transaction.
+   * @param {CustomEvent} event uploadfinished from lightning-file-upload
+   */
+  async handleUploadFinished(event) {
+    const files = event.detail.files || [];
+    this.isSending = true;
+    try {
+      for (const file of files) {
+        const ids = {
+          conversationId: this.selectedConversationId,
+          contentDocumentId: file.documentId
+        };
+        // eslint-disable-next-line no-await-in-loop
+        await prepareFile(ids);
+        // eslint-disable-next-line no-await-in-loop
+        const sent = await sendFile(ids);
+        this.messages = [...this.messages, sent];
+        this.shouldScrollToBottom = true;
+      }
+    } catch (error) {
+      this.dispatchEvent(
+        new ShowToastEvent({
+          message: this.messageFrom(error),
+          variant: "error"
+        })
+      );
+    } finally {
+      this.isSending = false;
+    }
+  }
+
+  get isUploadDisabled() {
+    return (
+      this.isSending || this.showUnfollowedBanner || this.showReadOnlyNotice
+    );
+  }
+
   handleConversationSelect(event) {
     const conversationId = event.currentTarget.dataset.id;
     if (conversationId !== this.selectedConversationId) {
@@ -329,9 +442,15 @@ export default class LineChat extends LightningElement {
     }
   }
 
-  handleInvite() {
-    // Wired to the QR invite modal in M6.
-    this.dispatchEvent(new CustomEvent("invite"));
+  // QR invite (M6): the customer's first message with the code links their chat to this Contact.
+  async handleInvite() {
+    await LineInvite.open({
+      size: "small",
+      label: INVITE,
+      contactId: this.recordId
+    });
+    // The customer may already have scanned and sent the code while the modal was open.
+    await this.loadConversations();
   }
 
   // ---------- view model ----------
@@ -344,8 +463,9 @@ export default class LineChat extends LightningElement {
     return this.conversations.length > 0;
   }
 
+  // The invite prompt belongs on a Contact page; opened from the inbox there is always a conversation.
   get showEmptyState() {
-    return !this.isLoading && !this.hasConversations;
+    return !this.isLoading && !this.hasConversations && !this._conversationId;
   }
 
   get hasMultipleConversations() {
@@ -392,6 +512,10 @@ export default class LineChat extends LightningElement {
         m.messageType === "sticker" &&
         !!m.stickerUrl &&
         !this.brokenStickerIds.includes(m.id);
+      // M7: a saved image shows its thumbnail; any other saved file shows as a chip that opens the preview.
+      const showImage = m.messageType === "image" && !!m.contentVersionId;
+      const showFile = !showImage && !!m.contentDocumentId;
+      const statusText = STATUS_TEXT[m.status];
       return {
         ...m,
         key: m.id,
@@ -405,7 +529,17 @@ export default class LineChat extends LightningElement {
           : "slds-grid slds-m-bottom_x-small",
         isText,
         showSticker,
-        placeholder: isText || showSticker ? undefined : this.placeholderFor(m),
+        showImage,
+        showFile,
+        thumbnailUrl: showImage
+          ? THUMBNAIL_PATH + m.contentVersionId
+          : undefined,
+        fileLabel: m.fileName || this.placeholderFor(m),
+        statusText,
+        placeholder:
+          isText || showSticker || showImage || showFile
+            ? undefined
+            : this.placeholderFor(m),
         isFailed: m.status === "Failed",
         failedLabel: FAILED_BADGE,
         failedDetail: m.errorMessage
@@ -419,6 +553,14 @@ export default class LineChat extends LightningElement {
     if (id && !this.brokenStickerIds.includes(id)) {
       this.brokenStickerIds = [...this.brokenStickerIds, id];
     }
+  }
+
+  handleOpenFile(event) {
+    this[NavigationMixin.Navigate]({
+      type: "standard__namedPage",
+      attributes: { pageName: "filePreview" },
+      state: { selectedRecordId: event.currentTarget.dataset.documentId }
+    });
   }
 
   placeholderFor(message) {

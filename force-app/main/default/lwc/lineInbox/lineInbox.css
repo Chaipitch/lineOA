@@ -1,0 +1,17 @@
+.line-inbox-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  line-height: 1.3;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.line-inbox-item_selected {
+  background: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+.line-inbox-list {
+  max-height: 32rem;
+  overflow-y: auto;
+}

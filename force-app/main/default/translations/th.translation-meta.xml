@@ -352,4 +352,162 @@
     >เขตเวลาของคุณต่างจากองค์กร การตั้งเวลาจะใช้เขตเวลาของคุณ งานจะทำงานเวลา 01:00 ตาม:</label>
         <name>LINE_Admin_Jobs_Zone_Mismatch</name>
     </customLabels>
+    <customLabels>
+        <label>กล่องข้อความ LINE</label>
+        <name>LINE_Inbox_Title</name>
+    </customLabels>
+    <customLabels>
+        <label>ยังไม่ได้อ่าน</label>
+        <name>LINE_Inbox_Unread</name>
+    </customLabels>
+    <customLabels>
+        <label>ยังไม่เชื่อมผู้ติดต่อ</label>
+        <name>LINE_Inbox_Unlinked</name>
+    </customLabels>
+    <customLabels>
+        <label>ทั้งหมด</label>
+        <name>LINE_Inbox_All</name>
+    </customLabels>
+    <customLabels>
+        <label>ไม่มีบทสนทนา</label>
+        <name>LINE_Inbox_Empty</name>
+    </customLabels>
+    <customLabels>
+        <label>เลือกบทสนทนาเพื่ออ่านและตอบกลับ</label>
+        <name>LINE_Inbox_Select</name>
+    </customLabels>
+    <customLabels>
+        <label>โหลดเพิ่ม</label>
+        <name>LINE_Inbox_Load_More</name>
+    </customLabels>
+    <customLabels>
+        <label>เชื่อมกับผู้ติดต่อ</label>
+        <name>LINE_Inbox_Link_Contact</name>
+    </customLabels>
+    <customLabels>
+        <label>เชื่อม</label>
+        <name>LINE_Inbox_Link</name>
+    </customLabels>
+    <customLabels>
+        <label>ยกเลิกการเชื่อม</label>
+        <name>LINE_Inbox_Unlink</name>
+    </customLabels>
+    <customLabels>
+        <label>เชื่อมกับ {0} แล้ว</label>
+        <name>LINE_Inbox_Linked</name>
+    </customLabels>
+    <customLabels>
+        <label>ยกเลิกการเชื่อมบทสนทนาแล้ว</label>
+        <name>LINE_Inbox_Unlinked_Done</name>
+    </customLabels>
+    <customLabels>
+        <label>ลบผู้ติดต่อชั่วคราวที่ LINE Connect สร้างไว้แล้ว</label>
+        <name>LINE_Inbox_Placeholder_Deleted</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >ผู้ติดต่อที่ LINE Connect สร้างไว้มีข้อมูลอื่นอยู่ จึงไม่ได้ลบ หากซ้ำกันโปรดรวมรายการ</label>
+        <name>LINE_Inbox_Placeholder_Kept</name>
+    </customLabels>
+    <customLabels>
+        <label>ผู้ติดต่อนี้เชื่อมกับผู้ใช้ LINE คนอื่นแล้ว</label>
+        <name>LINE_Link_Contact_Has_Other_User</name>
+    </customLabels>
+    <customLabels>
+        <label>ผู้ใช้ LINE นี้เชื่อมกับ {0} แล้ว</label>
+        <name>LINE_Link_Held_By</name>
+    </customLabels>
+    <customLabels>
+        <label>ผู้ใช้ LINE นี้เชื่อมกับผู้ติดต่ออื่นแล้ว</label>
+        <name>LINE_Link_Held_By_Hidden</name>
+    </customLabels>
+    <customLabels>
+        <label>คุณต้องมีสิทธิ์แก้ไขผู้ติดต่อนี้จึงจะเชื่อมได้</label>
+        <name>LINE_Link_No_Edit</name>
+    </customLabels>
+    <customLabels>
+        <label>บันทึกการเชื่อมไม่สำเร็จ: {0}</label>
+        <name>LINE_Link_Failed</name>
+    </customLabels>
+    <customLabels>
+        <label>เชื่อมบัญชีของฉัน #{0}</label>
+        <name>LINE_Invite_Message</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >คุณต้องมีบัญชี LINE Official Account ที่ใช้งานอยู่และกำหนดให้คุณ จึงจะเชิญลูกค้าได้</label>
+        <name>LINE_Invite_No_OA</name>
+    </customLabels>
+    <customLabels>
+        <label>ขอบคุณ บัญชี LINE ของคุณเชื่อมต่อเรียบร้อยแล้ว</label>
+        <name>LINE_Invite_Reply_Linked</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >รหัสนี้หมดอายุหรือใช้ไม่ได้แล้ว กรุณาขอรหัสใหม่จากพนักงานขายของคุณ</label>
+        <name>LINE_Invite_Reply_Refused</name>
+    </customLabels>
+    <customLabels>
+        <label>เชิญผ่าน LINE</label>
+        <name>LINE_Invite_Title</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >ให้ลูกค้าสแกนรหัสนี้ด้วยกล้องโทรศัพท์หรือ LINE แล้วกดส่งใน LINE บทสนทนาจะเชื่อมกับผู้ติดต่อนี้</label>
+        <name>LINE_Invite_Scan</name>
+    </customLabels>
+    <customLabels>
+        <label>หรือส่งลิงก์นี้ทาง SMS หรืออีเมล</label>
+        <name>LINE_Invite_Link</name>
+    </customLabels>
+    <customLabels>
+        <label>คัดลอกลิงก์</label>
+        <name>LINE_Invite_Copy</name>
+    </customLabels>
+    <customLabels>
+        <label>คัดลอกลิงก์แล้ว</label>
+        <name>LINE_Invite_Copied</name>
+    </customLabels>
+    <customLabels>
+        <label>ใช้ได้ถึง {0}</label>
+        <name>LINE_Invite_Expires</name>
+    </customLabels>
+    <customLabels>
+        <label>สร้างรหัสใหม่</label>
+        <name>LINE_Invite_New_Code</name>
+    </customLabels>
+    <customLabels>
+        <label>ปิด</label>
+        <name>LINE_Invite_Close</name>
+    </customLabels>
+    <customLabels>
+        <label>เปิดแชทกับ {0}</label>
+        <name>LINE_Invite_Through_OA</name>
+    </customLabels>
+    <customLabels>
+        <label>กำลังบันทึกไฟล์…</label>
+        <name>LINE_File_Downloading</name>
+    </customLabels>
+    <customLabels>
+        <label>ไฟล์ใหญ่เกินกว่าจะบันทึกใน Salesforce โปรดดูใน LINE</label>
+        <name>LINE_File_Too_Large</name>
+    </customLabels>
+    <customLabels>
+        <label>บันทึกไฟล์นี้ไม่ได้ โปรดดูใน LINE</label>
+        <name>LINE_File_Download_Failed</name>
+    </customLabels>
+    <customLabels>
+        <label>เปิดไฟล์</label>
+        <name>LINE_File_Open</name>
+    </customLabels>
+    <customLabels>
+        <label>{0}
+{1}
+(ลิงก์ใช้ได้ถึง {2})</label>
+        <name>LINE_File_Link_Message</name>
+    </customLabels>
+    <customLabels>
+        <label>ส่งไฟล์</label>
+        <name>LINE_Chat_Attach</name>
+    </customLabels>
 </Translations>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>LINE_Auto_Created__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description
+  >Set when LINE Connect created this Contact from a LINE user&apos;s first message. When a rep links that LINE user to another Contact, this placeholder is deleted if nothing else is attached to it (DEC-34).</description>
+    <inlineHelpText
+  >Created automatically by LINE Connect. Linking this LINE user to another Contact removes it if nothing else is attached.</inlineHelpText>
+    <label>Created by LINE Connect</label>
+    <type>Checkbox</type>
+</CustomField>

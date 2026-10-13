@@ -72,6 +72,7 @@ of who changed what. Subscribers see it in the record's History related list.
 | LINE_OA_Configuration__c | Lookup(LINE_OA_Configuration__c) | Primary LINE OA for this Contact |
 | LINE_Invite_Code__c | Text(8), Unique (case sensitive), External ID | One-time QR invite code (alphabet `A-HJ-NP-Z2-9`). Cleared once used. |
 | LINE_Invite_Expires_At__c | DateTime | Code expiry (`Invite_Code_Expiry_Days__c`) |
+| LINE_Auto_Created__c | Checkbox, default false | Set when LINE Connect created the Contact (DEC-27). Lets a manual link recognise and remove the placeholder (DEC-34). Read-only to users. |
 
 ### LINE_Conversation__c
 OWD: **Private**. Owner = the OA's assigned rep, or the fallback owner (a user or a subscriber-created queue that supports this object).
@@ -172,7 +173,8 @@ Implemented only in `LineLinkService`.
    - Contact already has the **same** ID → link.
    - Contact has a **different** ID → refuse with a message naming the other Contact (only if the user can see it; otherwise
      a generic message).
-   - Another Contact already has this ID → refuse as above, **unless the package auto-created that Contact** (DEC-34): then
+   - Another Contact already has this ID → refuse as above, **unless the package auto-created that Contact**
+     (`LINE_Auto_Created__c`, DEC-34): then
      move the ID to this Contact and delete the auto-created one if nothing else is attached to it, otherwise leave it for
      the rep to merge.
    - The rep needs Edit access to the Contact (checked in user mode).

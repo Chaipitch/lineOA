@@ -19,6 +19,11 @@
     <description
   >For LINE Connect administrators: settings, OA registration and reassignment, jobs, error log. Includes everything in LINE Chat User, plus View All on conversations and messages.</description>
     <fieldPermissions>
+        <editable>false</editable>
+        <field>Contact.LINE_Auto_Created__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <editable>true</editable>
         <field>Contact.LINE_Invite_Code__c</field>
         <readable>true</readable>
@@ -280,6 +285,10 @@
         <viewAllFields>false</viewAllFields>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
+    <tabSettings>
+        <tab>LINE_Inbox</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
     <tabSettings>
         <tab>LINE_Admin</tab>
         <visibility>Visible</visibility>

@@ -1,14 +1,51 @@
 import { createElement } from "lwc";
 import LineChat from "c/lineChat";
+import LightningModal from "lightning/modal";
+import { getNavigateCalledWith } from "lightning/navigation";
+
+// The stock stub doesn't record navigation; this one keeps the last page reference.
+jest.mock("lightning/navigation", () => {
+  const Navigate = Symbol("Navigate");
+  const calls = [];
+  const NavigationMixin = (Base) =>
+    class extends Base {
+      [Navigate](pageReference) {
+        calls.push(pageReference);
+      }
+    };
+  NavigationMixin.Navigate = Navigate;
+  return {
+    NavigationMixin,
+    getNavigateCalledWith: () => calls[calls.length - 1]
+  };
+});
 import getConversations from "@salesforce/apex/LineChatController.getConversations";
+import getConversation from "@salesforce/apex/LineChatController.getConversation";
 import getMessages from "@salesforce/apex/LineChatController.getMessages";
 import getMessagesSince from "@salesforce/apex/LineChatController.getMessagesSince";
 import markRead from "@salesforce/apex/LineChatController.markRead";
 import sendText from "@salesforce/apex/LineChatController.sendText";
+import prepareFile from "@salesforce/apex/LineChatController.prepareFile";
+import sendFile from "@salesforce/apex/LineChatController.sendFile";
 import getPollIntervalSeconds from "@salesforce/apex/LineChatController.getPollIntervalSeconds";
 
 jest.mock(
   "@salesforce/apex/LineChatController.getConversations",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineChatController.getConversation",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineChatController.prepareFile",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineChatController.sendFile",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
@@ -279,6 +316,200 @@ describe("c-line-chat", () => {
     expect(
       element.shadowRoot.querySelector('[data-id="read-only-notice"]')
     ).toBeNull();
+  });
+
+  it("opens one conversation by Id when used from the inbox", async () => {
+    getConversation.mockResolvedValue({
+      ...CONVERSATION,
+      id: "a00000000000009"
+    });
+    const element = createElement("c-line-chat", { is: LineChat });
+    element.conversationId = "a00000000000009";
+    const onRead = jest.fn();
+    element.addEventListener("read", onRead);
+    document.body.appendChild(element);
+    await flush();
+
+    expect(getConversation).toHaveBeenCalledWith({
+      conversationId: "a00000000000009"
+    });
+    expect(getConversations).not.toHaveBeenCalled();
+    expect(onRead).toHaveBeenCalled();
+    expect(onRead.mock.calls[0][0].detail.conversationId).toBe(
+      "a00000000000009"
+    );
+  });
+
+  it("switches conversation when the inbox selects another", async () => {
+    getConversation.mockResolvedValue({
+      ...CONVERSATION,
+      id: "a00000000000009"
+    });
+    const element = createElement("c-line-chat", { is: LineChat });
+    element.conversationId = "a00000000000009";
+    document.body.appendChild(element);
+    await flush();
+
+    getConversation.mockResolvedValue({
+      ...CONVERSATION,
+      id: "a00000000000010"
+    });
+    element.conversationId = "a00000000000010";
+    await flush();
+
+    expect(getConversation).toHaveBeenLastCalledWith({
+      conversationId: "a00000000000010"
+    });
+  });
+
+  it("opens the QR invite for this Contact", async () => {
+    getConversations.mockResolvedValue([]);
+    const element = createComponent();
+    await flush();
+
+    [...element.shadowRoot.querySelectorAll("lightning-button")]
+      .find((b) => b.label === "c.LINE_Chat_Invite")
+      .click();
+    await flush();
+
+    expect(LightningModal.open).toHaveBeenCalledWith(
+      expect.objectContaining({ contactId: "003000000000001" })
+    );
+    expect(getConversations).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows a saved image as its thumbnail and opens the file preview", async () => {
+    getMessages.mockResolvedValue({
+      messages: [
+        {
+          ...inboundMessage("m9", null),
+          messageType: "image",
+          contentDocumentId: "069000000000001",
+          contentVersionId: "068000000000001",
+          fileName: "LINE image.jpg"
+        }
+      ],
+      hasMore: false
+    });
+    const element = createComponent();
+    await flush();
+
+    const img = element.shadowRoot.querySelector("img.line-image");
+    expect(img.src).toContain("versionId=068000000000001");
+    element.shadowRoot.querySelector("button.line-file-button").click();
+    expect(getNavigateCalledWith().state.selectedRecordId).toBe(
+      "069000000000001"
+    );
+  });
+
+  it("shows a saved file by name, and the state of one still being saved", async () => {
+    getMessages.mockResolvedValue({
+      messages: [
+        {
+          ...inboundMessage("m10", null),
+          messageType: "file",
+          fileName: "quote.pdf",
+          contentDocumentId: "069000000000002"
+        },
+        {
+          ...inboundMessage("m11", null),
+          messageType: "file",
+          fileName: "huge.zip",
+          status: "Too Large"
+        }
+      ],
+      hasMore: false
+    });
+    const element = createComponent();
+    await flush();
+
+    expect(
+      element.shadowRoot.querySelector("button.line-file-button").textContent
+    ).toContain("quote.pdf");
+    expect(
+      element.shadowRoot.querySelector('[data-id="file-status"]').textContent
+    ).toContain("c.LINE_File_Too_Large");
+  });
+
+  it("updates a file still being saved when polling", async () => {
+    const downloading = {
+      ...inboundMessage("m12", null),
+      messageType: "image",
+      status: "Downloading"
+    };
+    getMessages.mockResolvedValueOnce({
+      messages: [downloading],
+      hasMore: false
+    });
+    getMessages.mockResolvedValue({
+      messages: [
+        {
+          ...downloading,
+          status: "Received",
+          contentDocumentId: "069000000000003",
+          contentVersionId: "068000000000003"
+        }
+      ],
+      hasMore: false
+    });
+    const element = createComponent();
+    await flush();
+    expect(
+      element.shadowRoot.querySelector('[data-id="file-status"]')
+    ).not.toBeNull();
+
+    jest.advanceTimersByTime(5000);
+    await flush();
+
+    expect(
+      element.shadowRoot.querySelector('[data-id="file-status"]')
+    ).toBeNull();
+    expect(element.shadowRoot.querySelector("img.line-image")).not.toBeNull();
+  });
+
+  it("sends an uploaded file: link first, then the push", async () => {
+    prepareFile.mockResolvedValue();
+    sendFile.mockResolvedValue({
+      ...inboundMessage("m20", null),
+      isOutbound: true,
+      direction: "Outbound",
+      messageType: "file",
+      fileName: "quote.pdf",
+      contentDocumentId: "069000000000020",
+      status: "Sent"
+    });
+    const element = createComponent();
+    await flush();
+
+    element.shadowRoot.querySelector("lightning-file-upload").dispatchEvent(
+      new CustomEvent("uploadfinished", {
+        detail: {
+          files: [{ documentId: "069000000000020", name: "quote.pdf" }]
+        }
+      })
+    );
+    await flush();
+
+    const ids = {
+      conversationId: CONVERSATION.id,
+      contentDocumentId: "069000000000020"
+    };
+    expect(prepareFile).toHaveBeenCalledWith(ids);
+    expect(sendFile).toHaveBeenCalledWith(ids);
+    expect(prepareFile.mock.invocationCallOrder[0]).toBeLessThan(
+      sendFile.mock.invocationCallOrder[0]
+    );
+    expect(element.shadowRoot.textContent).toContain("quote.pdf");
+  });
+
+  it("does not offer uploads to someone who can only read", async () => {
+    getConversations.mockResolvedValue([{ ...CONVERSATION, canSend: false }]);
+    const element = createComponent();
+    await flush();
+
+    expect(
+      element.shadowRoot.querySelector("lightning-file-upload").disabled
+    ).toBe(true);
   });
 
   it("shows an error toast when sending fails", async () => {

@@ -648,4 +648,18 @@ private class LineApiClientTest {
     Assert.areEqual(60000, audio.duration);
     Assert.isFalse(JSON.serialize(audio, true).contains('previewImageUrl'));
   }
+
+  // ---------- QR invite link (D10) ----------
+
+  @IsTest
+  static void oaMessageUrlPercentEncodesTheText() {
+    Assert.areEqual(
+      'https://line.me/R/oaMessage/%40803ctlbv/?Link%20my%20account%20%23K7PM2QXA',
+      LineApiClient.oaMessageUrl('@803ctlbv', 'Link my account #K7PM2QXA')
+    );
+    String thai = LineApiClient.oaMessageUrl('@803ctlbv', 'เชื่อม #K7PM2QXA');
+    Assert.isFalse(thai.contains('เชื่อม'), 'Thai text is percent-encoded');
+    Assert.isTrue(thai.endsWith('%20%23K7PM2QXA'));
+    Assert.isNull(LineApiClient.oaMessageUrl(' ', 'x'), 'No basic ID, no link');
+  }
 }

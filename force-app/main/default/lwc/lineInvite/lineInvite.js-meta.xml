@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>67.0</apiVersion>
+    <isExposed>false</isExposed>
+    <masterLabel>LINE Invite</masterLabel>
+    <description
+  >QR invite modal opened from lineChat: a one-time code that links the customer's LINE chat to this Contact.</description>
+</LightningComponentBundle>

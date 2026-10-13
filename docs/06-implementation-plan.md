@@ -85,6 +85,8 @@ Record the [VERIFY] results for stateless tokens, `destination`, and Automated P
 - `lineInvite` modal: QR (static resource library), copy link, expiry shown.
 - `lineInbox`: tabs *Unread* and *Unlinked*, link to Contact (`lightning-record-picker`), open the conversation.
 - **Beta 2** → QA org: scan the QR with a real phone; add a second OA and check it auto-links.
+- ✅ **Built (Beta 8):** the LINE Inbox tab, manual link with placeholder clean-up and admin unlink (DEC-34, DEC-41), QR invite (DEC-42).
+  Auto-link across OAs proven live (2026-10-11). Still open: the phone test of the invite link.
 
 **Done when:** acceptance criteria 6 passes on real phones (iOS and Android); the URL scheme result is recorded in DECISIONS.
 
@@ -95,6 +97,8 @@ Record the [VERIFY] results for stateless tokens, `destination`, and Automated P
 - Outbound: upload in `lineChat` → image/video/audio sent natively, other files as an expiring `ContentDistribution` link in a text message.
   Validate type and size before the callout.
 - Stickers rendered as a label or image (as verified), location as a text + map link.
+- ✅ **Built (Beta 8, DEC-43):** downloads, thumbnails and file chips, rep file sending (JPEG/PNG ≤ 1 MB as pictures, the rest as
+  expiring links), location as text with coordinates (no map link, user decision). Still open: the live check with real files.
 
 **Done when:** acceptance criteria 2 (image + document) and 7 pass in the QA org with real files; LINE accepts the Salesforce public URL (recorded in DECISIONS).
 

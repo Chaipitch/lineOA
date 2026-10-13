@@ -10,6 +10,7 @@
     <isOmniPinnedViewEnabled>false</isOmniPinnedViewEnabled>
     <label>LINE Chat</label>
     <navType>Standard</navType>
+    <tabs>LINE_Inbox</tabs>
     <tabs>LINE_Conversation__c</tabs>
     <tabs>LINE_OA_Configuration__c</tabs>
     <tabs>LINE_Admin</tabs>

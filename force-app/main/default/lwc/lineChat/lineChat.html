@@ -113,8 +113,48 @@
                     onerror={handleStickerError}
                   />
                 </template>
+                <!-- M7: a customer's or rep's image, saved as a Salesforce File -->
+                <template lwc:elseif={message.showImage}>
+                  <button
+                    class="slds-button line-file-button"
+                    data-document-id={message.contentDocumentId}
+                    title={labels.openFile}
+                    onclick={handleOpenFile}
+                  >
+                    <img
+                      class="line-image"
+                      src={message.thumbnailUrl}
+                      alt={message.fileLabel}
+                      loading="lazy"
+                    />
+                  </button>
+                </template>
+                <template lwc:elseif={message.showFile}>
+                  <button
+                    class="slds-button line-file-button slds-grid slds-grid_vertical-align-center"
+                    data-document-id={message.contentDocumentId}
+                    title={labels.openFile}
+                    onclick={handleOpenFile}
+                  >
+                    <lightning-icon
+                      icon-name="doctype:attachment"
+                      size="small"
+                    ></lightning-icon>
+                    <span class="slds-var-m-left_x-small line-text"
+                      >{message.fileLabel}</span
+                    >
+                  </button>
+                </template>
                 <template lwc:else>
                   <p class="slds-text-color_weak">{message.placeholder}</p>
+                </template>
+                <template lwc:if={message.statusText}>
+                  <p
+                    class="slds-text-body_small slds-text-color_weak"
+                    data-id="file-status"
+                  >
+                    {message.statusText}
+                  </p>
                 </template>
 
                 <div
@@ -153,10 +193,21 @@
             onchange={handleDraftChange}
             onkeydown={handleKeyDown}
           ></lightning-textarea>
-          <div class="slds-grid slds-grid_align-spread slds-var-m-top_xx-small">
+          <div
+            class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-var-m-top_xx-small"
+          >
             <span class="slds-text-body_small slds-text-color_weak"
               >{labels.sendHint}</span
             >
+            <!-- M7: saved on the conversation, then sent as a picture or an expiring link (DEC-43) -->
+            <lightning-file-upload
+              label={labels.attach}
+              variant="label-hidden"
+              name="lineFile"
+              record-id={selectedConversationId}
+              disabled={isUploadDisabled}
+              onuploadfinished={handleUploadFinished}
+            ></lightning-file-upload>
             <lightning-button
               variant="brand"
               label={labels.send}

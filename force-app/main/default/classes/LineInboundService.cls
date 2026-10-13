@@ -5,7 +5,8 @@
  * Steps: parse and filter → resolve owners → upsert conversations by `Unique_Key__c` → upsert messages by
  * `Webhook_Event_Id__c` (redeliveries are no-ops and don't touch unread counts) → notify owners → enqueue one
  * `LineCalloutQueueable` for follow-up callouts.
- * Contacts are linked or created by `LineLinkService`, from the follow-up queueable (03 §5); invite codes follow.
+ * Contacts are linked or created by `LineLinkService`, from the follow-up queueable (03 §5). An invite code in a new
+ * message links here, before the queueable can auto-create a Contact, and queues the free confirmation reply (D10).
  *
  * `without sharing` (02 §2): runs as Automated Process from the platform event trigger and creates conversations
  * owned by reps, which no user context could do. Nothing here is exposed to users directly.
@@ -29,6 +30,17 @@ public without sharing class LineInboundService {
     'sticker',
     'location'
   };
+  // Messages whose content LINE hosts and we download into Salesforce Files (M7).
+  private static final Set<String> DOWNLOADABLE_TYPES = new Set<String>{
+    'image',
+    'video',
+    'audio',
+    'file'
+  };
+  @TestVisible
+  static final String STATUS_DOWNLOADING = 'Downloading';
+  @TestVisible
+  static final String STATUS_TOO_LARGE = 'Too Large';
   private static final String STATUS_FOLLOWING = 'Following';
   private static final String STATUS_UNFOLLOWED = 'Unfollowed';
 
@@ -37,6 +49,10 @@ public without sharing class LineInboundService {
   // Caps notifications per batch so a burst from many customers can't flood reps or burn CPU.
   @TestVisible
   static final Integer MAX_NOTIFICATIONS_PER_BATCH = 100;
+  // Each invite link costs a handful of queries and DML; invites are rare, so a burst beyond this is left for the
+  // rep to link from the inbox rather than risk the batch's limits.
+  @TestVisible
+  static final Integer MAX_INVITES_PER_BATCH = 10;
   // Result of the last call, for tests (the trigger discards it).
   @TestVisible
   static Result lastResult;
@@ -48,6 +64,7 @@ public without sharing class LineInboundService {
     public Integer conversationsUpserted = 0;
     public Integer notificationsSent = 0;
     public Integer calloutItemsQueued = 0;
+    public Integer invitesLinked = 0;
   }
 
   /**
@@ -171,10 +188,18 @@ public without sharing class LineInboundService {
       conversations,
       conversationIdByKey
     );
+    List<LineCalloutQueueable.WorkItem> inviteReplies = linkInvites(
+      incoming,
+      conversationIdByKey,
+      alreadyStored,
+      result
+    );
     result.calloutItemsQueued = enqueueFollowUps(
       incoming,
       existing,
-      conversationIdByKey
+      conversationIdByKey,
+      inviteReplies,
+      downloadItems(incoming, conversationIdByKey, messages)
     );
     lastResult = result;
     return result;
@@ -446,8 +471,23 @@ public without sharing class LineInboundService {
         msg.Location__c = truncate(locationText(m), SHORT_TEXT_LENGTH);
       }
     }
-    // Media content is downloaded in M7; until then media messages are stored as placeholders.
+    // M7: LINE-hosted content is downloaded by the follow-up queueable. A file LINE already says is too big is never
+    // fetched; media at an external URL (contentProvider "external") stays a placeholder.
+    if (DOWNLOADABLE_TYPES.contains(type) && isLineHosted(m)) {
+      msg.Status__c = type == 'file' &&
+        m.fileSize != null &&
+        m.fileSize > LineSettings.maxDownloadBytes()
+        ? STATUS_TOO_LARGE
+        : STATUS_DOWNLOADING;
+    }
     return msg;
+  }
+
+  private static Boolean isLineHosted(LineWebhookModels.Message m) {
+    return m.type == 'file' ||
+      m.contentProvider == null ||
+      m.contentProvider.type == null ||
+      m.contentProvider.type == 'line';
   }
 
   private static Integer upsertMessages(List<LINE_Message__c> messages) {
@@ -573,10 +613,144 @@ public without sharing class LineInboundService {
 
   // Profile fetch for new conversations and for (re-)follows, plus Contact resolution on a customer's first
   // message (03 §5). One queueable per transaction (CLAUDE.md).
+  /**
+   * QR invites (03 §5 rule 1, D10): a new text message holding `#CODE` for an unexpired code links its conversation to
+   * the Contact the code was issued for. Every code found gets a reply: linked, or refused (expired, unknown, or the
+   * LINE user already belongs to another Contact). Redeliveries are skipped, so a code is never processed twice.
+   */
+  private static List<LineCalloutQueueable.WorkItem> linkInvites(
+    List<Incoming> incoming,
+    Map<String, Id> conversationIdByKey,
+    Set<String> alreadyStored,
+    Result result
+  ) {
+    List<LineCalloutQueueable.WorkItem> replies = new List<LineCalloutQueueable.WorkItem>();
+    Map<String, Incoming> byCode = new Map<String, Incoming>();
+    for (Incoming item : incoming) {
+      LineWebhookModels.Event e = item.event;
+      if (
+        e.type != 'message' ||
+        e.message == null ||
+        e.message.type != 'text' ||
+        alreadyStored.contains(e.webhookEventId)
+      ) {
+        continue;
+      }
+      String code = LineLinkService.inviteCodeIn(e.message.text);
+      if (code != null && !byCode.containsKey(code)) {
+        if (byCode.size() >= MAX_INVITES_PER_BATCH) {
+          LineLogger.error(
+            'LineInboundService.linkInvites',
+            'More invite codes in one batch than can be linked; the rest stay unlinked for the rep.',
+            item.oa.Id,
+            null
+          );
+          break;
+        }
+        byCode.put(code, item);
+      }
+    }
+    if (byCode.isEmpty()) {
+      return replies;
+    }
+
+    Map<String, Contact> contactByCode = new Map<String, Contact>();
+    for (Contact c : [
+      SELECT Id, LINE_Invite_Code__c, LINE_Invite_Expires_At__c
+      FROM Contact
+      WHERE LINE_Invite_Code__c IN :byCode.keySet()
+      WITH SYSTEM_MODE
+    ]) {
+      contactByCode.put(c.LINE_Invite_Code__c, c);
+    }
+
+    Datetime now = Datetime.now();
+    for (String code : byCode.keySet()) {
+      Incoming item = byCode.get(code);
+      Id conversationId = conversationIdByKey.get(item.key);
+      if (conversationId == null) {
+        continue;
+      }
+      Contact contact = contactByCode.get(code);
+      String outcome = LineCalloutQueueable.INVITE_REFUSED;
+      // SOQL matched case-insensitively; the code itself is case-sensitive.
+      if (
+        contact != null &&
+        code.equals(contact.LINE_Invite_Code__c) &&
+        contact.LINE_Invite_Expires_At__c != null &&
+        contact.LINE_Invite_Expires_At__c > now
+      ) {
+        try {
+          LineLinkService.linkByInvite(conversationId, contact.Id);
+          outcome = LineCalloutQueueable.INVITE_LINKED;
+          result.invitesLinked++;
+        } catch (Exception e) {
+          // Refused by the linking rules, or blocked by the subscriber's Contact rules: the message is already stored.
+          LineLogger.error(
+            'LineInboundService.linkInvites',
+            e,
+            item.oa.Id,
+            conversationId
+          );
+        }
+      }
+      if (String.isNotBlank(item.event.replyToken)) {
+        replies.add(
+          LineCalloutQueueable.inviteReplyItem(
+            conversationId,
+            item.oa.Id,
+            item.oa.Channel_Id__c,
+            item.event.replyToken,
+            outcome
+          )
+        );
+      }
+    }
+    return replies;
+  }
+
+  // One download per stored media message (M7), carried by the same queueable as the profile and invite work.
+  private static List<LineCalloutQueueable.WorkItem> downloadItems(
+    List<Incoming> incoming,
+    Map<String, Id> conversationIdByKey,
+    List<LINE_Message__c> messages
+  ) {
+    Map<Id, LINE_OA_Configuration__c> oaByConversation = new Map<Id, LINE_OA_Configuration__c>();
+    for (Incoming item : incoming) {
+      Id conversationId = conversationIdByKey.get(item.key);
+      if (conversationId != null) {
+        oaByConversation.put(conversationId, item.oa);
+      }
+    }
+    List<LineCalloutQueueable.WorkItem> result = new List<LineCalloutQueueable.WorkItem>();
+    for (LINE_Message__c m : messages) {
+      LINE_OA_Configuration__c oa = oaByConversation.get(
+        m.LINE_Conversation__c
+      );
+      if (m.Id == null || m.Status__c != STATUS_DOWNLOADING || oa == null) {
+        continue;
+      }
+      result.add(
+        LineCalloutQueueable.downloadItem(
+          m.Id,
+          m.LINE_Conversation__c,
+          oa.Id,
+          oa.Channel_Id__c,
+          m.Line_Message_Id__c,
+          m.Message_Type__c,
+          m.File_Name__c
+        )
+      );
+    }
+    return result;
+  }
+
   private static Integer enqueueFollowUps(
     List<Incoming> incoming,
     Map<String, LINE_Conversation__c> existing,
-    Map<String, Id> conversationIdByKey
+    Map<String, Id> conversationIdByKey,
+    List<LineCalloutQueueable.WorkItem> inviteReplies,
+    List<LineCalloutQueueable.WorkItem> downloads
   ) {
     Map<Id, LineCalloutQueueable.WorkItem> items = new Map<Id, LineCalloutQueueable.WorkItem>();
     for (Incoming item : incoming) {
@@ -614,10 +788,17 @@ public without sharing class LineInboundService {
         )
       );
     }
-    if (!items.isEmpty()) {
-      LineCalloutQueueable.enqueue(items.values());
+    // One queueable per transaction: invite replies first, while their tokens are freshest; profiles next, so a new
+    // customer is named and linked quickly; downloads last, since they may spread over several executions.
+    List<LineCalloutQueueable.WorkItem> work = new List<LineCalloutQueueable.WorkItem>(
+      inviteReplies
+    );
+    work.addAll(items.values());
+    work.addAll(downloads);
+    if (!work.isEmpty()) {
+      LineCalloutQueueable.enqueue(work);
     }
-    return items.size();
+    return work.size();
   }
 
   // ---------------------------------------------------------------------------------------------------------------

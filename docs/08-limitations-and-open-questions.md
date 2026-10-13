@@ -10,7 +10,7 @@
 | L4 | One OA = one rep; splitting a rep's customers means customers must add the new rep's OA | Reassign the whole OA; generic OA names |
 | L5 | Chat refresh is polling (~2 s, DEC-40), not instant | Custom notifications for instant alerts |
 | L6 | Inbound files limited to ~10 MB by Apex heap/callout limits | "Too large, view in LINE" |
-| L7 | LINE bots can't send file attachments; documents go as expiring links | ContentDistribution with expiry |
+| L7 | LINE bots can't send file attachments; documents go as expiring links. Only JPEG/PNG up to 1 MB show as pictures (LINE needs a ≤ 1 MB preview); larger images, video and audio also go as links (DEC-43). Links stop working after 7 days | ContentDistribution with expiry; the setting `Public_Link_Expiry_Days__c` |
 | L8 | 1:1 chats only | Groups out of scope |
 | L9 | Storage grows with message volume | Retention setting |
 | L10 | Contact record pages only (no Person Account page support in MVP) | Backlog |
@@ -38,6 +38,8 @@
 | **Stale secrets (found 2026-10-03).** LINE sends no event when a channel is deleted, nothing in the package calls `LineCredentialStore.remove()`, and subscriber admins can't reach the protected setting, so a secret stays until the package is uninstalled. A deleted channel's secret is dead (LINE issues no token for it), but a deactivated-yet-live OA keeps a working secret we no longer need. Storage is negligible (<1 KB each). Proposed for M8: a *Remove OA* action that deletes the secret and keeps the history; a nightly credentials check that flags OAs LINE rejects; delete the secret whenever an OA record is deleted. No automatic deletion. ✅ **Resolved in Beta 6 (DEC-33).** | Beta 6 |
 | **Callout allowlist (raised preparing the TA review, 2026-10-04).** Callouts are allowlisted by packaged Remote Site Settings for the two LINE hosts; Salesforce's recommended route is Named Credentials. Our authentication is per OA and issued at runtime, so it can't live in a Named Credential's authentication, but a **no-authentication Named Credential used only as the endpoint** is a valid hardening step. Risk: it needs callout access through an External Credential principal in a permission set, including for the Automated Process user; unproven in an installed package. | M11 |
 | **Private Contacts (found live 2026-10-11).** With Contact sharing *Controlled by Parent*, a Contact without an Account is visible only to its owner, so a second rep whose conversation auto-linked to it couldn't open it. ✅ **Fixed in the scratch org (DEC-36):** an admin-chosen default Account for auto-created Contacts, with a warning on the admin page. Contacts created before the setting existed must be given an Account by hand. Whether auto-create stays on by default is still a GTM question (TA R4). | Beta 7 |
+| **Queueable chain depth in Developer Edition orgs (M7).** Developer and trial orgs limit chained queueables to a depth of 5. A burst of large files or a long video transcoding wait chains several times, so on such an org the tail of a burst can stop with messages left at *Downloading*. Production orgs have no such limit. Watch in the QA org; if it bites, add a nightly sweep that re-queues stuck downloads. | M11 |
+| **Invite and file [VERIFY]s on real phones (M6/M7).** The `oaMessage` link (iOS and Android, friend and non-friend), LINE accepting Salesforce `ContentDownloadUrl` for pictures and `DistributionPublicUrl` for documents, and the reply token still being valid when the follow-up queueable runs. | Beta 8 QA |
 
 ## Open questions — business (via BA)
 

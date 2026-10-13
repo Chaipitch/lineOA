@@ -10,7 +10,10 @@ Status per section: what is designed (from the spec) and what is **implemented a
 | `https://api.line.me` | Token, bot info, webhook set/test, profile, push, reply, quota | `LINE_API` | M1/M2 |
 | `https://api-data.line.me` | Message content download | `LINE_API_DATA` | M1/M2 |
 
-No other callouts. No AI/LLM services. The QR library is a static resource.
+No other callouts. No AI/LLM services. The QR library is a static resource (`qrcode-generator` 2.0.4, MIT; reviewed: no network,
+`eval` or DOM access; draws on a canvas, no `innerHTML`; DEC-42). The invite link `line.me/R/oaMessage/...` is opened by the
+customer's phone; Apex never calls it. Invite codes are 8 random characters from a 32-symbol alphabet (40 bits), one-time,
+expire after `Invite_Code_Expiry_Days__c` (7), and only link when the conversation's LINE user isn't held by a Contact a person linked.
 
 **Why Remote Site Settings, not Named Credentials (D4, DEC-16):** two fixed hosts, the same for every subscriber, approved
 by the admin in the install wizard; authentication is per OA and issued at runtime, so it can't be stored as endpoint
@@ -80,7 +83,7 @@ From 02 §2. Each class carries a justification comment in code. Filled in as ea
 | `LineInboundService` (+ inner `OwnerResolver`) | Creates conversations/messages owned by reps, from system context | ✅ M3 (DML uses `AccessLevel.SYSTEM_MODE`) |
 | `LineCalloutQueueable` | Async follow-up; updates conversations and OA configurations the running user may not own | ✅ M3 |
 | `LineOAConfigAdminService` | Writes the secret and OA configurations; the caller (`LineAdminController`) checks the `LINE_Admin` custom permission first | ✅ M3; admin page since DEC-25 |
-| `LineLinkService` | Links and creates Contacts from the inbound path (Automated Process); user-initiated paths will check access in user mode first | ✅ M6 part (auto-link, auto-create; DEC-27) |
+| `LineLinkService` | Links and creates Contacts from the inbound path (Automated Process). Manual link: `LineChatController.linkToContact` first checks, as the user, read on the conversation and Edit on the chosen Contact (`UserRecordAccess`); the service then moves the LINE user ID off an **auto-created** placeholder (never off a Contact a person linked) and deletes that placeholder only if nothing else is attached (DEC-34), which the rep may not own. Unlink is admin-only (`LINE_Admin`). | ✅ M6 (auto-link, auto-create, manual link, unlink; DEC-27, DEC-34, DEC-41) |
 | `LineOAConfigTriggerHandler` | Deletes the protected secrets of deleted OAs for whoever deleted them; the setting is reachable only from package code | ✅ Beta 6 (DEC-33) |
 | `LineDailyEventSyncBatch` | Runs as whichever admin scheduled it, possibly for years; must see every conversation whatever that admin's sharing is. Writes Events owned by reps; nothing is shown to a user | ✅ M9 (DEC-30; queries `WITH SYSTEM_MODE`, DML `AccessLevel.SYSTEM_MODE`, partial success) |
 | Send authorization (DEC-37) | `LineChatController.assertCanSend`: seeing a conversation is not enough; only the OA's assigned rep (inactive OA: fallback owner or fallback-queue member) may send. OA routing fields read in system mode so OA sharing can't widen who may send | ✅ |
@@ -125,7 +128,11 @@ Implemented (M5, M8 part): `lineChat` and `lineAdmin` render message text with t
 
 - Media and documents are shared through `ContentDistribution` with an expiry (`Public_Link_Expiry_Days__c`).
 
-Implemented: — (M7)
+Implemented (M7, DEC-43): a public link is created only for a File the rep uploaded to that conversation (checked by
+`ContentDocumentLink`), only by a user who may send in it (DEC-37) and can see the File (user mode); it expires after
+`Public_Link_Expiry_Days__c` (7), no password, view and download allowed. Anyone holding the link can open the file until then,
+which is inherent to sending it over LINE; the rep chooses what to upload. Inbound files are stored as Salesforce Files only
+(never rendered as HTML or executed); file names come from the customer and are used only as the File's title.
 
 ## 8. Code Analyzer
 

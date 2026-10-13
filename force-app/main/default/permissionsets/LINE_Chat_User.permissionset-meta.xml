@@ -11,6 +11,11 @@
     <description
   >For sales reps and managers: chat with customers through their LINE OA. Record access still follows sharing (reps see conversations they own).</description>
     <fieldPermissions>
+        <editable>false</editable>
+        <field>Contact.LINE_Auto_Created__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
         <editable>true</editable>
         <field>Contact.LINE_Invite_Code__c</field>
         <readable>true</readable>
@@ -232,6 +237,10 @@
         <viewAllFields>false</viewAllFields>
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
+    <tabSettings>
+        <tab>LINE_Inbox</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
     <tabSettings>
         <tab>LINE_Conversation__c</tab>
         <visibility>Visible</visibility>

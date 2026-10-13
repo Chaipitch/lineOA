@@ -15,6 +15,9 @@ public inherited sharing class LineApiClient {
   // never called from Apex; the packaged CSP Trusted Site `LINE_Sticker_Images` allows this host for images only.
   @TestVisible
   static final String STICKER_IMAGE_BASE = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/';
+  // The LINE URL scheme that opens an OA's chat with a pre-filled message (D10). Opened by the customer's phone only.
+  @TestVisible
+  static final String OA_MESSAGE_BASE = 'https://line.me/R/oaMessage/';
   private static final Pattern STICKER_ID_PATTERN = Pattern.compile(
     '^[0-9]{1,20}$'
   );
@@ -54,6 +57,26 @@ public inherited sharing class LineApiClient {
       return null;
     }
     return STICKER_IMAGE_BASE + stickerId + '/android/sticker.png';
+  }
+
+  /**
+   * The QR invite link (D10): opens the OA's chat, offering to add it as a friend, with `text` typed in.
+   * @param basicId the OA's basic ID, e.g. `@803ctlbv`
+   * @param text the message to pre-fill
+   * @return the link, or null without a basic ID
+   */
+  public static String oaMessageUrl(String basicId, String text) {
+    if (String.isBlank(basicId)) {
+      return null;
+    }
+    // LINE wants %20 for spaces; urlEncode produces form encoding ('+').
+    String encoded = EncodingUtil.urlEncode(text == null ? '' : text, 'UTF-8')
+      .replace('+', '%20');
+    // 04 §3: the basic ID's '@' is URL-encoded too (%40).
+    return OA_MESSAGE_BASE +
+      EncodingUtil.urlEncode(basicId.trim(), 'UTF-8') +
+      '/?' +
+      encoded;
   }
 
   /**

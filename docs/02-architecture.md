@@ -46,7 +46,7 @@ Only `LineWebhookResource` is `global`. Everything else is `public`. `@AuraEnabl
 | `LineApiClient` | – | All HTTP to LINE: token, bot info, webhook endpoint set/test, profile, push, reply, content, quota. Per-transaction token cache. Throws `LineApiException`. |
 | `LineCalloutQueueable` | `without sharing`, `Database.AllowsCallouts` | Work items: nightly credentials check (DEC-33), fetch profile, download content → ContentVersion, send invite confirmation reply. Chains itself if more work remains (respecting callout/heap limits). |
 | `LineOutboundService` | `without sharing` | Send text/image/document link. Callout first, then DML. Uses `X-Line-Retry-Key`. |
-| `LineChatController` | `with sharing` | LWC API for reps: conversations for a Contact, message pages, poll since, send, mark read, link, create invite, unlinked list. All queries `WITH USER_MODE`. |
+| `LineChatController` | `with sharing` | LWC API for reps: conversations for a Contact or one conversation, message pages (with file thumbnails), poll since, send text, send a file (`prepareFile` then `sendFile`, DEC-43), mark read, the inbox (`getInbox`), link and admin unlink (DEC-41), create invite (DEC-42). Queries `WITH USER_MODE`; sending also requires the OA's assigned rep (DEC-37). |
 | `LineAdminController` | `with sharing` | LWC API for the admin page: settings, register OA, rotate secret, reassign, deactivate, test webhook, quota, schedule jobs. Checks the `LINE_Admin` custom permission. |
 | `LineOAConfigAdminService` | `without sharing` | Register, rotate, reassign, deactivate (callouts first, then DML). |
 | `LineOAConfigTriggerHandler` | `without sharing` | After delete: deletes the deleted OAs' channel secrets (DEC-33). M8: on rep or active change → start `LineReassignBatch`. |
@@ -57,7 +57,7 @@ Only `LineWebhookResource` is `global`. Everything else is `public`. `@AuraEnabl
 | `LineLogger` | – | Writes `LINE_Error_Log__c`; never throws. Buffers entries, and `flush()` runs at the end of each entry point. |
 | `LineTriggerHandler` (base) | – | Minimal virtual trigger handler with bypass. |
 
-LWC: `lineChat` (Contact record page), `lineInbox` (Home/App page), `lineInvite` (modal used by `lineChat`),
+LWC: `lineChat` (Contact record page; also opens one conversation inside the inbox), `lineInbox` (the **LINE Inbox** tab, an app page, DEC-41), `lineInvite` (modal used by `lineChat`),
 `lineAdmin` (admin app page). Static resource: QR code library (see 09 §6).
 
 ## 3. Key design decisions

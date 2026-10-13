@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-10-11**, after the TA review feedback, the D5 Provider check and the default Account (DEC-36, in the scratch org, not yet in a beta). Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-13**, after M6 (inbox, manual link, QR invite) and M7 (files and images), built into Beta 8. Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -14,14 +14,14 @@ milestone. For how the system works, read `HOW_IT_WORKS.md`.
 | M3 Registration + inbound | **Done, proven live** in a scratch org and in the installed package. |
 | M4 Outbound text | **Done, proven live**: a reply sent from Salesforce reached a real phone. |
 | M5 Chat panel (`lineChat`) | **Done, proven live** on a Contact page in the QA org. |
-| M6 Linking + inbox | **Partly done:** auto-link and auto-create Contact on first message (DEC-27), default Account for created Contacts (DEC-36, scratch only); D5 proven live (DECISIONS §2). **Not done:** QR invite codes, manual link, `lineInbox`, `lineInvite`. |
-| M7 Files & images | **Part done:** stickers show as pictures (DEC-32). Images, video, audio and files still show placeholders. |
+| M6 Linking + inbox | **Mostly done:** auto-link and auto-create (DEC-27), default Account (DEC-36), D5 proven live; **LINE Inbox tab, manual link with placeholder clean-up, admin unlink (DEC-34, DEC-41; scratch only, not in a beta yet)**. **QR invite built (DEC-42, scratch only)**; still to do: the [VERIFY] on real iOS and Android phones (`oaMessage` link, including for a customer who hasn't added the OA). |
+| M7 Files & images | **Built in the scratch org (DEC-43), not yet in a beta:** customer images/video/audio/files saved as Salesforce Files on the conversation and Contact (Too Large / Download Failed handled, video waits for LINE's transcoding), thumbnails and file chips in the chat, reps send files (small JPEG/PNG as pictures, the rest as expiring links). **Still to do:** the live [VERIFY] that LINE accepts Salesforce's public URLs, on real phones. |
 | M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29), *Remove OA* and the nightly credentials check (DEC-33). **Not done:** rotate secret, reassign, deactivate, quota display (M8a, decided display-only in DEC-35), error log. |
 | **M9 Daily Event sync** | **Done, proven live** in the QA org on Beta 4 (DEC-28–30). Follow-ups (minute rounding, time zones on the jobs card) shipped in Beta 6. |
 | M10–M12 | Not started. M11 now also includes evaluating a no-authentication Named Credential as the callout endpoint (06 M11, 08 "Callout allowlist"). |
 
-Checks on 2026-10-03 (Beta 6 work): **207/207 Apex tests** and **33/33 Jest tests** pass, org-wide coverage **94%**
-(lowest class `LineAdminController` 87%), Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
+Checks on 2026-10-13 (Beta 8 work): **257/257 Apex tests** and **59/59 Jest tests** pass, org-wide coverage **92%**
+(every class ≥ 85%), Code Analyzer **0 Critical/High**, Prettier and ESLint clean.
 
 **Beta 4 (`0.1.0.4`, `04tgL000000WOs1QAG`)**: M9, the first-message notification fix and the `registerOA` cleanup.
 **Installed in the QA org** by the user on 2026-09-29.
@@ -100,7 +100,7 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
      early in `line-dev` (push 2,000 messages in one transaction, record CPU, heap, time; ~half a day). Not answered yet.
    - Before the demo (deck "Proof" notes): Beta 6 installed, OA credentials show Valid, nightly job scheduled, `lineChat`
      on the Contact page, phone with the OA added.
-2. **QA org: install Beta 6, then schedule the nightly job** (LINE Admin → Nightly jobs → Schedule). It wasn't scheduled
+2. **QA org: install Beta 8 (the latest), then schedule the nightly job** (LINE Admin → Nightly jobs → Schedule). It wasn't scheduled
    after Beta 5 was installed. The card shows the org time zone and warns if the admin's differs.
 3. **M6 needs, before starting:**
    - the design for recognising auto-created Contacts (DEC-34: linking to the real Contact deletes an empty stub);
@@ -169,12 +169,15 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
 
 ## 7. Suggested next steps
 
-1. Install **Beta 6** in the QA org, schedule the nightly job, and try *Remove OA* on a throwaway OA.
-   Optionally, before 7 Oct, the early 2,000-message load test (§4 item 1).
-2. **M6** (confirm first: a new "created by LINE Connect" Contact field for the DEC-34 stub handling): QR invites, manual link with the DEC-34 stub handling, `lineInbox`.
-3. **M7**: customer images, video, audio and files in the chat panel.
-4. **M8 remainder**: rotate secret, reassign/deactivate with `LineReassignBatch`, quota display (M8a), error log.
-5. **M10** retention before any high-volume client; **M11** load tests (2,000-event batch, Site limits) and hardening.
+1. **Install Beta 8 in the QA org** (reinstall checklist: §1 and §5; uninstalling clears `Contact.LINE_User_Id__c`, so
+   delete or note the test Contacts first). Set the default Account, register the OAs (tick the Provider box), schedule
+   the nightly job.
+2. **Phone tests** (the open [VERIFY]s in 08): QR invite on iOS and Android, friend and non-friend; a photo and a PDF
+   from the phone appear as Files; a picture and a PDF sent from Salesforce arrive; the read-only panel for a
+   non-assigned rep; 401 for an unknown OA. Record the results in DECISIONS §2.
+3. **M8 remainder**: rotate secret, reassign/deactivate with `LineReassignBatch`, quota display (M8a), error log.
+4. **M10** retention before any high-volume client; **M11** load tests (2,000-event batch, Site limits) and hardening;
+   **M12** acceptance run, upgrade test, install guide.
 
 ## 8. Starting a new session
 

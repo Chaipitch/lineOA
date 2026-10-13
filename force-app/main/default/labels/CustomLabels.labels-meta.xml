@@ -736,4 +736,337 @@
         <value
     >Your own time zone is different. Schedule uses yours, so the job would run at 01:00 in:</value>
     </labels>
+    <labels>
+        <fullName>LINE_Inbox_Title</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Inbox tab and card title</shortDescription>
+        <value>LINE Inbox</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Unread</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Inbox filter: unread</shortDescription>
+        <value>Unread</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Unlinked</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Inbox filter and badge: no Contact linked</shortDescription>
+        <value>Not linked</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_All</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Inbox filter: all</shortDescription>
+        <value>All</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Empty</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Inbox list is empty</shortDescription>
+        <value>No conversations here.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Select</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Inbox: nothing selected yet</shortDescription>
+        <value>Choose a conversation to read and reply.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Load_More</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Inbox: load the next page</shortDescription>
+        <value>Load more</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Link_Contact</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Contact picker label for linking</shortDescription>
+        <value>Link to Contact</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Link</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Link button</shortDescription>
+        <value>Link</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Unlink</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Unlink button (admins)</shortDescription>
+        <value>Unlink</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Linked</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Toast after linking; {0} = Contact name</shortDescription>
+        <value>Linked to {0}.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Unlinked_Done</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Toast after unlinking</shortDescription>
+        <value>Conversation unlinked.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Placeholder_Deleted</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Toast: the auto-created placeholder Contact was deleted</shortDescription>
+        <value
+    >The placeholder Contact that LINE Connect created was removed.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Inbox_Placeholder_Kept</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Toast: the auto-created placeholder Contact was kept</shortDescription>
+        <value
+    >The Contact that LINE Connect created has other records, so it was kept. Merge it if it is a duplicate.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Link_Contact_Has_Other_User</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Link refused: Contact already holds another LINE user</shortDescription>
+        <value>This Contact is already linked to a different LINE user.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Link_Held_By</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Link refused: LINE user held by a named Contact; {0} = name</shortDescription>
+        <value>This LINE user is already linked to {0}.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Link_Held_By_Hidden</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Link refused: LINE user held by a Contact the user cannot see</shortDescription>
+        <value>This LINE user is already linked to another Contact.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Link_No_Edit</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Link refused: no Edit access on the Contact</shortDescription>
+        <value>You need edit access to this Contact to link it.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Link_Failed</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Link failed on save; {0} = Salesforce message</shortDescription>
+        <value>The link could not be saved: {0}</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Message</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Pre-filled LINE message carrying the invite code; {0} = code</shortDescription>
+        <value>Link my account #{0}</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_No_OA</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Invite refused: the rep has no active LINE OA</shortDescription>
+        <value
+    >You need an active LINE Official Account assigned to you to invite customers.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Reply_Linked</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Reply sent to the customer when the invite linked</shortDescription>
+        <value>Thank you. Your LINE account is now connected.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Reply_Refused</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Reply sent to the customer when the invite code could not be used</shortDescription>
+        <value
+    >This code has expired or can no longer be used. Please ask your sales representative for a new one.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Title</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Invite modal title</shortDescription>
+        <value>Invite via LINE</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Scan</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Invite modal instructions</shortDescription>
+        <value
+    >Ask the customer to scan this code with their phone camera or LINE, then tap Send in LINE. Their chat is then linked to this Contact.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Link</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Label of the invite link field</shortDescription>
+        <value>Or send this link by SMS or email</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Copy</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Copy link button</shortDescription>
+        <value>Copy link</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Copied</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Toast after copying the link</shortDescription>
+        <value>Link copied.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Expires</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Invite expiry text; {0} = date and time</shortDescription>
+        <value>Valid until {0}</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_New_Code</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Button that issues a new invite code</shortDescription>
+        <value>New code</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Close</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Close button of the invite modal</shortDescription>
+        <value>Close</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Invite_Through_OA</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Which OA the invite opens; {0} = OA name</shortDescription>
+        <value>Opens the chat with {0}</value>
+    </labels>
+    <labels>
+        <fullName>LINE_File_Downloading</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Status under a customer file still being saved</shortDescription>
+        <value>Saving the file…</value>
+    </labels>
+    <labels>
+        <fullName>LINE_File_Too_Large</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Status under a customer file above the size limit</shortDescription>
+        <value>Too large to save in Salesforce. View it in LINE.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_File_Download_Failed</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Status under a customer file that could not be saved</shortDescription>
+        <value>This file could not be saved. View it in LINE.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_File_Open</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Tooltip on a file or image in the chat</shortDescription>
+        <value>Open file</value>
+    </labels>
+    <labels>
+        <fullName>LINE_File_Link_Message</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >File link text to customer: {0} name, {1} link, {2} expiry</shortDescription>
+        <value>{0}
+{1}
+(Link valid until {2})</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Chat_Attach</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Attach file button in the chat panel</shortDescription>
+        <value>Send a file</value>
+    </labels>
 </CustomLabels>

@@ -45,12 +45,15 @@ Test.getEventBus().deliver();   // runs the PE trigger
 | Follow/unfollow | follow creates a conversation + a profile job; unfollow → Unfollowed; re-follow → Following |
 | Inactive OA | owner = fallback owner; no notification when the owner is a queue |
 | Send authorization (DEC-37) | assigned rep sends; a user who can see the conversation but isn't the rep gets `LINE_Chat_Not_Assigned_Rep`, no callout, panel read-only; inactive OA → fallback owner and fallback-queue member send, the former rep can't |
+| Files (DEC-43) | image → File on conversation and Contact (incl. a Contact created in the same run); file over the limit never fetched; external media stays a placeholder; 404 → Download Failed; over limit after download → Too Large; video still transcoding → delayed retry; memory budget chains the rest; small JPEG sent as a LINE image, PDF as an expiring link; only a File on the conversation can be sent |
 | Default Account (DEC-36) | created Contact gets the default Account; deleted default → logged, Contact created without one; an existing Contact is never moved |
-| Linking — manual | sets Contact__c + Contact.LINE_User_Id__c + primary OA if blank; conflicts refused; no Edit on Contact → refused |
+| Linking — manual | sets Contact__c + Contact.LINE_User_Id__c + primary OA if blank; conflicts refused; no Edit on Contact → refused; refusal names the holder only if the rep can see it |
+| Linking — placeholder (DEC-34) | an auto-created holder is replaced: ID moves, the customer's other OA conversations and daily LINE Events move, the empty placeholder is deleted; a placeholder with other records (e.g. a Task) is kept |
+| Inbox (DEC-41) | Unread / Not linked / All show only the rep's own conversations with a message, most recent first; keyset paging with no overlap; unlink is admin-only |
 | Linking — auto | second OA conversation auto-links by LINE user ID |
 | Linking — auto-create (DEC-27) | first message from an unknown LINE user → Contact created (LastName = LINE display name, `LINE_User_Id__c`, primary OA, owner = rep) and linked; an existing Contact with that ID → linked, no new Contact; same person on two OAs → one Contact; follow without a message → no Contact; setting off → none; display name over 80 chars → cut; Contact insert rejected → logged, conversation unlinked, message still stored |
 | Notifications | the rep who owns the conversation is notified; a customer's first message (profile not fetched yet) says "a new LINE customer", not the raw LINE user ID |
-| Linking — invite | valid code links + clears code + queues reply; expired/unknown code → no link, "expired" reply; code in the middle of the text still matches |
+| Linking — invite (DEC-42) | valid code links + clears code + replies (no auto-created duplicate, no push); expired/unknown code → no link, refused reply; code in the middle of the text still matches; lower case or 9 characters don't match; a redelivery replies once; an expired reply token is logged, never pushed; `createInvite` needs an active OA of your own |
 | Subscriber automation | a Contact validation rule that blocks updates → message still stored, link failure logged |
 | Outbound | text/image/document success → Sent + Sender; 429 monthly limit → Failed + readable error; 409 → Sent; no access to the conversation → exception |
 | Files | download → ContentVersion linked to conversation (+ Contact); over the size limit → Too Large, no callout; download 5xx → Download Failed + retry path |

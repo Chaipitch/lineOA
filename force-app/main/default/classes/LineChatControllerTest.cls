@@ -719,4 +719,376 @@ private class LineChatControllerTest {
     Assert.isFalse(serialized.contains(LineHttpMock.FAKE_TOKEN));
     Assert.isFalse(serialized.contains(LineTestFactory.CHANNEL_A));
   }
+
+  // ---------- inbox (M6) ----------
+
+  private static LINE_Conversation__c inboxConversation(
+    String lineUserId,
+    Id ownerId,
+    Decimal unread,
+    Id contactId,
+    Datetime lastMessageAt
+  ) {
+    LINE_OA_Configuration__c oa = [
+      SELECT Id
+      FROM LINE_OA_Configuration__c
+      WITH SYSTEM_MODE
+      LIMIT 1
+    ];
+    return new LINE_Conversation__c(
+      Name = lineUserId,
+      LINE_OA_Configuration__c = oa.Id,
+      LINE_User_Id__c = lineUserId,
+      Unique_Key__c = LineTestFactory.CHANNEL_A + ':' + lineUserId,
+      Status__c = 'Following',
+      OwnerId = ownerId,
+      Unread_Count__c = unread,
+      Contact__c = contactId,
+      Last_Message_At__c = lastMessageAt,
+      Last_Message_Preview__c = 'hi from ' + lineUserId
+    );
+  }
+
+  private static Set<Id> idsOf(LineChatController.InboxPage page) {
+    Set<Id> ids = new Set<Id>();
+    for (LineChatController.ConversationView v : page.conversations) {
+      ids.add(v.id);
+    }
+    return ids;
+  }
+
+  @IsTest
+  static void inboxFiltersTheRepsOwnConversations() {
+    LineTestFactory.ensurePackageAccess();
+    User rep = repA();
+    Contact contact = new Contact(LastName = 'Linked', OwnerId = rep.Id);
+    insert as system contact;
+    Datetime now = Datetime.now();
+    LINE_Conversation__c unreadLinked = inboxConversation(
+      'Uib1',
+      rep.Id,
+      2,
+      contact.Id,
+      now
+    );
+    LINE_Conversation__c readUnlinked = inboxConversation(
+      'Uib2',
+      rep.Id,
+      0,
+      null,
+      now.addMinutes(-1)
+    );
+    LINE_Conversation__c someoneElses = inboxConversation(
+      'Uib3',
+      repB().Id,
+      5,
+      null,
+      now
+    );
+    insert as system new List<LINE_Conversation__c>{
+      unreadLinked,
+      readUnlinked,
+      someoneElses
+    };
+
+    LineChatController.InboxPage unread;
+    LineChatController.InboxPage unlinked;
+    LineChatController.InboxPage all;
+    Test.startTest();
+    System.runAs(rep) {
+      unread = LineChatController.getInbox('unread', null, null);
+      unlinked = LineChatController.getInbox('unlinked', null, null);
+      all = LineChatController.getInbox('all', null, null);
+    }
+    Test.stopTest();
+
+    Assert.areEqual(new Set<Id>{ unreadLinked.Id }, idsOf(unread));
+    Assert.areEqual(new Set<Id>{ readUnlinked.Id }, idsOf(unlinked));
+    Assert.areEqual(
+      new Set<Id>{ unreadLinked.Id, readUnlinked.Id },
+      idsOf(all),
+      'Another rep\'s conversation never shows, and one with no message yet is left out'
+    );
+    Assert.areEqual(
+      unreadLinked.Id,
+      all.conversations[0].id,
+      'Most recent first'
+    );
+    LineChatController.ConversationView first = all.conversations[0];
+    Assert.areEqual(contact.Id, first.contactId);
+    Assert.areEqual('Linked', first.contactName);
+    Assert.areEqual('hi from Uib1', first.lastMessagePreview);
+    Assert.isTrue(first.canSend, 'Rep A is the OA\'s assigned rep');
+    Assert.isFalse(all.isAdmin);
+  }
+
+  @IsTest
+  static void inboxPagesWithoutOffset() {
+    LineTestFactory.ensurePackageAccess();
+    User rep = repA();
+    List<LINE_Conversation__c> many = new List<LINE_Conversation__c>();
+    Datetime base = Datetime.now();
+    Integer total = LineChatController.INBOX_PAGE_SIZE + 3;
+    for (Integer i = 0; i < total; i++) {
+      many.add(
+        inboxConversation('Upage' + i, rep.Id, 0, null, base.addMinutes(-i))
+      );
+    }
+    insert as system many;
+
+    LineChatController.InboxPage first;
+    LineChatController.InboxPage second;
+    Test.startTest();
+    System.runAs(rep) {
+      first = LineChatController.getInbox('all', null, null);
+      LineChatController.ConversationView last = first.conversations[
+        first.conversations.size() - 1
+      ];
+      second = LineChatController.getInbox('all', last.lastMessageAt, last.id);
+    }
+    Test.stopTest();
+
+    Assert.areEqual(
+      LineChatController.INBOX_PAGE_SIZE,
+      first.conversations.size()
+    );
+    Assert.isTrue(first.hasMore);
+    Assert.areEqual(3, second.conversations.size());
+    Assert.isFalse(second.hasMore);
+    Set<Id> overlap = idsOf(first);
+    overlap.retainAll(idsOf(second));
+    Assert.isTrue(overlap.isEmpty(), 'No row appears on two pages');
+  }
+
+  @IsTest
+  static void getConversationIsRefusedForAConversationTheUserCannotSee() {
+    LineTestFactory.ensurePackageAccess();
+    Id conversationId = conversationId();
+    String message;
+    System.runAs(repB()) {
+      try {
+        LineChatController.getConversation(conversationId);
+      } catch (AuraHandledException e) {
+        message = e.getMessage();
+      }
+    }
+    Assert.areEqual(System.Label.LINE_Error_No_Access, message);
+  }
+
+  // ---------- linking (03 §5 rule 3) ----------
+
+  @IsTest
+  static void repLinksTheirConversationToTheirContact() {
+    LineTestFactory.ensurePackageAccess();
+    User rep = repA();
+    Contact contact = new Contact(LastName = 'Real Somchai', OwnerId = rep.Id);
+    insert as system contact;
+    Id conversationId = conversationId();
+
+    LineChatController.LinkView view;
+    Test.startTest();
+    System.runAs(rep) {
+      view = LineChatController.linkToContact(conversationId, contact.Id);
+    }
+    Test.stopTest();
+
+    Assert.areEqual(contact.Id, view.conversation.contactId);
+    Assert.areEqual('Real Somchai', view.conversation.contactName);
+    Assert.isFalse(view.placeholderDeleted);
+    Assert.isFalse(view.placeholderKept);
+  }
+
+  @IsTest
+  static void linkNeedsAContactToEdit() {
+    LineTestFactory.ensurePackageAccess();
+    Id conversationId = conversationId();
+    String message;
+    System.runAs(repA()) {
+      try {
+        // Not a Contact Id at all.
+        LineChatController.linkToContact(conversationId, conversationId);
+      } catch (AuraHandledException e) {
+        message = e.getMessage();
+      }
+    }
+    Assert.areEqual(System.Label.LINE_Link_No_Edit, message);
+    Assert.isNull(
+      [
+        SELECT Contact__c
+        FROM LINE_Conversation__c
+        WHERE Id = :conversationId
+        WITH SYSTEM_MODE
+      ]
+      .Contact__c
+    );
+  }
+
+  @IsTest
+  static void linkRefusalNamesTheHolderTheRepCanSee() {
+    LineTestFactory.ensurePackageAccess();
+    User rep = repA();
+    Contact holder = new Contact(
+      LastName = 'Existing Somchai',
+      OwnerId = rep.Id,
+      LINE_User_Id__c = 'Ucustomer1'
+    );
+    Contact chosen = new Contact(LastName = 'Chosen', OwnerId = rep.Id);
+    insert as system new List<Contact>{ holder, chosen };
+    Id conversationId = conversationId();
+
+    String message;
+    System.runAs(rep) {
+      try {
+        LineChatController.linkToContact(conversationId, chosen.Id);
+      } catch (AuraHandledException e) {
+        message = e.getMessage();
+      }
+    }
+    Assert.areEqual(
+      String.format(
+        System.Label.LINE_Link_Held_By,
+        new List<Object>{ 'Existing Somchai' }
+      ),
+      message
+    );
+  }
+
+  @IsTest
+  static void onlyAdminsCanUnlink() {
+    LineTestFactory.ensurePackageAccess();
+    User rep = repA();
+    Contact contact = new Contact(LastName = 'Linked', OwnerId = rep.Id);
+    insert as system contact;
+    LINE_Conversation__c c = [
+      SELECT Id
+      FROM LINE_Conversation__c
+      WITH SYSTEM_MODE
+      LIMIT 1
+    ];
+    c.Contact__c = contact.Id;
+    update as system c;
+
+    String message;
+    System.runAs(rep) {
+      try {
+        LineChatController.unlinkConversation(c.Id);
+      } catch (AuraHandledException e) {
+        message = e.getMessage();
+      }
+    }
+    Assert.areEqual(System.Label.LINE_Error_Admin_Only, message);
+    Assert.areEqual(
+      contact.Id,
+      [
+        SELECT Contact__c
+        FROM LINE_Conversation__c
+        WHERE Id = :c.Id
+        WITH SYSTEM_MODE
+      ]
+      .Contact__c
+    );
+  }
+
+  // ---------- QR invite (03 §5 rule 5) ----------
+
+  @IsTest
+  static void createInviteSavesACodeAndBuildsTheRepsOaLink() {
+    LineTestFactory.ensurePackageAccess();
+    User rep = repA();
+    Contact contact = new Contact(LastName = 'To invite', OwnerId = rep.Id);
+    insert as system contact;
+    LINE_OA_Configuration__c oa = [
+      SELECT Basic_Id__c, Name
+      FROM LINE_OA_Configuration__c
+      WITH SYSTEM_MODE
+      LIMIT 1
+    ];
+
+    LineChatController.InviteView invite;
+    Test.startTest();
+    System.runAs(rep) {
+      invite = LineChatController.createInvite(contact.Id);
+    }
+    Test.stopTest();
+
+    Contact saved = [
+      SELECT LINE_Invite_Code__c, LINE_Invite_Expires_At__c
+      FROM Contact
+      WHERE Id = :contact.Id
+      WITH SYSTEM_MODE
+    ];
+    Assert.areEqual(saved.LINE_Invite_Code__c, invite.code);
+    Assert.isTrue(
+      invite.url.startsWith(
+        'https://line.me/R/oaMessage/' +
+          EncodingUtil.urlEncode(oa.Basic_Id__c, 'UTF-8') +
+          '/?'
+      )
+    );
+    Assert.isTrue(
+      invite.url.endsWith('%23' + invite.code),
+      'The code travels in the pre-filled text'
+    );
+    Assert.areEqual(oa.Name, invite.oaName);
+    Assert.isTrue(
+      saved.LINE_Invite_Expires_At__c > Datetime.now().addDays(6),
+      'Seven days by default'
+    );
+  }
+
+  @IsTest
+  static void createInviteNeedsAnActiveOaOfYourOwn() {
+    LineTestFactory.ensurePackageAccess();
+    User other = repB();
+    Contact contact = new Contact(LastName = 'To invite', OwnerId = other.Id);
+    insert as system contact;
+
+    String message;
+    System.runAs(other) {
+      try {
+        LineChatController.createInvite(contact.Id);
+      } catch (AuraHandledException e) {
+        message = e.getMessage();
+      }
+    }
+    Assert.areEqual(System.Label.LINE_Invite_No_OA, message);
+  }
+
+  // ---------- files (M7) ----------
+
+  @IsTest
+  static void messagesCarryTheirFilesLatestVersionForTheThumbnail() {
+    LineTestFactory.ensurePackageAccess();
+    Id conversationId = conversationId();
+    ContentVersion v = new ContentVersion(
+      Title = 'photo',
+      PathOnClient = 'photo.jpg',
+      VersionData = Blob.valueOf('fake-binary'),
+      FirstPublishLocationId = conversationId
+    );
+    insert as system v;
+    Id documentId = [
+      SELECT ContentDocumentId
+      FROM ContentVersion
+      WHERE Id = :v.Id
+      WITH SYSTEM_MODE
+    ]
+    .ContentDocumentId;
+    insert as system new LINE_Message__c(
+      LINE_Conversation__c = conversationId,
+      Direction__c = 'Inbound',
+      Message_Type__c = 'image',
+      Status__c = 'Received',
+      Sent_At__c = Datetime.now(),
+      Webhook_Event_Id__c = 'evt-photo',
+      Content_Document_Id__c = documentId
+    );
+
+    LineChatController.MessagePage page;
+    System.runAs(repA()) {
+      page = LineChatController.getMessages(conversationId, null, null, null);
+    }
+
+    Assert.areEqual(String.valueOf(v.Id), page.messages[0].contentVersionId);
+  }
 }

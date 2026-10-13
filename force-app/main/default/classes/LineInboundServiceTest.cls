@@ -633,4 +633,228 @@ private class LineInboundServiceTest {
       ]
     );
   }
+
+  // ---------- QR invite (03 §5 rule 1, D10) ----------
+
+  private static Contact invitedContact(Datetime expiresAt) {
+    Contact invited = new Contact(
+      LastName = 'Somchai (CRM)',
+      LINE_Invite_Code__c = 'K7PM2QXA',
+      LINE_Invite_Expires_At__c = expiresAt
+    );
+    insert as system invited;
+    return invited;
+  }
+
+  private static String replyBody(LineHttpMock mock) {
+    List<HttpRequest> replies = mock.requestsTo('/v2/bot/message/reply');
+    Assert.areEqual(1, replies.size(), 'Exactly one reply');
+    return replies[0].getBody();
+  }
+
+  @IsTest
+  static void validInviteLinksTheInvitedContactAndConfirms() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    Test.setMock(HttpCalloutMock.class, mock);
+    Contact invited = invitedContact(Datetime.now().addDays(3));
+
+    Test.startTest();
+    sendToA(
+      new List<String>{
+        LineTestFactory.textEvent(
+          CUSTOMER,
+          'Hi! Link my account #K7PM2QXA',
+          'evt1'
+        )
+      }
+    );
+    Test.stopTest();
+
+    Assert.areEqual(1, LineInboundService.lastResult.invitesLinked);
+    Assert.areEqual(
+      invited.Id,
+      conversation(LineTestFactory.CHANNEL_A, CUSTOMER).Contact__c
+    );
+    Contact after = [
+      SELECT LINE_User_Id__c, LINE_Invite_Code__c
+      FROM Contact
+      WHERE Id = :invited.Id
+      WITH SYSTEM_MODE
+    ];
+    Assert.areEqual(CUSTOMER, after.LINE_User_Id__c);
+    Assert.isNull(after.LINE_Invite_Code__c, 'Used once');
+    Assert.areEqual(
+      1,
+      [SELECT COUNT() FROM Contact WITH SYSTEM_MODE],
+      'No second Contact was auto-created'
+    );
+    Assert.isTrue(
+      replyBody(mock).contains(System.Label.LINE_Invite_Reply_Linked.left(20)),
+      'A free reply confirms the link'
+    );
+    Assert.areEqual(
+      0,
+      mock.requestsTo('/v2/bot/message/push').size(),
+      'Never a paid push'
+    );
+  }
+
+  @IsTest
+  static void expiredInviteDoesNotLinkAndSaysSo() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    Test.setMock(HttpCalloutMock.class, mock);
+    Contact invited = invitedContact(Datetime.now().addMinutes(-1));
+
+    Test.startTest();
+    sendToA(
+      new List<String>{
+        LineTestFactory.textEvent(CUSTOMER, 'Link my account #K7PM2QXA', 'evt1')
+      }
+    );
+    Test.stopTest();
+
+    Assert.areEqual(0, LineInboundService.lastResult.invitesLinked);
+    Assert.areNotEqual(
+      invited.Id,
+      conversation(LineTestFactory.CHANNEL_A, CUSTOMER).Contact__c
+    );
+    Assert.isTrue(
+      replyBody(mock).contains(System.Label.LINE_Invite_Reply_Refused.left(20))
+    );
+  }
+
+  @IsTest
+  static void unknownCodeGetsTheRefusedReply() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    Test.setMock(HttpCalloutMock.class, mock);
+
+    Test.startTest();
+    sendToA(
+      new List<String>{
+        LineTestFactory.textEvent(CUSTOMER, 'Link my account #ZZZZZZZZ', 'evt1')
+      }
+    );
+    Test.stopTest();
+
+    Assert.isTrue(
+      replyBody(mock).contains(System.Label.LINE_Invite_Reply_Refused.left(20))
+    );
+  }
+
+  @IsTest
+  static void redeliveredInviteIsHandledOnce() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    Test.setMock(HttpCalloutMock.class, mock);
+    invitedContact(Datetime.now().addDays(3));
+    String event = LineTestFactory.textEvent(
+      CUSTOMER,
+      'Link my account #K7PM2QXA',
+      'evt1'
+    );
+
+    Test.startTest();
+    sendToA(new List<String>{ event });
+    sendToA(new List<String>{ event });
+    Test.stopTest();
+
+    replyBody(mock);
+  }
+
+  // ---------- files and images (M7) ----------
+
+  @IsTest
+  static void customerImageBecomesAFileOnTheConversationAndContact() {
+    LineTestFactory.ensurePackageAccess();
+    Test.setMock(HttpCalloutMock.class, new LineHttpMock());
+
+    Test.startTest();
+    sendToA(
+      new List<String>{
+        LineTestFactory.rawMessageEvent(
+          CUSTOMER,
+          'evtImg',
+          '{"id":"m1","type":"image","contentProvider":{"type":"line"}}'
+        )
+      }
+    );
+    Test.stopTest();
+
+    LINE_Message__c m = [
+      SELECT Status__c, Content_Document_Id__c, File_Name__c, File_Size__c
+      FROM LINE_Message__c
+      WITH SYSTEM_MODE
+    ];
+    Assert.areEqual('Received', m.Status__c);
+    Assert.isNotNull(m.Content_Document_Id__c);
+    Assert.isTrue(
+      m.File_Name__c.endsWith('.jpg'),
+      'Named from the content type'
+    );
+    Assert.areEqual(Blob.valueOf('fake-binary').size(), m.File_Size__c);
+    LINE_Conversation__c c = conversation(LineTestFactory.CHANNEL_A, CUSTOMER);
+    Set<Id> linkedTo = new Set<Id>();
+    for (ContentDocumentLink link : [
+      SELECT LinkedEntityId
+      FROM ContentDocumentLink
+      WHERE ContentDocumentId = :m.Content_Document_Id__c
+      WITH SYSTEM_MODE
+    ]) {
+      linkedTo.add(link.LinkedEntityId);
+    }
+    Assert.isTrue(linkedTo.contains(c.Id), 'On the conversation');
+    Assert.isTrue(
+      linkedTo.contains(c.Contact__c),
+      'And on the Contact created for this new customer in the same run'
+    );
+  }
+
+  @IsTest
+  static void fileLineSaysIsTooBigIsNeverDownloaded() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    Test.setMock(HttpCalloutMock.class, mock);
+
+    Test.startTest();
+    sendToA(
+      new List<String>{
+        LineTestFactory.fileEvent(CUSTOMER, 'huge.zip', 50000000, 'evtFile')
+      }
+    );
+    Test.stopTest();
+
+    Assert.areEqual(
+      'Too Large',
+      [SELECT Status__c FROM LINE_Message__c WITH SYSTEM_MODE].Status__c
+    );
+    Assert.areEqual(0, mock.requestsTo('/content').size());
+  }
+
+  @IsTest
+  static void externallyHostedMediaStaysAPlaceholder() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    Test.setMock(HttpCalloutMock.class, mock);
+
+    Test.startTest();
+    sendToA(
+      new List<String>{
+        LineTestFactory.rawMessageEvent(
+          CUSTOMER,
+          'evtImg',
+          '{"id":"m1","type":"image","contentProvider":{"type":"external","originalContentUrl":"https://example.com/a.jpg"}}'
+        )
+      }
+    );
+    Test.stopTest();
+
+    Assert.areEqual(
+      'Received',
+      [SELECT Status__c FROM LINE_Message__c WITH SYSTEM_MODE].Status__c
+    );
+    Assert.areEqual(0, mock.requestsTo('/content').size(), 'Never fetched');
+  }
 }

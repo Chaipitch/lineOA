@@ -1,0 +1,154 @@
+<template>
+  <lightning-card
+    title={labels.title}
+    icon-name="standard:messaging_conversation"
+  >
+    <div class="slds-var-p-horizontal_small">
+      <template lwc:if={errorMessage}>
+        <div
+          class="slds-text-color_error slds-var-m-bottom_x-small"
+          role="alert"
+        >
+          {errorMessage}
+        </div>
+      </template>
+
+      <div class="slds-grid slds-gutters slds-wrap">
+        <!-- Conversation list -->
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-3">
+          <lightning-radio-group
+            type="button"
+            variant="label-hidden"
+            label={labels.title}
+            name="filter"
+            options={filterOptions}
+            value={filter}
+            onchange={handleFilterChange}
+          ></lightning-radio-group>
+
+          <div class="line-inbox-list slds-var-m-top_x-small">
+            <template lwc:if={isLoading}>
+              <lightning-spinner
+                alternative-text={labels.title}
+                size="small"
+              ></lightning-spinner>
+            </template>
+            <template lwc:if={showEmpty}>
+              <p
+                class="slds-text-color_weak slds-var-p-vertical_medium"
+                data-id="empty"
+              >
+                {labels.empty}
+              </p>
+            </template>
+            <ul>
+              <template for:each={items} for:item="item">
+                <li key={item.id}>
+                  <button
+                    class={item.buttonClass}
+                    data-id={item.id}
+                    aria-pressed={item.ariaPressed}
+                    onclick={handleSelect}
+                  >
+                    <span class="slds-grid slds-grid_align-spread">
+                      <strong class="slds-truncate">{item.name}</strong>
+                      <template lwc:if={item.hasUnread}>
+                        <lightning-badge
+                          label={item.unreadCount}
+                          class="slds-badge_inverse"
+                        ></lightning-badge>
+                      </template>
+                    </span>
+                    <span
+                      class="slds-text-body_small slds-text-color_weak slds-truncate"
+                    >
+                      {item.oaName} · {item.contactLabel}
+                    </span>
+                    <!-- Customer text is rendered as text, never as HTML (09 §7) -->
+                    <span class="slds-text-body_small slds-truncate"
+                      >{item.lastMessagePreview}</span
+                    >
+                    <span class="slds-text-body_small slds-text-color_weak">
+                      <lightning-formatted-date-time
+                        value={item.lastMessageAt}
+                        hour="2-digit"
+                        minute="2-digit"
+                        day="numeric"
+                        month="short"
+                      ></lightning-formatted-date-time>
+                    </span>
+                  </button>
+                </li>
+              </template>
+            </ul>
+            <template lwc:if={hasMore}>
+              <lightning-button
+                variant="base"
+                label={labels.loadMore}
+                onclick={handleLoadMore}
+              ></lightning-button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Selected conversation: its Contact, linking, and the chat -->
+        <div class="slds-col slds-size_1-of-1 slds-medium-size_2-of-3">
+          <template lwc:if={selectedConversation}>
+            <div
+              class="slds-grid slds-wrap slds-grid_vertical-align-end slds-var-m-bottom_x-small"
+            >
+              <div class="slds-col slds-grow-none slds-var-m-right_small">
+                <template lwc:if={selectedConversation.contactId}>
+                  <lightning-button
+                    variant="base"
+                    icon-name="standard:contact"
+                    label={selectedConversation.contactName}
+                    onclick={handleOpenContact}
+                    data-id="contact-link"
+                  ></lightning-button>
+                  <template lwc:if={isAdmin}>
+                    <lightning-button
+                      class="slds-var-m-left_x-small"
+                      label={labels.unlink}
+                      onclick={handleUnlink}
+                    ></lightning-button>
+                  </template>
+                </template>
+                <template lwc:else>
+                  <span class="slds-text-color_weak">{labels.unlinked}</span>
+                </template>
+              </div>
+              <div class="slds-col">
+                <lightning-record-picker
+                  label={labels.linkContact}
+                  object-api-name="Contact"
+                  value={pickedContactId}
+                  onchange={handleContactPick}
+                ></lightning-record-picker>
+              </div>
+              <div class="slds-col slds-grow-none slds-var-m-left_x-small">
+                <lightning-button
+                  variant="brand"
+                  label={labels.link}
+                  disabled={isLinkDisabled}
+                  onclick={handleLink}
+                ></lightning-button>
+              </div>
+            </div>
+            <c-line-chat
+              conversation-id={selectedId}
+              onread={handleRead}
+            ></c-line-chat>
+          </template>
+          <template lwc:else>
+            <p
+              class="slds-text-color_weak slds-var-p-vertical_large slds-text-align_center"
+            >
+              {labels.select}
+            </p>
+          </template>
+        </div>
+      </div>
+    </div>
+  </lightning-card>
+</template>

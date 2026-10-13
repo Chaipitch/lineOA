@@ -113,11 +113,15 @@ stored whatever the subscriber's configuration says.
 Callouts cannot happen in a trigger, so they happen here, one queueable per transaction carrying a work list, which
 chains itself if the list is long. Each execution does **all callouts first, then all DML** (hard rule 6).
 
-Two work types today:
+Work types:
 
 - `PROFILE` — `GET /v2/bot/profile/{userId}` gives the customer's display name and picture, which become the
   conversation's name. Until this returns, the conversation is named after the opaque `U4a6a…` user ID.
+- `INVITE_REPLY` — the free reply to a QR invite code (DEC-42).
+- `DOWNLOAD` — a customer's image, video, audio or file becomes a Salesforce File on the conversation and its
+  Contact (DEC-43). At most ~3 MB is held per execution; video waits for LINE's transcoding with a delayed retry.
 - `WEBHOOK_TEST` — used at registration to record whether LINE could reach us.
+- `CREDENTIAL_CHECK` — the nightly check that LINE still accepts each OA's secret (DEC-33).
 
 ### 3.5 Contacts — `LineLinkService`
 
@@ -139,6 +143,17 @@ The insert is `Database.insert(…, false, SYSTEM_MODE)` and failures are logged
 validation rule we know nothing about — Account required, a custom field required — the Contact is refused, the
 conversation stays unlinked, and **the message is still stored**. That asymmetry is hard rule 7, and it is the single
 most important rule for surviving in an unknown org: *nothing about Contacts or Events may cost us a message.*
+
+**QR invite (DEC-42).** On a Contact with no conversation, *Invite via LINE* shows a QR code. It opens the rep's OA in
+LINE with `Link my account #K7PM2QXA` typed in. When that message arrives, `LineInboundService` links the conversation
+to the invited Contact straight away (before the follow-up could auto-create one), clears the one-time code, and the
+follow-up sends a free reply: "connected", or "code expired".
+
+**Linking by hand (DEC-34, DEC-41).** In the **LINE Inbox** tab a rep picks a Contact for a conversation. If the LINE
+user ID sits on a Contact that LINE Connect auto-created (`LINE_Auto_Created__c`), the ID, the customer's other OA
+conversations and their daily LINE Events move to the chosen Contact, and the placeholder is deleted when nothing
+else is attached to it. A Contact a person linked is never taken over: the link is refused, naming that Contact if
+the rep can see it.
 
 ### 3.6 Capacity, counted in transactions
 
@@ -193,6 +208,11 @@ Reads use **keyset pagination** on (`Sent_At__c`, `Id`), never `OFFSET` (D12), s
 as the first.
 
 ### 4.3 `LineOutboundService` — callout, then DML
+
+**Files (DEC-43).** The rep uploads a file in the panel; it is saved on the conversation. The panel then makes two
+calls: `prepareFile` creates an expiring public link (a write), and `sendFile` pushes it (a callout, then the record).
+They can't share a transaction, because the push has to come before any write. A JPEG or PNG up to 1 MB goes as a
+picture; anything else as a text message with the expiring link.
 
 `POST /v2/bot/message/push` first, the record afterwards. In that order for a reason: if the transaction dies
 half-way, the worst case is a message LINE delivered that we failed to store — recoverable and visible. The reverse
@@ -356,14 +376,15 @@ Two traps worth knowing before you write a test, both learned the hard way and r
 
 ## 10. What is built, and what is not
 
-**Working end to end:** inbound webhook → storage → notification, the chat panel, outbound text, OA registration and
-settings from the admin page, automatic Contact creation. **Built and tested, awaiting its first package version:** the
-daily Activity History sync and its scheduling buttons (M9).
+**Proven live in the QA org:** inbound webhook → storage → notification, the chat panel, outbound text, OA registration
+and settings from the admin page, automatic Contact creation, the daily Activity History sync and its scheduling, and
+one Contact shared across OAs under one Provider. **Built and tested in the scratch org, in Beta 8 but not yet tried
+live:** the TA review fixes (DEC-36–39), the 2-second refresh (DEC-40), the LINE Inbox with manual linking (DEC-34,
+DEC-41), QR invites (DEC-42), and customer and rep files and images (DEC-43).
 
-**Not built yet:** QR/link invites and the rep inbox (the rest of M6), images and files (M7), the remaining admin
-actions — rotate secret, reassign, deactivate, quota display, error log (M8), the retention and reassignment batches
-(M8, M10). `06-implementation-plan.md` is the running order;
-`HANDOFF.md` is the current state.
+**Not built yet:** the remaining admin actions — rotate secret, reassign, deactivate, quota display, error log (M8),
+the retention and reassignment batches (M8, M10), hardening and release (M11, M12). `06-implementation-plan.md` is the
+running order; `HANDOFF.md` is the current state.
 
 **Known product limits**, all in `08`: replies sent from the LINE OA Manager app never reach Salesforce; polling is
 ~2 s, not instant; inbound files are capped near 10 MB by Apex heap; LINE bots cannot send file attachments, so
