@@ -40,6 +40,7 @@ config/project-scratch-def.json
 }
 ```
 After the first release, add `"ancestorVersion": "HIGHEST"` so upgrades are validated against the last released version.
+**Done 2026-10-14:** 0.1.0.10 released (DEC-46); the project now builds `0.2.0.NEXT` with `ancestorVersion: HIGHEST`.
 
 Scratch definition: Developer edition, `hasSampleData: false`. Add features/settings as needed: e.g. enable Sites, and
 `lightningExperienceSettings`. [VERIFY which scratch features Sites needs.] Keep the definition in `config/project-scratch-def.json`.

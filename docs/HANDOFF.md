@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-10-14**, after removing the inbox (DEC-44): linking, files, photos and stickers now all live in the Contact chat panel. Not yet in a beta (Beta 8 still has the old inbox). Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-14**, after the **first release (0.1.0.10, DEC-46)**, verified on the dev5-ts sandbox. Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -56,6 +56,13 @@ org is planned after it checks out (needs `sf package version promote`, the user
 R15 decided (error log kept). **This is the one to install** (QA org, or a sandbox of the production org) and, once its
 checks pass, the candidate to promote for the team's own production org. **Checks passed on dev5-ts 2026-10-14**; ready to promote (`sf package version promote`, the user's
 explicit go-ahead). Install link: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZN9pQAG`.
+
+**✅ RELEASED: `0.1.0.10` (`04tgL000000ZN9pQAG`) promoted 2026-10-14 (DEC-46)** for the team's own production org. Install link
+(production: `login.salesforce.com`, sandbox: `test.salesforce.com`):
+`https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZN9pQAG`. **Everything packaged in it is now
+permanent** (09 §4). The next build is `0.2.0.NEXT` with `ancestorVersion: HIGHEST`; test every new version as an **upgrade**
+from this release (install the release, add data, upgrade, run the checks), e.g. in dev5-ts. Released versions upgrade in place:
+no more uninstalling.
 
 ## 2. Orgs and access
 
