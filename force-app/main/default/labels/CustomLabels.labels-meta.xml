@@ -1047,4 +1047,63 @@
     >Chat panel button that opens the sticker picker</shortDescription>
         <value>Stickers</value>
     </labels>
+    <labels>
+        <fullName>LINE_Error_Rotate_Removed</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Rotate refused: the OA was removed</shortDescription>
+        <value
+    >This OA was removed. Register it again with the new secret.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Error_Secret_Required</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Rotate refused: no secret entered</shortDescription>
+        <value>Paste the new channel secret.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Rotate</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Rotate secret button on an OA row</shortDescription>
+        <value>Rotate secret</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Rotate_Title</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Rotate secret panel title; {0} = OA name</shortDescription>
+        <value>New channel secret for {0}</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Rotate_Help</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Rotate secret instructions</shortDescription>
+        <value
+    >First issue a new channel secret in the LINE Developers Console (Basic settings), then paste it here straight away. Messages fail until Salesforce has it.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Rotated</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Toast after rotating; {0} = OA name</shortDescription>
+        <value>{0}: new secret checked with LINE and saved.</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Admin_Cancel</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Cancel button on the admin page</shortDescription>
+        <value>Cancel</value>
+    </labels>
 </CustomLabels>

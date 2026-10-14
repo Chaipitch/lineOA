@@ -11,6 +11,7 @@ import scheduleJobs from "@salesforce/apex/LineAdminController.scheduleJobs";
 import unscheduleJobs from "@salesforce/apex/LineAdminController.unscheduleJobs";
 import runDailySyncNow from "@salesforce/apex/LineAdminController.runDailySyncNow";
 import removeOA from "@salesforce/apex/LineAdminController.removeOA";
+import rotateSecretApex from "@salesforce/apex/LineAdminController.rotateSecret";
 
 import TITLE from "@salesforce/label/c.LINE_Admin_Title";
 import SETTINGS from "@salesforce/label/c.LINE_Admin_Settings";
@@ -54,6 +55,11 @@ import CREDENTIAL_UNCHECKED from "@salesforce/label/c.LINE_Admin_Credential_Unch
 import REMOVE from "@salesforce/label/c.LINE_Admin_Remove";
 import REMOVE_CONFIRM from "@salesforce/label/c.LINE_Admin_Remove_Confirm";
 import REMOVED from "@salesforce/label/c.LINE_Admin_Removed";
+import ROTATE from "@salesforce/label/c.LINE_Admin_Rotate";
+import ROTATE_TITLE from "@salesforce/label/c.LINE_Admin_Rotate_Title";
+import ROTATE_HELP from "@salesforce/label/c.LINE_Admin_Rotate_Help";
+import ROTATED from "@salesforce/label/c.LINE_Admin_Rotated";
+import CANCEL from "@salesforce/label/c.LINE_Admin_Cancel";
 
 /**
  * LINE Admin app page: org settings, nightly jobs and OA registration.
@@ -107,7 +113,10 @@ export default class LineAdmin extends LightningElement {
     jobsDayZone: JOBS_DAY_ZONE,
     jobsZoneMismatch: JOBS_ZONE_MISMATCH,
     credentials: CREDENTIALS,
-    remove: REMOVE
+    remove: REMOVE,
+    rotate: ROTATE,
+    rotateHelp: ROTATE_HELP,
+    cancel: CANCEL
   };
 
   async connectedCallback() {
@@ -237,6 +246,57 @@ export default class LineAdmin extends LightningElement {
     } catch (error) {
       this.toast(this.messageFrom(error), "error");
     }
+  }
+
+  // ---------- rotate secret (R7, DEC-45) ----------
+
+  rotatingOaId;
+  rotatingOaName;
+  rotateSecret = "";
+  isRotating = false;
+
+  handleRotateStart(event) {
+    this.rotatingOaId = event.target.dataset.id;
+    this.rotatingOaName = event.target.dataset.name;
+    this.rotateSecret = "";
+  }
+
+  handleRotateSecretChange(event) {
+    this.rotateSecret = event.target.value;
+  }
+
+  handleRotateCancel() {
+    this.rotatingOaId = undefined;
+    // The secret leaves the browser as soon as it is no longer needed.
+    this.rotateSecret = "";
+  }
+
+  async handleRotate() {
+    if (this.isRotateDisabled) {
+      return;
+    }
+    this.isRotating = true;
+    try {
+      this.oas = await rotateSecretApex({
+        oaConfigId: this.rotatingOaId,
+        channelSecret: this.rotateSecret
+      });
+      this.toast(ROTATED.replace("{0}", this.rotatingOaName), "success");
+      this.rotatingOaId = undefined;
+    } catch (error) {
+      this.toast(this.messageFrom(error), "error");
+    } finally {
+      this.rotateSecret = "";
+      this.isRotating = false;
+    }
+  }
+
+  get rotateTitle() {
+    return ROTATE_TITLE.replace("{0}", this.rotatingOaName || "");
+  }
+
+  get isRotateDisabled() {
+    return !(this.rotateSecret || "").trim() || this.isRotating;
   }
 
   // ---------- registration ----------

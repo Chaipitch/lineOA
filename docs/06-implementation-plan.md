@@ -106,7 +106,7 @@ Record the [VERIFY] results for stateless tokens, `destination`, and Automated P
 ## M8 — Admin UI + reassignment (4–5 d)
 - `lineAdmin` app page:
   - **Settings form** for `LINE_Settings__c`;
-  - **OA list** with register, rotate secret, reassign, deactivate/activate, test webhook and quota;
+  - **OA list** with register, rotate secret (✅ DEC-45), reassign, deactivate/activate, test webhook and quota;
   - **Job status**, with schedule/unschedule of the nightly jobs;
   - **Error log** list.
 - `LineAdminController` checks the `LINE_Admin` custom permission.

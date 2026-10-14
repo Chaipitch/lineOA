@@ -16,7 +16,7 @@ milestone. For how the system works, read `HOW_IT_WORKS.md`.
 | M5 Chat panel (`lineChat`) | **Done, proven live** on a Contact page in the QA org. |
 | M6 Linking | **Built:** auto-link and auto-create (DEC-27), default Account (DEC-36), D5 proven live, QR invite (DEC-42), manual link with placeholder clean-up and admin unlink **in the chat panel** (DEC-34, DEC-44; the Beta 8 inbox tab is removed). The link icon is **hidden** for now (commented out in `lineChat.html`, tests skipped) until the business wants it. Still to do: the phone test of the invite link. |
 | M7 Files & images | **Built in the scratch org (DEC-43), not yet in a beta:** customer images/video/audio/files saved as Salesforce Files on the conversation and Contact (Too Large / Download Failed handled, video waits for LINE's transcoding), thumbnails and file chips in the chat, reps send files (small JPEG/PNG as pictures, the rest as expiring links). **Still to do:** the live [VERIFY] that LINE accepts Salesforce's public URLs, on real phones. |
-| M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29), *Remove OA* and the nightly credentials check (DEC-33). **Not done:** rotate secret, reassign, deactivate, quota display (M8a, decided display-only in DEC-35), error log. |
+| M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29), *Remove OA* and the nightly credentials check (DEC-33), **Rotate secret (DEC-45, scratch only)**. **Not done:** reassign, deactivate, quota display (M8a, display-only per DEC-35), error log viewer. |
 | **M9 Daily Event sync** | **Done, proven live** in the QA org on Beta 4 (DEC-28–30). Follow-ups (minute rounding, time zones on the jobs card) shipped in Beta 6. |
 | M10–M12 | Not started. M11 now also includes evaluating a no-authentication Named Credential as the callout endpoint (06 M11, 08 "Callout allowlist"). |
 
@@ -93,7 +93,8 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
      can send (R1), DEC-38 unknown OA → 401 (R8), DEC-39 same-Provider checkbox at registration (R3).
    - **Beta 7 built 2026-10-11** with all four (§1). Next: the QA reinstall (uninstall deletes LINE data,
      including `Contact.LINE_User_Id__c`, so existing Contacts would be duplicated on the next message).
-   - **GTM (Thai team):** licence, R4 auto-create default, R15 error log object, S1 chat panel scope, R6 app replies.
+   - **Decided 2026-10-14 (DEC-45):** R4 auto-create stays on; R6 reps reply only from Salesforce; S1 the chat panel stays.
+     **Still open:** R15 keep or drop `LINE_Error_Log__c` (before the first release); licence; the sizing sheet (M11 numbers).
    - **QA org data (2026-10-11):** Account "Chaipitch (test)" created and Contact "Chaipitch" put under it by hand, so
      Rep Sales2 can open it. OAs: TS Chaipitch, TS SalesRep1 (other Provider), SalesRep2 (same Provider as TS Chaipitch).
 
@@ -186,7 +187,7 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
 2. **Phone tests** (the open [VERIFY]s in 08): QR invite on iOS and Android, friend and non-friend; a photo and a PDF
    from the phone appear as Files; a picture and a PDF sent from Salesforce arrive; the read-only panel for a
    non-assigned rep; 401 for an unknown OA. Record the results in DECISIONS §2.
-3. **M8 remainder**: rotate secret, reassign/deactivate with `LineReassignBatch`, quota display (M8a), error log.
+3. **M8 remainder**: reassign/deactivate with `LineReassignBatch` (TA R13, acceptance criterion 5), quota display (M8a), error log viewer.
 4. **M10** retention before any high-volume client; **M11** load tests (2,000-event batch, Site limits) and hardening;
    **M12** acceptance run, upgrade test, install guide.
 

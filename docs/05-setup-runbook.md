@@ -39,7 +39,7 @@ This is the install guide we give clients. Keep it this short: every extra step 
 | C1 | Install the package from the install link (Admins Only, or specific profiles) |
 | C2 | Setup → Sites: register a site domain if none exists; create site `LineWebhook` (active; any home page) |
 | C3 | Site → Public Access Settings → guest user → assign permission set **LINE_Webhook_Guest** |
-| C4 | Assign **LINE_Admin** to admins and **LINE_Chat_User** to reps and managers |
+| C4 | Assign **LINE_Admin** only to the one or two people who register OAs and manage secrets (it can register, rotate and remove OAs, and change settings); assign **LINE_Chat_User** to reps and managers. Changes to OAs are field-history tracked (R17). |
 | C4b | Setup → **Content Deliveries and Public Links**: make sure it is enabled (needed for reps to send files; on by default in most orgs). |
 | C5 | App Launcher → LINE Chat → **LINE Admin** tab → Settings: paste the site base URL, pick the fallback owner, **pick an Account for new Contacts** (create one such as "LINE Unassigned" first; required in practice when Contact sharing is *Controlled by Parent*, and the page warns if so, DEC-36), and review retention, invite expiry and daily sync. Then, on the same page, **Nightly jobs → Schedule** (01:00 in the admin's time zone). Without it no daily Events are created. |
 | C6 | Lightning App Builder → Contact record page → add **lineChat** → activate. |
@@ -65,6 +65,7 @@ protected setting is invisible to subscriber admins (DEC-33).
 
 1. **[HUMAN]** LINE Admin tab: **Reassign** the OA to the new rep, or **Deactivate** it (→ fallback owner). The batch moves ownership.
 2. **[HUMAN]** LINE OA Manager: remove the old rep's access; add the new rep if they use the app.
-3. **[HUMAN]** LINE Developers Console: reissue the channel secret → LINE Admin tab → **Rotate secret**.
+3. **[HUMAN]** LINE Developers Console → Basic settings: issue a new channel secret → **straight away** LINE Admin tab →
+   the OA → **Rotate secret** → paste it. Messages fail between the two steps, so do them together (DEC-45).
 4. **[HUMAN]** Optional: rename the OA or change its picture (verified accounts may need LINE review).
 5. **[HUMAN]** If the OA is retired rather than handed over: LINE Admin tab → **Remove**, so its secret is deleted.

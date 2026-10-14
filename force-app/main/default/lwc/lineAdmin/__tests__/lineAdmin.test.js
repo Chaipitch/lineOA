@@ -9,6 +9,7 @@ import scheduleJobs from "@salesforce/apex/LineAdminController.scheduleJobs";
 import unscheduleJobs from "@salesforce/apex/LineAdminController.unscheduleJobs";
 import runDailySyncNow from "@salesforce/apex/LineAdminController.runDailySyncNow";
 import removeOA from "@salesforce/apex/LineAdminController.removeOA";
+import rotateSecret from "@salesforce/apex/LineAdminController.rotateSecret";
 import LightningConfirm from "lightning/confirm";
 
 jest.mock(
@@ -48,6 +49,11 @@ jest.mock(
 );
 jest.mock(
   "@salesforce/apex/LineAdminController.runDailySyncNow",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineAdminController.rotateSecret",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
@@ -527,5 +533,47 @@ describe("c-line-admin", () => {
     expect(
       element.shadowRoot.querySelector('[data-id="zone-mismatch"]')
     ).toBeNull();
+  });
+
+  it("rotates an OA's secret and forgets it afterwards", async () => {
+    rotateSecret.mockResolvedValue([OA]);
+    const element = createComponent();
+    await flush();
+
+    buttonByLabel(element, "c.LINE_Admin_Rotate").click();
+    await flush();
+    const input = element.shadowRoot.querySelector('[data-id="rotate-secret"]');
+    input.value = "new_fake_secret";
+    input.dispatchEvent(new CustomEvent("change"));
+    await flush();
+    const panelButton = [
+      ...element.shadowRoot.querySelectorAll(
+        '[data-id="rotate-panel"] lightning-button'
+      )
+    ].find((b) => b.label === "c.LINE_Admin_Rotate");
+    panelButton.click();
+    await flush();
+
+    expect(rotateSecret).toHaveBeenCalledWith({
+      oaConfigId: OA.id,
+      channelSecret: "new_fake_secret"
+    });
+    expect(
+      element.shadowRoot.querySelector('[data-id="rotate-panel"]')
+    ).toBeNull();
+  });
+
+  it("keeps the rotate button disabled until a secret is typed", async () => {
+    const element = createComponent();
+    await flush();
+    buttonByLabel(element, "c.LINE_Admin_Rotate").click();
+    await flush();
+
+    const panelButton = [
+      ...element.shadowRoot.querySelectorAll(
+        '[data-id="rotate-panel"] lightning-button'
+      )
+    ].find((b) => b.label === "c.LINE_Admin_Rotate");
+    expect(panelButton.disabled).toBe(true);
   });
 });

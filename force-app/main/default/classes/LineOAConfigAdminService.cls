@@ -154,4 +154,56 @@ public without sharing class LineOAConfigAdminService {
     );
     LineCredentialStore.remove(oa.Channel_Id__c);
   }
+
+  /**
+   * Rotates an OA's channel secret (R7, DEC-45): after the admin issues a new secret in the LINE Developers Console,
+   * this proves it with LINE and replaces the stored one. LINE keeps one secret per channel, so webhooks and sends fail
+   * from the moment LINE issues it until this runs; the admin pastes it straight away.
+   *
+   * Callout first (a token issued with the new secret proves it belongs to this channel), then the writes. A wrong
+   * secret changes nothing. The secret is never returned, logged or stored anywhere but `LINE_OA_Credential__c`.
+   *
+   * @param oaConfigId the OA
+   * @param channelSecret the new secret from the LINE Developers Console
+   * @throws AdminException when the OA is unknown or removed, or the secret is blank
+   * @throws LineApiException when LINE doesn't accept the secret
+   */
+  public static void rotateSecret(Id oaConfigId, String channelSecret) {
+    List<LINE_OA_Configuration__c> found = oaConfigId == null
+      ? new List<LINE_OA_Configuration__c>()
+      : [
+          SELECT Id, Channel_Id__c, Credential_Status__c
+          FROM LINE_OA_Configuration__c
+          WHERE Id = :oaConfigId
+          WITH SYSTEM_MODE
+        ];
+    if (found.isEmpty()) {
+      throw new AdminException(System.Label.LINE_Error_OA_Not_Found);
+    }
+    LINE_OA_Configuration__c oa = found[0];
+    if (oa.Credential_Status__c == CREDENTIAL_REMOVED) {
+      // A removed OA is brought back by registering it, which also re-points the webhook.
+      throw new AdminException(System.Label.LINE_Error_Rotate_Removed);
+    }
+    if (String.isBlank(channelSecret)) {
+      throw new AdminException(System.Label.LINE_Error_Secret_Required);
+    }
+    String secret = channelSecret.trim();
+
+    // 1. Callout: the old secret's cached token must not be reused for the check.
+    LineApiClient.clearTokenCache();
+    LineApiClient.withCredentials(oa.Channel_Id__c, secret).issueToken();
+
+    // 2. DML
+    LineCredentialStore.putSecret(oa.Channel_Id__c, secret);
+    Database.update(
+      new LINE_OA_Configuration__c(
+        Id = oa.Id,
+        Credential_Status__c = CREDENTIAL_VALID,
+        Credential_Checked_At__c = Datetime.now()
+      ),
+      true,
+      AccessLevel.SYSTEM_MODE
+    );
+  }
 }

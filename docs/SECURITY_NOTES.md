@@ -41,6 +41,8 @@ Implemented (M3), tested and verified live with LINE:
 - `LINE_Webhook_Guest` = Apex class `LineWebhookResource` + `LINE_Webhook_Event__e` Create/Read. No objects, no fields.
 - Input limits before authentication: body ≤ 1 MB, and only the top-level `destination` is read (streaming parser) to pick the secret.
 - Signature: HMAC-SHA256 over the raw body; Base64 compared **case-sensitively in constant time** (`LineSignatureVerifier`). Missing, wrong-case or wrong signatures → 401 (tests).
+- **Replay protection (R8):** LINE signatures carry no timestamp, so a captured genuine request could be resent. It does no harm:
+  every LINE event is stored by its unique `webhookEventId`, so a replay or redelivery changes nothing and is never processed twice.
 - Unknown destination → 401, the same as a bad signature, so registered OAs can't be enumerated (DEC-38); malformed → 400; nothing is published or stored in any rejected case (tests).
 - The webhook writes no records at all, not even error logs, so unauthenticated traffic can't create data. Its only output after authentication is `EventBus.publish`.
 - Code Analyzer's graph engine flags the system-mode OA lookup on this path (High). It is suppressed at `LineOAConfigSelector.byBotUserIds` with the reason above (DECISIONS DEC-18).
@@ -56,6 +58,23 @@ Implemented (M3), tested and verified live with LINE:
 Implemented: M1 — `LINE_OA_Credential__c` is a List custom setting with Visibility **Protected**; no permission set grants access to it.
 The protection itself only applies once installed as a managed package. **Verified 2026-09-22 (Beta 1, QA org):** a subscriber
 System Administrator querying `tsthlineoa__LINE_OA_Credential__c` gets "sObject type … is not supported" (DECISIONS §2).
+
+**Why a protected custom setting (TA review R7):** checking LINE's webhook signature is an HMAC over the raw body with the
+channel secret, so Apex needs the secret itself. A Named Credential never hands its secret to Apex, so it can't serve
+here; a protected setting is unreadable to subscriber admins, the API and other code once installed (verified above).
+
+**Procedures (R7, DEC-45):**
+- **Rotation:** LINE Developers Console → the channel → Basic settings → issue a new channel secret → straight away, LINE
+  Admin → the OA → **Rotate secret** → paste. Salesforce checks it with LINE before storing it; a wrong one changes nothing.
+  Messages fail between the two steps (LINE keeps one secret), so do them together; with webhook redelivery on, LINE resends
+  what failed [VERIFY].
+- **Suspected leak:** rotate immediately (the leaked secret stops working the moment LINE issues the new one), then check
+  the OA's sent messages in LINE OA Manager for anything not sent from Salesforce. If the OA is being retired, **Remove** it
+  instead, which deletes the secret.
+- **Development and test orgs:** never use a production OA's secret in a scratch, development or beta org. The protection
+  only applies to an installed managed package; in a source-deployed org the setting is readable. Use test OAs there.
+- **Audit:** credential status changes are field-history tracked (`Credential_Status__c`), as are the assigned rep, active
+  flag and webhook status (R17).
 
 Implemented: M2
 - `LineCredentialStore` is the only class that references `LINE_OA_Credential__c`. It validates the channel ID (digits, at most 38 characters) and secret, and its errors never echo the value (tested).

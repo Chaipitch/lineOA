@@ -294,6 +294,23 @@ public with sharing class LineAdminController {
     }
   }
 
+  /**
+   * Replaces an OA's channel secret with a new one issued in the LINE Developers Console (R7, DEC-45).
+   * @param oaConfigId the OA
+   * @param channelSecret the new secret; checked with LINE, stored only in the protected setting, never returned
+   * @return every registered OA, refreshed
+   */
+  @AuraEnabled
+  public static List<OaView> rotateSecret(Id oaConfigId, String channelSecret) {
+    try {
+      assertAdmin();
+      LineOAConfigAdminService.rotateSecret(oaConfigId, channelSecret);
+      return getOAs();
+    } catch (Exception e) {
+      throw handled(e, 'rotateSecret');
+    }
+  }
+
   /** The nightly job and the last daily sync, as shown on the admin page (DEC-29). */
   public class JobsView {
     @AuraEnabled

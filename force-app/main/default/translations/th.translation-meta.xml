@@ -498,4 +498,33 @@
         <label>สติกเกอร์</label>
         <name>LINE_Chat_Stickers</name>
     </customLabels>
+    <customLabels>
+        <label>OA นี้ถูกนำออกแล้ว โปรดลงทะเบียนใหม่ด้วย Secret ใหม่</label>
+        <name>LINE_Error_Rotate_Removed</name>
+    </customLabels>
+    <customLabels>
+        <label>โปรดวาง Channel secret ใหม่</label>
+        <name>LINE_Error_Secret_Required</name>
+    </customLabels>
+    <customLabels>
+        <label>เปลี่ยน Secret</label>
+        <name>LINE_Admin_Rotate</name>
+    </customLabels>
+    <customLabels>
+        <label>Channel secret ใหม่ของ {0}</label>
+        <name>LINE_Admin_Rotate_Title</name>
+    </customLabels>
+    <customLabels>
+        <label
+    >ออก Channel secret ใหม่ใน LINE Developers Console (Basic settings) ก่อน แล้ววางที่นี่ทันที ข้อความจะรับส่งไม่ได้จนกว่า Salesforce จะได้ Secret ใหม่</label>
+        <name>LINE_Admin_Rotate_Help</name>
+    </customLabels>
+    <customLabels>
+        <label>{0}: ตรวจสอบ Secret ใหม่กับ LINE และบันทึกแล้ว</label>
+        <name>LINE_Admin_Rotated</name>
+    </customLabels>
+    <customLabels>
+        <label>ยกเลิก</label>
+        <name>LINE_Admin_Cancel</name>
+    </customLabels>
 </Translations>

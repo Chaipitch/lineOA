@@ -247,6 +247,14 @@
                   </td>
                   <td>
                     <lightning-button
+                      label={labels.rotate}
+                      data-id={oa.id}
+                      data-name={oa.name}
+                      disabled={oa.isRemoved}
+                      onclick={handleRotateStart}
+                    ></lightning-button>
+                    <lightning-button
+                      class="slds-var-m-left_x-small"
                       label={labels.remove}
                       variant="destructive-text"
                       data-id={oa.id}
@@ -259,6 +267,38 @@
               </template>
             </tbody>
           </table>
+        </template>
+
+        <!-- Rotate secret (R7, DEC-45): the secret goes straight to Apex and is never read back -->
+        <template lwc:if={rotatingOaId}>
+          <div class="slds-box slds-var-m-top_small" data-id="rotate-panel">
+            <p class="slds-text-heading_small">{rotateTitle}</p>
+            <p
+              class="slds-text-body_small slds-text-color_weak slds-var-m-vertical_x-small"
+            >
+              {labels.rotateHelp}
+            </p>
+            <lightning-input
+              type="password"
+              label={labels.channelSecret}
+              value={rotateSecret}
+              onchange={handleRotateSecretChange}
+              data-id="rotate-secret"
+            ></lightning-input>
+            <div class="slds-var-m-top_x-small">
+              <lightning-button
+                variant="brand"
+                label={labels.rotate}
+                disabled={isRotateDisabled}
+                onclick={handleRotate}
+              ></lightning-button>
+              <lightning-button
+                class="slds-var-m-left_x-small"
+                label={labels.cancel}
+                onclick={handleRotateCancel}
+              ></lightning-button>
+            </div>
+          </div>
         </template>
       </div>
     </lightning-card>
