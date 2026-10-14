@@ -54,7 +54,7 @@ org is planned after it checks out (needs `sf package version promote`, the user
 
 **Beta 10 (`0.1.0.10`, `04tgL000000ZN9pQAG`) built 2026-10-14** from commit `a305bd5`: Beta 9 plus Rotate secret (DEC-45);
 R15 decided (error log kept). **This is the one to install** (QA org, or a sandbox of the production org) and, once its
-checks pass, the candidate to promote for the team's own production org (`sf package version promote`, the user's
+checks pass, the candidate to promote for the team's own production org. **Checks passed on dev5-ts 2026-10-14**; ready to promote (`sf package version promote`, the user's
 explicit go-ahead). Install link: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZN9pQAG`.
 
 ## 2. Orgs and access
@@ -62,6 +62,7 @@ explicit go-ahead). Install link: `https://login.salesforce.com/packaging/instal
 | Alias | What it is | Notes |
 |---|---|---|
 | `sf-line-dev` | **Dev Hub** (Enterprise Edition trial, expires 2027-09-22). Owns the package and the namespace link | Never deploy source here. Limits: 3 active scratch orgs, 6 package versions a day. |
+| `dev5-ts` | **Company sandbox** (`wchaipitch@terrasky.co.th`), a sandbox of the production org. **Beta 10 installed and verified by the user 2026-10-14**: messages, photos and PDFs both ways, stickers, QR invite, Rotate secret. Site `LineWebhook` at `https://terraskyth--dev5.sandbox.my.salesforce-sites.com/linewebhook`, created by hand (packages can't create Sites). | A LINE channel has one webhook URL: registering an OA here takes it away from the QA org until it's registered there again. |
 | `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **Beta 5 (0.1.0.5) installed**; Beta 6 not yet | Real LINE OA **TS Chaipitch** (`@803ctlbv`, channel `2011659553`) registered, webhook OK. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Org and admin time zone **Asia/Bangkok** (changed 2026-09-30). Nightly job **not scheduled** since the Beta 5 install (§4). Contact "Chaipitch" auto-created from a real message. |
 | `line-dev` | **The one scratch org** (namespaced `tsthlineoa`, user `test-e8dratclzthk@example.com`); the project default | Created **2026-10-11**, expires **2026-11-10**. Rebuild: `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev`, then `sf apex run --file scripts/apex/seed-daily-sync.apex`. Holds that seed data (OA "May Sales OA", Rep A, Somchai, Niran). Org time zone America/Los_Angeles (scratch default). The previous org (`test-egv3lqxcpg7t`) was deleted the same day. |
 
