@@ -46,7 +46,7 @@ Three ways, in order of preference:
    holding a one-time code. The customer taps send, and the package links the conversation to that Contact and
    replies with a confirmation.
 2. **Auto-link**: the Contact already has this LINE user ID (linked earlier through another rep's OA) → linked immediately.
-3. **Manual**: the rep links an unlinked conversation from their inbox to a Contact.
+3. **Manual**: from the chat panel on a Contact (e.g. one LINE Connect created), the rep links the chat to another Contact (DEC-44).
 
 ### F5 — Customer sends a message
 Text, image, video, audio, file (PDF/Office/etc.), sticker or location → stored on the conversation. Files are saved as
@@ -71,7 +71,7 @@ deleted too. Conversations are kept.
 
 ## 4. MVP scope
 
-**In:** F1–F9, the inbox (unread and unlinked lists), notifications, error log, Thai + English UI labels,
+**In:** F1–F9, notifications, error log, Thai + English UI labels,
 package versioning and install guide.
 
 **Out (later versions):** group/room chats, broadcast/marketing, rich menus, chatbots or any AI, LINE Login,

@@ -138,7 +138,7 @@ Ask before: deleting orgs, uninstalling the package from the QA org, `sf package
 
 ## LWC conventions
 
-- Components: `lineChat`, `lineInbox`, `lineInvite`, `lineAdmin`.
+- Components: `lineChat`, `lineInvite`, `lineAdmin` (no inbox, DEC-44).
 - **Apex calls:** imperative calls for anything polled or mutable. `@wire` only for static data.
 - **Polling:**
   - interval from settings;

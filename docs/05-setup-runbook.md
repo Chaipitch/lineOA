@@ -42,7 +42,7 @@ This is the install guide we give clients. Keep it this short: every extra step 
 | C4 | Assign **LINE_Admin** to admins and **LINE_Chat_User** to reps and managers |
 | C4b | Setup → **Content Deliveries and Public Links**: make sure it is enabled (needed for reps to send files; on by default in most orgs). |
 | C5 | App Launcher → LINE Chat → **LINE Admin** tab → Settings: paste the site base URL, pick the fallback owner, **pick an Account for new Contacts** (create one such as "LINE Unassigned" first; required in practice when Contact sharing is *Controlled by Parent*, and the page warns if so, DEC-36), and review retention, invite expiry and daily sync. Then, on the same page, **Nightly jobs → Schedule** (01:00 in the admin's time zone). Without it no daily Events are created. |
-| C6 | Lightning App Builder → Contact record page → add **lineChat** → activate. Optionally add **lineInbox** to the Home page. |
+| C6 | Lightning App Builder → Contact record page → add **lineChat** → activate. |
 | C7 | Optional: create a queue that supports LINE Conversation and use it as the fallback owner |
 
 ## Part D — Per rep OA (in the LINE Admin tab)

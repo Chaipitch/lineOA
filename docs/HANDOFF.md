@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-10-13**, after M6 (inbox, manual link, QR invite) and M7 (files and images), built into Beta 8. Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-14**, after removing the inbox (DEC-44): linking, files, photos and stickers now all live in the Contact chat panel. Not yet in a beta (Beta 8 still has the old inbox). Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -14,7 +14,7 @@ milestone. For how the system works, read `HOW_IT_WORKS.md`.
 | M3 Registration + inbound | **Done, proven live** in a scratch org and in the installed package. |
 | M4 Outbound text | **Done, proven live**: a reply sent from Salesforce reached a real phone. |
 | M5 Chat panel (`lineChat`) | **Done, proven live** on a Contact page in the QA org. |
-| M6 Linking + inbox | **Mostly done:** auto-link and auto-create (DEC-27), default Account (DEC-36), D5 proven live; **LINE Inbox tab, manual link with placeholder clean-up, admin unlink (DEC-34, DEC-41; scratch only, not in a beta yet)**. **QR invite built (DEC-42, scratch only)**; still to do: the [VERIFY] on real iOS and Android phones (`oaMessage` link, including for a customer who hasn't added the OA). |
+| M6 Linking | **Built:** auto-link and auto-create (DEC-27), default Account (DEC-36), D5 proven live, QR invite (DEC-42), manual link with placeholder clean-up and admin unlink **in the chat panel** (DEC-34, DEC-44; the Beta 8 inbox tab is removed). The link icon is **hidden** for now (commented out in `lineChat.html`, tests skipped) until the business wants it. Still to do: the phone test of the invite link. |
 | M7 Files & images | **Built in the scratch org (DEC-43), not yet in a beta:** customer images/video/audio/files saved as Salesforce Files on the conversation and Contact (Too Large / Download Failed handled, video waits for LINE's transcoding), thumbnails and file chips in the chat, reps send files (small JPEG/PNG as pictures, the rest as expiring links). **Still to do:** the live [VERIFY] that LINE accepts Salesforce's public URLs, on real phones. |
 | M8 Admin UI | **Partly done:** settings and OA registration (DEC-25), nightly jobs card (DEC-29), *Remove OA* and the nightly credentials check (DEC-33). **Not done:** rotate secret, reassign, deactivate, quota display (M8a, decided display-only in DEC-35), error log. |
 | **M9 Daily Event sync** | **Done, proven live** in the QA org on Beta 4 (DEC-28–30). Follow-ups (minute rounding, time zones on the jobs card) shipped in Beta 6. |
@@ -43,7 +43,7 @@ Uninstalling Beta 5 deletes all LINE data, including `Contact.LINE_User_Id__c`, 
 
 **Beta 8 (`0.1.0.8`, `04tgL000000Z5BJQA0`) built 2026-10-13**, 92% coverage: Beta 7 plus the 2-second refresh (DEC-40),
 the LINE Inbox with manual linking and placeholder clean-up (DEC-34, DEC-41), QR invites (DEC-42) and files and images
-(DEC-43). **This is the one to install in the QA org** (skip Betas 6 and 7). Install link:
+(DEC-43). Superseded before install: it still has the LINE Inbox tab, removed in DEC-44; build Beta 9 and install that instead. Install link:
 `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000Z5BJQA0`.
 
 ## 2. Orgs and access

@@ -4,13 +4,16 @@ import { NavigationMixin } from "lightning/navigation";
 import LineInvite from "c/lineInvite";
 
 import getConversations from "@salesforce/apex/LineChatController.getConversations";
-import getConversation from "@salesforce/apex/LineChatController.getConversation";
+import linkToContact from "@salesforce/apex/LineChatController.linkToContact";
+import unlinkConversation from "@salesforce/apex/LineChatController.unlinkConversation";
 import getMessages from "@salesforce/apex/LineChatController.getMessages";
 import getMessagesSince from "@salesforce/apex/LineChatController.getMessagesSince";
 import markRead from "@salesforce/apex/LineChatController.markRead";
 import sendText from "@salesforce/apex/LineChatController.sendText";
 import prepareFile from "@salesforce/apex/LineChatController.prepareFile";
 import sendFile from "@salesforce/apex/LineChatController.sendFile";
+import sendSticker from "@salesforce/apex/LineChatController.sendSticker";
+import getStickerCatalog from "@salesforce/apex/LineChatController.getStickerCatalog";
 import getPollIntervalSeconds from "@salesforce/apex/LineChatController.getPollIntervalSeconds";
 
 import TITLE from "@salesforce/label/c.LINE_Chat_Title";
@@ -35,6 +38,17 @@ import FILE_TOO_LARGE from "@salesforce/label/c.LINE_File_Too_Large";
 import FILE_DOWNLOAD_FAILED from "@salesforce/label/c.LINE_File_Download_Failed";
 import FILE_OPEN from "@salesforce/label/c.LINE_File_Open";
 import ATTACH from "@salesforce/label/c.LINE_Chat_Attach";
+import PHOTO from "@salesforce/label/c.LINE_Chat_Photo";
+import STICKERS from "@salesforce/label/c.LINE_Chat_Stickers";
+import LINK_ACTION from "@salesforce/label/c.LINE_Link_Action";
+import LINK_CONTACT_LABEL from "@salesforce/label/c.LINE_Link_Contact_Label";
+import LINK_BUTTON from "@salesforce/label/c.LINE_Link_Button";
+import LINK_CANCEL from "@salesforce/label/c.LINE_Link_Cancel";
+import UNLINK_BUTTON from "@salesforce/label/c.LINE_Unlink_Button";
+import LINK_DONE from "@salesforce/label/c.LINE_Link_Done";
+import UNLINK_DONE from "@salesforce/label/c.LINE_Unlink_Done";
+import PLACEHOLDER_DELETED from "@salesforce/label/c.LINE_Link_Placeholder_Deleted";
+import PLACEHOLDER_KEPT from "@salesforce/label/c.LINE_Link_Placeholder_Kept";
 
 const MAX_TEXT_LENGTH = 5000;
 const DEFAULT_POLL_SECONDS = 2;
@@ -58,23 +72,6 @@ const STATUS_TEXT = {
  */
 export default class LineChat extends NavigationMixin(LightningElement) {
   @api recordId;
-
-  /**
-   * Opens one conversation instead of a Contact's conversations, for `lineInbox` (M6). Changing it switches the panel.
-   */
-  @api
-  get conversationId() {
-    return this._conversationId;
-  }
-  set conversationId(value) {
-    const changed = value !== this._conversationId;
-    this._conversationId = value;
-    if (changed && this.connected) {
-      this.loadConversations();
-    }
-  }
-  _conversationId;
-  connected = false;
 
   // Sticker pictures that failed to load; those show the placeholder instead.
   brokenStickerIds = [];
@@ -108,19 +105,34 @@ export default class LineChat extends NavigationMixin(LightningElement) {
     unfollowed: UNFOLLOWED,
     notAssignedRep: NOT_ASSIGNED_REP,
     openFile: FILE_OPEN,
-    attach: ATTACH
+    attach: ATTACH,
+    photo: PHOTO,
+    stickers: STICKERS,
+    linkAction: LINK_ACTION,
+    linkContact: LINK_CONTACT_LABEL,
+    link: LINK_BUTTON,
+    cancel: LINK_CANCEL,
+    unlink: UNLINK_BUTTON
   };
+
+  // Linking from the panel (DEC-44): move this chat to the right Contact, e.g. off a Contact LINE Connect created.
+  showLinkPanel = false;
+
+  // Composer trays (DEC-44): "files", "photos" or "stickers"; one open at a time.
+  tray;
+  stickerCatalog;
+  activePackageId;
+  pickedContactId;
+  isLinking = false;
 
   async connectedCallback() {
     this.visibilityHandler = () => this.onVisibilityChange();
     document.addEventListener("visibilitychange", this.visibilityHandler);
-    this.connected = true;
     await this.loadPollInterval();
     await this.loadConversations();
   }
 
   disconnectedCallback() {
-    this.connected = false;
     this.stopPolling();
     if (this.visibilityHandler) {
       document.removeEventListener("visibilitychange", this.visibilityHandler);
@@ -146,16 +158,9 @@ export default class LineChat extends NavigationMixin(LightningElement) {
     this.isLoading = true;
     this.stopPolling();
     try {
-      if (this._conversationId) {
-        const conversation = await getConversation({
-          conversationId: this._conversationId
-        });
-        this.conversations = conversation ? [conversation] : [];
-      } else {
-        this.conversations = await getConversations({
-          contactId: this.recordId
-        });
-      }
+      this.conversations = await getConversations({
+        contactId: this.recordId
+      });
       if (this.conversations.length) {
         await this.selectConversation(this.conversations[0].id);
       }
@@ -340,12 +345,6 @@ export default class LineChat extends NavigationMixin(LightningElement) {
   async markConversationRead() {
     try {
       await markRead({ conversationId: this.selectedConversationId });
-      // Lets the inbox clear its unread badge without waiting for its next refresh.
-      this.dispatchEvent(
-        new CustomEvent("read", {
-          detail: { conversationId: this.selectedConversationId }
-        })
-      );
       this.conversations = this.conversations.map((c) => {
         return c.id === this.selectedConversationId
           ? { ...c, unreadCount: 0 }
@@ -417,6 +416,7 @@ export default class LineChat extends NavigationMixin(LightningElement) {
         this.messages = [...this.messages, sent];
         this.shouldScrollToBottom = true;
       }
+      this.tray = undefined;
     } catch (error) {
       this.dispatchEvent(
         new ShowToastEvent({
@@ -429,10 +429,171 @@ export default class LineChat extends NavigationMixin(LightningElement) {
     }
   }
 
+  // ---------- composer trays (DEC-44) ----------
+
+  handleOpenFiles() {
+    this.tray = this.tray === "files" ? undefined : "files";
+  }
+
+  handleOpenPhotos() {
+    this.tray = this.tray === "photos" ? undefined : "photos";
+  }
+
+  async handleToggleStickers() {
+    if (this.tray === "stickers") {
+      this.tray = undefined;
+      return;
+    }
+    this.tray = "stickers";
+    if (!this.stickerCatalog) {
+      try {
+        this.stickerCatalog = await getStickerCatalog();
+        this.activePackageId = this.stickerCatalog[0]?.packageId;
+      } catch (error) {
+        this.tray = undefined;
+        this.toast(this.messageFrom(error), "error");
+      }
+    }
+  }
+
+  handleStickerPack(event) {
+    this.activePackageId = event.currentTarget.dataset.package;
+  }
+
+  async handleStickerSend(event) {
+    const { package: packageId, sticker: stickerId } =
+      event.currentTarget.dataset;
+    if (this.isSending) {
+      return;
+    }
+    this.isSending = true;
+    try {
+      const sent = await sendSticker({
+        conversationId: this.selectedConversationId,
+        packageId,
+        stickerId
+      });
+      this.messages = [...this.messages, sent];
+      this.shouldScrollToBottom = true;
+      this.tray = undefined;
+    } catch (error) {
+      this.toast(this.messageFrom(error), "error");
+    } finally {
+      this.isSending = false;
+    }
+  }
+
+  get showUploadTray() {
+    return this.tray === "files" || this.tray === "photos";
+  }
+
+  get showStickerTray() {
+    return this.tray === "stickers" && !!this.stickerCatalog;
+  }
+
+  get uploadLabel() {
+    return this.tray === "photos" ? PHOTO : ATTACH;
+  }
+
+  // Photos only for the photo button; on a phone the picker also offers the camera.
+  get uploadAccept() {
+    return this.tray === "photos"
+      ? [".jpg", ".jpeg", ".png", ".gif", ".heic"]
+      : undefined;
+  }
+
+  get stickerPacks() {
+    return (this.stickerCatalog || []).map((pack) => ({
+      packageId: pack.packageId,
+      coverUrl: pack.stickers[0]?.url,
+      tabClass:
+        pack.packageId === this.activePackageId
+          ? "slds-button line-sticker-pack line-sticker-pack_active"
+          : "slds-button line-sticker-pack"
+    }));
+  }
+
+  get activeStickers() {
+    const pack = (this.stickerCatalog || []).find(
+      (p) => p.packageId === this.activePackageId
+    );
+    return pack ? pack.stickers : [];
+  }
+
   get isUploadDisabled() {
     return (
       this.isSending || this.showUnfollowedBanner || this.showReadOnlyNotice
     );
+  }
+
+  // ---------- linking (03 §5 rules 3–4, DEC-34, DEC-44) ----------
+
+  handleToggleLink() {
+    this.showLinkPanel = !this.showLinkPanel;
+    this.pickedContactId = undefined;
+  }
+
+  handleContactPick(event) {
+    this.pickedContactId = event.detail.recordId;
+  }
+
+  async handleLink() {
+    if (this.isLinkDisabled) {
+      return;
+    }
+    this.isLinking = true;
+    try {
+      const result = await linkToContact({
+        conversationId: this.selectedConversationId,
+        contactId: this.pickedContactId
+      });
+      this.toast(
+        LINK_DONE.replace("{0}", result.conversation.contactName),
+        "success"
+      );
+      if (result.placeholderDeleted) {
+        this.toast(PLACEHOLDER_DELETED, "info");
+      } else if (result.placeholderKept) {
+        this.toast(PLACEHOLDER_KEPT, "warning");
+      }
+      this.showLinkPanel = false;
+      // The chat now lives on the chosen Contact; this one may even have been the placeholder that was removed.
+      this[NavigationMixin.Navigate]({
+        type: "standard__recordPage",
+        attributes: {
+          recordId: result.conversation.contactId,
+          objectApiName: "Contact",
+          actionName: "view"
+        }
+      });
+    } catch (error) {
+      this.toast(this.messageFrom(error), "error");
+    } finally {
+      this.isLinking = false;
+    }
+  }
+
+  async handleUnlink() {
+    try {
+      await unlinkConversation({ conversationId: this.selectedConversationId });
+      this.toast(UNLINK_DONE, "success");
+      this.showLinkPanel = false;
+      await this.loadConversations();
+    } catch (error) {
+      this.toast(this.messageFrom(error), "error");
+    }
+  }
+
+  get isLinkDisabled() {
+    return !this.pickedContactId || this.isLinking;
+  }
+
+  get canUnlink() {
+    return this.selectedConversation?.canUnlink === true;
+  }
+
+  toast(message, variant) {
+    this.dispatchEvent(new ShowToastEvent({ message, variant }));
   }
 
   handleConversationSelect(event) {
@@ -463,9 +624,8 @@ export default class LineChat extends NavigationMixin(LightningElement) {
     return this.conversations.length > 0;
   }
 
-  // The invite prompt belongs on a Contact page; opened from the inbox there is always a conversation.
   get showEmptyState() {
-    return !this.isLoading && !this.hasConversations && !this._conversationId;
+    return !this.isLoading && !this.hasConversations;
   }
 
   get hasMultipleConversations() {

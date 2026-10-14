@@ -18,7 +18,7 @@ built on 2026-09-30.
 | M3 | OA registration + inbound webhook + processing → **Beta 1** | 4–5 | ✅ |
 | M4 | Outbound text | 1.5–2 | ✅ |
 | M5 | Chat panel (`lineChat`) | 4–5 | ✅ |
-| M6 | Linking: manual, auto, QR invite + inbox (`lineInbox`) → **Beta 2** | 5–6 | Part: auto-link, auto-create (DEC-27) |
+| M6 | Linking: manual (from the chat panel, DEC-44), auto, QR invite → **Beta 2** | 5–6 | Part: auto-link, auto-create (DEC-27) |
 | M7 | Files and images, in and out | 5–7 | Part: sticker pictures (DEC-32) |
 | M8 | Admin UI (`lineAdmin`) + reassignment batch | 4–5 | Part: settings, register OA, nightly jobs, remove OA + credentials check (DEC-25, DEC-29, DEC-33) |
 | M9 | Daily Event sync | 2–3 | ✅ live in the QA org (Beta 4) |
@@ -83,9 +83,10 @@ Record the [VERIFY] results for stateless tokens, `destination`, and Automated P
 ## M6 — Linking + inbox (5–6 d) → Beta 2
 - `LineLinkService`: manual, auto, and invite code (03 §5); `createInvite`; confirmation/expired **reply** in the queueable.
 - `lineInvite` modal: QR (static resource library), copy link, expiry shown.
-- `lineInbox`: tabs *Unread* and *Unlinked*, link to Contact (`lightning-record-picker`), open the conversation.
+- ~~`lineInbox`~~ dropped (DEC-44): linking is in the chat panel.
 - **Beta 2** → QA org: scan the QR with a real phone; add a second OA and check it auto-links.
-- ✅ **Built (Beta 8):** the LINE Inbox tab, manual link with placeholder clean-up and admin unlink (DEC-34, DEC-41), QR invite (DEC-42).
+- ✅ **Built:** manual link with placeholder clean-up and admin unlink, in the chat panel (DEC-34, DEC-44), QR invite (DEC-42). Beta 8 had an
+  inbox tab instead; it was removed (DEC-44).
   Auto-link across OAs proven live (2026-10-11). Still open: the phone test of the invite link.
 
 **Done when:** acceptance criteria 6 passes on real phones (iOS and Android); the URL scheme result is recorded in DECISIONS.

@@ -31,12 +31,12 @@ Claude Code does all of the implementation; its working rules are in [../CLAUDE.
 | [KICKOFF_PROMPT.md](KICKOFF_PROMPT.md) | First prompt for a new Claude Code session |
 | `DECISIONS.md`, `SECURITY_NOTES.md` | Created in M0 and kept current during the build |
 
-## Status (2026-10-13)
+## Status (2026-10-14)
 
 - Package **LINE Connect**, namespace `tsthlineoa`, Dev Hub `sf-line-dev`. Beta 5 (`0.1.0.5`) is installed in the QA org
   `chaipitch-devhub` and working end to end with a real LINE OA.
 - M0–M7 and M9 built (M6 and M7 awaiting their phone tests); M8 partly done. **Beta 8** (`0.1.0.8`, built 2026-10-13, waiting to be installed) carries everything since Beta 5:
-  TA review fixes, 2-second refresh, LINE Inbox and manual linking, QR invites, files and images. The full picture is in
+  TA review fixes, 2-second refresh, manual linking, QR invites, files and images (and a LINE Inbox tab since removed, DEC-44; the next beta drops it and adds the LINE-style composer with stickers). The full picture is in
   [HANDOFF.md](HANDOFF.md).
 - TA review held 7 Oct 2026: no Required findings. R1, R3, R4 (default Account) and R8 are fixed; the rest are BA
   document updates or GTM decisions (HANDOFF §4). Quota is decided: display only (DEC-35).

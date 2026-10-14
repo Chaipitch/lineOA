@@ -231,4 +231,76 @@ private class LineOutboundServiceTest {
       Assert.areEqual(System.Label.LINE_Error_Generic, e.getMessage());
     }
   }
+
+  // ---------- stickers (DEC-44) ----------
+
+  @IsTest
+  static void stickerIsPushedAndStored() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    Test.setMock(HttpCalloutMock.class, mock);
+
+    Test.startTest();
+    LINE_Message__c sent = LineOutboundService.sendSticker(
+      conversationId(),
+      '446',
+      '1989'
+    );
+    Test.stopTest();
+
+    Assert.areEqual('Sent', sent.Status__c);
+    Assert.areEqual('sticker', sent.Message_Type__c);
+    Assert.areEqual('1989', sent.Sticker_Id__c);
+    String body = mock.requestsTo('/v2/bot/message/push')[0].getBody();
+    Assert.isTrue(body.contains('"type":"sticker"'), body);
+    Assert.isTrue(body.contains('"packageId":"446"'), body);
+    Assert.areEqual(
+      System.Label.LINE_Preview_Sticker,
+      [
+        SELECT Last_Message_Preview__c
+        FROM LINE_Conversation__c
+        WHERE Id = :conversationId()
+        WITH SYSTEM_MODE
+      ]
+      .Last_Message_Preview__c
+    );
+  }
+
+  @IsTest
+  static void stickersOutsideTheSendableSetAreRefusedBeforeAnyCallout() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    Test.setMock(HttpCalloutMock.class, mock);
+
+    for (
+      List<String> sticker : new List<List<String>>{
+        new List<String>{ '446', '9999' },
+        new List<String>{ '1', '1' },
+        new List<String>{ '446', 'abc' }
+      }
+    ) {
+      try {
+        LineOutboundService.sendSticker(
+          conversationId(),
+          sticker[0],
+          sticker[1]
+        );
+        Assert.fail('Expected IllegalArgumentException for ' + sticker);
+      } catch (IllegalArgumentException e) {
+        Assert.isNotNull(e.getMessage());
+      }
+    }
+    Assert.areEqual(0, mock.requests.size());
+  }
+
+  @IsTest
+  static void sendableStickersListEveryPackage() {
+    Map<String, List<String>> stickers = LineOutboundService.sendableStickers();
+    Assert.areEqual(
+      LineOutboundService.SENDABLE_STICKERS.keySet(),
+      stickers.keySet()
+    );
+    Assert.areEqual(40, stickers.get('446').size());
+    Assert.areEqual('1988', stickers.get('446')[0]);
+  }
 }

@@ -8,7 +8,8 @@
  * Reads are paged with keyset pagination on (`Sent_At__c`, `Id`) and never use OFFSET (D12), so a conversation with
  * a million messages pages as fast as a new one.
  *
- * M4: sending text. M5: conversation and message reads, polling, mark-as-read.
+ * M4: sending text. M5: conversation and message reads, polling, mark-as-read. M6: link/unlink from the chat panel
+ * (DEC-44) and QR invites. M7: sending files.
  */
 public with sharing class LineChatController {
   @TestVisible
@@ -18,8 +19,6 @@ public with sharing class LineChatController {
   // A poll returns only what arrived since the last one; this cap is a safety net, not a normal case.
   @TestVisible
   static final Integer MAX_NEW_MESSAGES = 200;
-  @TestVisible
-  static final Integer INBOX_PAGE_SIZE = 50;
   private static final Integer MAX_INVITE_ATTEMPTS = 5;
   // The last error turned into a generic message, so tests can show what really happened.
   @TestVisible
@@ -122,6 +121,9 @@ public with sharing class LineChatController {
     public String contactName;
     @AuraEnabled
     public String lastMessagePreview;
+    /** Admins may unlink (03 §5 rule 4). */
+    @AuraEnabled
+    public Boolean canUnlink = false;
 
     private ConversationView(LINE_Conversation__c c, Id primaryOaId) {
       this.id = c.Id;
@@ -141,15 +143,22 @@ public with sharing class LineChatController {
     }
   }
 
-  /** One page of the inbox, most recent first (keyset on `Last_Message_At__c`, `Id`). */
-  public class InboxPage {
+  /** One sticker the rep can send, with its picture (DEC-44). */
+  public class StickerView {
     @AuraEnabled
-    public List<ConversationView> conversations = new List<ConversationView>();
+    public String packageId;
     @AuraEnabled
-    public Boolean hasMore = false;
-    /** Admins may unlink (03 §5 rule 4). */
+    public String stickerId;
     @AuraEnabled
-    public Boolean isAdmin = false;
+    public String url;
+  }
+
+  /** One sticker package for the picker. */
+  public class StickerPackView {
+    @AuraEnabled
+    public String packageId;
+    @AuraEnabled
+    public List<StickerView> stickers = new List<StickerView>();
   }
 
   /** A QR invite for a Contact (03 §5 rule 5). */
@@ -223,8 +232,10 @@ public with sharing class LineChatController {
         oaIds.add(view.oaConfigurationId);
       }
       Set<Id> sendable = sendableOaIds(oaIds, UserInfo.getUserId());
+      Boolean isAdmin = FeatureManagement.checkPermission('LINE_Admin');
       for (ConversationView view : result) {
         view.canSend = sendable.contains(view.oaConfigurationId);
+        view.canUnlink = isAdmin;
       }
       // The Contact's primary OA opens first (03 §2); the rest keep their most-recent-first order.
       for (Integer i = 1; i < result.size(); i++) {
@@ -243,7 +254,7 @@ public with sharing class LineChatController {
   }
 
   /**
-   * One conversation, for the chat panel opened from the inbox.
+   * One conversation, as the chat panel shows it (used after linking or unlinking).
    *
    * @param conversationId the conversation
    * @return the conversation, including whether the user may reply
@@ -260,58 +271,6 @@ public with sharing class LineChatController {
       return found[0];
     } catch (Exception e) {
       throw handled(e, 'getConversation', conversationId);
-    }
-  }
-
-  /**
-   * The running user's own conversations, most recent first (01 inbox; 02 §2).
-   *
-   * @param filter `unread`, `unlinked`, or anything else for all
-   * @param beforeLastMessageAt `lastMessageAt` of the last row held, or null for the first page
-   * @param beforeId Id of that same row
-   * @return one page of up to 50
-   */
-  @AuraEnabled
-  public static InboxPage getInbox(
-    String filter,
-    Datetime beforeLastMessageAt,
-    Id beforeId
-  ) {
-    try {
-      Datetime before = beforeLastMessageAt == null
-        ? Datetime.newInstance(4000, 1, 1)
-        : beforeLastMessageAt;
-      Id beforeRecordId = beforeId == null
-        ? (Id) '000000000000000AAA'
-        : beforeId;
-      List<LINE_Conversation__c> rows = inboxRows(
-        filter,
-        before,
-        beforeRecordId,
-        INBOX_PAGE_SIZE + 1
-      );
-      InboxPage page = new InboxPage();
-      page.isAdmin = FeatureManagement.checkPermission('LINE_Admin');
-      page.hasMore = rows.size() > INBOX_PAGE_SIZE;
-      if (page.hasMore) {
-        rows.remove(rows.size() - 1);
-      }
-      List<Id> ordered = new List<Id>();
-      for (LINE_Conversation__c row : rows) {
-        ordered.add(row.Id);
-      }
-      Map<Id, ConversationView> byId = new Map<Id, ConversationView>();
-      for (ConversationView view : conversationViews(new Set<Id>(ordered))) {
-        byId.put(view.id, view);
-      }
-      for (Id rowId : ordered) {
-        if (byId.containsKey(rowId)) {
-          page.conversations.add(byId.get(rowId));
-        }
-      }
-      return page;
-    } catch (Exception e) {
-      throw handled(e, 'getInbox', null);
     }
   }
 
@@ -462,59 +421,6 @@ public with sharing class LineChatController {
     }
   }
 
-  // Owner-filtered, so a manager's inbox shows their own chats rather than the whole team's. One static query per
-  // filter keeps every query selective (OwnerId) and avoids dynamic SOQL.
-  private static List<LINE_Conversation__c> inboxRows(
-    String filter,
-    Datetime before,
-    Id beforeId,
-    Integer queryLimit
-  ) {
-    Id me = UserInfo.getUserId();
-    if (filter == 'unread') {
-      return [
-        SELECT Id
-        FROM LINE_Conversation__c
-        WHERE
-          OwnerId = :me
-          AND Unread_Count__c > 0
-          AND (Last_Message_At__c < :before
-          OR (Last_Message_At__c = :before
-          AND Id < :beforeId))
-        WITH USER_MODE
-        ORDER BY Last_Message_At__c DESC, Id DESC
-        LIMIT :queryLimit
-      ];
-    }
-    if (filter == 'unlinked') {
-      return [
-        SELECT Id
-        FROM LINE_Conversation__c
-        WHERE
-          OwnerId = :me
-          AND Contact__c = NULL
-          AND (Last_Message_At__c < :before
-          OR (Last_Message_At__c = :before
-          AND Id < :beforeId))
-        WITH USER_MODE
-        ORDER BY Last_Message_At__c DESC, Id DESC
-        LIMIT :queryLimit
-      ];
-    }
-    return [
-      SELECT Id
-      FROM LINE_Conversation__c
-      WHERE
-        OwnerId = :me
-        AND (Last_Message_At__c < :before
-        OR (Last_Message_At__c = :before
-        AND Id < :beforeId))
-      WITH USER_MODE
-      ORDER BY Last_Message_At__c DESC, Id DESC
-      LIMIT :queryLimit
-    ];
-  }
-
   // Thumbnails need a version Id; read as the user, so a file they can't see shows no picture.
   private static void addFileVersions(List<MessageView> views) {
     Set<Id> documentIds = new Set<Id>();
@@ -572,8 +478,10 @@ public with sharing class LineChatController {
       oaIds.add(view.oaConfigurationId);
     }
     Set<Id> sendable = sendableOaIds(oaIds, UserInfo.getUserId());
+    Boolean isAdmin = FeatureManagement.checkPermission('LINE_Admin');
     for (ConversationView view : result) {
       view.canSend = sendable.contains(view.oaConfigurationId);
+      view.canUnlink = isAdmin;
     }
     return result;
   }
@@ -898,6 +806,55 @@ public with sharing class LineChatController {
       return view;
     } catch (Exception e) {
       throw handled(e, 'sendFile', conversationId);
+    }
+  }
+
+  /**
+   * The stickers LINE lets bots send, for the panel's picker (DEC-44). Static data; pictures come from LINE's sticker
+   * server through the packaged CSP Trusted Site (DEC-32).
+   *
+   * @return the sticker packages in display order
+   */
+  @AuraEnabled(cacheable=true)
+  public static List<StickerPackView> getStickerCatalog() {
+    List<StickerPackView> result = new List<StickerPackView>();
+    Map<String, List<String>> sendable = LineOutboundService.sendableStickers();
+    for (String packageId : sendable.keySet()) {
+      StickerPackView pack = new StickerPackView();
+      pack.packageId = packageId;
+      for (String stickerId : sendable.get(packageId)) {
+        StickerView sticker = new StickerView();
+        sticker.packageId = packageId;
+        sticker.stickerId = stickerId;
+        sticker.url = LineApiClient.stickerImageUrl(stickerId);
+        pack.stickers.add(sticker);
+      }
+      result.add(pack);
+    }
+    return result;
+  }
+
+  /**
+   * Sends a sticker to the customer (DEC-44).
+   *
+   * @param conversationId the open conversation
+   * @param packageId sticker package, from `getStickerCatalog`
+   * @param stickerId sticker, from `getStickerCatalog`
+   * @return the stored message
+   */
+  @AuraEnabled
+  public static MessageView sendSticker(
+    Id conversationId,
+    String packageId,
+    String stickerId
+  ) {
+    try {
+      assertCanSend(conversationId);
+      return new MessageView(
+        LineOutboundService.sendSticker(conversationId, packageId, stickerId)
+      );
+    } catch (Exception e) {
+      throw handled(e, 'sendSticker', conversationId);
     }
   }
 

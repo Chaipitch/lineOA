@@ -87,7 +87,7 @@ Allow Activities: **on**. Allow Reports: on.
 | Unique_Key__c | Text(80), Unique, External ID | `<Channel_Id__c>:<LINE_User_Id__c>`, the upsert key |
 | Picture_Url__c | URL | From the profile API |
 | Status__c | Picklist: Following, Unfollowed | Updated on follow/unfollow |
-| Last_Message_At__c | DateTime | Sorts the inbox |
+| Last_Message_At__c | DateTime | Last activity; drives the daily sync and list views |
 | Last_Message_Preview__c | Text(255) | |
 | Unread_Count__c | Number(6,0), default 0 | +1 on inbound; reset by `markRead` |
 

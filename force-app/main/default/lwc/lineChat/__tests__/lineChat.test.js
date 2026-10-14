@@ -20,13 +20,16 @@ jest.mock("lightning/navigation", () => {
   };
 });
 import getConversations from "@salesforce/apex/LineChatController.getConversations";
-import getConversation from "@salesforce/apex/LineChatController.getConversation";
+import linkToContact from "@salesforce/apex/LineChatController.linkToContact";
+import unlinkConversation from "@salesforce/apex/LineChatController.unlinkConversation";
 import getMessages from "@salesforce/apex/LineChatController.getMessages";
 import getMessagesSince from "@salesforce/apex/LineChatController.getMessagesSince";
 import markRead from "@salesforce/apex/LineChatController.markRead";
 import sendText from "@salesforce/apex/LineChatController.sendText";
 import prepareFile from "@salesforce/apex/LineChatController.prepareFile";
 import sendFile from "@salesforce/apex/LineChatController.sendFile";
+import sendSticker from "@salesforce/apex/LineChatController.sendSticker";
+import getStickerCatalog from "@salesforce/apex/LineChatController.getStickerCatalog";
 import getPollIntervalSeconds from "@salesforce/apex/LineChatController.getPollIntervalSeconds";
 
 jest.mock(
@@ -35,7 +38,22 @@ jest.mock(
   { virtual: true }
 );
 jest.mock(
-  "@salesforce/apex/LineChatController.getConversation",
+  "@salesforce/apex/LineChatController.linkToContact",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineChatController.unlinkConversation",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineChatController.sendSticker",
+  () => ({ default: jest.fn() }),
+  { virtual: true }
+);
+jest.mock(
+  "@salesforce/apex/LineChatController.getStickerCatalog",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
@@ -318,50 +336,6 @@ describe("c-line-chat", () => {
     ).toBeNull();
   });
 
-  it("opens one conversation by Id when used from the inbox", async () => {
-    getConversation.mockResolvedValue({
-      ...CONVERSATION,
-      id: "a00000000000009"
-    });
-    const element = createElement("c-line-chat", { is: LineChat });
-    element.conversationId = "a00000000000009";
-    const onRead = jest.fn();
-    element.addEventListener("read", onRead);
-    document.body.appendChild(element);
-    await flush();
-
-    expect(getConversation).toHaveBeenCalledWith({
-      conversationId: "a00000000000009"
-    });
-    expect(getConversations).not.toHaveBeenCalled();
-    expect(onRead).toHaveBeenCalled();
-    expect(onRead.mock.calls[0][0].detail.conversationId).toBe(
-      "a00000000000009"
-    );
-  });
-
-  it("switches conversation when the inbox selects another", async () => {
-    getConversation.mockResolvedValue({
-      ...CONVERSATION,
-      id: "a00000000000009"
-    });
-    const element = createElement("c-line-chat", { is: LineChat });
-    element.conversationId = "a00000000000009";
-    document.body.appendChild(element);
-    await flush();
-
-    getConversation.mockResolvedValue({
-      ...CONVERSATION,
-      id: "a00000000000010"
-    });
-    element.conversationId = "a00000000000010";
-    await flush();
-
-    expect(getConversation).toHaveBeenLastCalledWith({
-      conversationId: "a00000000000010"
-    });
-  });
-
   it("opens the QR invite for this Contact", async () => {
     getConversations.mockResolvedValue([]);
     const element = createComponent();
@@ -481,6 +455,8 @@ describe("c-line-chat", () => {
     const element = createComponent();
     await flush();
 
+    element.shadowRoot.querySelector('[data-id="open-files"]').click();
+    await flush();
     element.shadowRoot.querySelector("lightning-file-upload").dispatchEvent(
       new CustomEvent("uploadfinished", {
         detail: {
@@ -507,9 +483,142 @@ describe("c-line-chat", () => {
     const element = createComponent();
     await flush();
 
+    for (const id of ["open-files", "open-photos", "open-stickers"]) {
+      expect(
+        element.shadowRoot.querySelector(`[data-id="${id}"]`).disabled
+      ).toBe(true);
+    }
+  });
+
+  // The link button is hidden for now (DEC-44); re-enable these with it.
+  it.skip("links the chat to another Contact and opens that Contact", async () => {
+    linkToContact.mockResolvedValue({
+      conversation: {
+        ...CONVERSATION,
+        contactId: "003000000000099",
+        contactName: "Somchai S."
+      },
+      placeholderDeleted: true,
+      placeholderKept: false
+    });
+    const element = createComponent();
+    await flush();
+
+    element.shadowRoot.querySelector('[data-id="link-toggle"]').click();
+    await flush();
+    element.shadowRoot
+      .querySelector('[data-id="link-panel"] lightning-record-picker')
+      .dispatchEvent(
+        new CustomEvent("change", { detail: { recordId: "003000000000099" } })
+      );
+    await flush();
+    [...element.shadowRoot.querySelectorAll("lightning-button")]
+      .find((b) => b.label === "c.LINE_Link_Button")
+      .click();
+    await flush();
+
+    expect(linkToContact).toHaveBeenCalledWith({
+      conversationId: CONVERSATION.id,
+      contactId: "003000000000099"
+    });
+    expect(getNavigateCalledWith().attributes.recordId).toBe("003000000000099");
+  });
+
+  // The link button is hidden for now (DEC-44); re-enable these with it.
+  it.skip("offers unlink only to admins", async () => {
+    getConversations.mockResolvedValue([{ ...CONVERSATION, canUnlink: true }]);
+    unlinkConversation.mockResolvedValue({});
+    const element = createComponent();
+    await flush();
+    element.shadowRoot.querySelector('[data-id="link-toggle"]').click();
+    await flush();
+
+    [...element.shadowRoot.querySelectorAll("lightning-button")]
+      .find((b) => b.label === "c.LINE_Unlink_Button")
+      .click();
+    await flush();
+
+    expect(unlinkConversation).toHaveBeenCalledWith({
+      conversationId: CONVERSATION.id
+    });
+  });
+
+  // The link button is hidden for now (DEC-44); re-enable these with it.
+  it.skip("hides unlink from reps", async () => {
+    const element = createComponent();
+    await flush();
+    element.shadowRoot.querySelector('[data-id="link-toggle"]').click();
+    await flush();
+
     expect(
-      element.shadowRoot.querySelector("lightning-file-upload").disabled
-    ).toBe(true);
+      [...element.shadowRoot.querySelectorAll("lightning-button")].some(
+        (b) => b.label === "c.LINE_Unlink_Button"
+      )
+    ).toBe(false);
+  });
+
+  it("offers photos only from the photo button", async () => {
+    const element = createComponent();
+    await flush();
+
+    element.shadowRoot.querySelector('[data-id="open-photos"]').click();
+    await flush();
+    const upload = element.shadowRoot.querySelector("lightning-file-upload");
+    expect(upload.accept).toEqual(expect.arrayContaining([".jpg", ".png"]));
+
+    element.shadowRoot.querySelector('[data-id="open-photos"]').click();
+    await flush();
+    expect(
+      element.shadowRoot.querySelector("lightning-file-upload")
+    ).toBeNull();
+  });
+
+  it("picks and sends a sticker", async () => {
+    getStickerCatalog.mockResolvedValue([
+      {
+        packageId: "446",
+        stickers: [
+          { packageId: "446", stickerId: "1988", url: "https://s/1988.png" },
+          { packageId: "446", stickerId: "1989", url: "https://s/1989.png" }
+        ]
+      },
+      {
+        packageId: "789",
+        stickers: [
+          { packageId: "789", stickerId: "10855", url: "https://s/10855.png" }
+        ]
+      }
+    ]);
+    sendSticker.mockResolvedValue({
+      ...inboundMessage("m30", null),
+      isOutbound: true,
+      direction: "Outbound",
+      messageType: "sticker",
+      stickerUrl: "https://s/1989.png",
+      status: "Sent"
+    });
+    const element = createComponent();
+    await flush();
+
+    element.shadowRoot.querySelector('[data-id="open-stickers"]').click();
+    await flush();
+    expect(
+      element.shadowRoot.querySelectorAll("button.line-sticker-choice").length
+    ).toBe(2);
+    element.shadowRoot
+      .querySelectorAll("button.line-sticker-choice")[1]
+      .click();
+    await flush();
+
+    expect(sendSticker).toHaveBeenCalledWith({
+      conversationId: CONVERSATION.id,
+      packageId: "446",
+      stickerId: "1989"
+    });
+    expect(
+      element.shadowRoot.querySelector('[data-id="sticker-tray"]')
+    ).toBeNull();
+    expect(element.shadowRoot.querySelector("img.line-sticker")).not.toBeNull();
   });
 
   it("shows an error toast when sending fails", async () => {

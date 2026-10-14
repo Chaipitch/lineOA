@@ -149,7 +149,7 @@ LINE with `Link my account #K7PM2QXA` typed in. When that message arrives, `Line
 to the invited Contact straight away (before the follow-up could auto-create one), clears the one-time code, and the
 follow-up sends a free reply: "connected", or "code expired".
 
-**Linking by hand (DEC-34, DEC-41).** In the **LINE Inbox** tab a rep picks a Contact for a conversation. If the LINE
+**Linking by hand (DEC-34, DEC-44).** From the chat panel's link icon, a rep picks another Contact for the chat. If the LINE
 user ID sits on a Contact that LINE Connect auto-created (`LINE_Auto_Created__c`), the ID, the customer's other OA
 conversations and their daily LINE Events move to the chosen Contact, and the placeholder is deleted when nothing
 else is attached to it. A Contact a person linked is never taken over: the link is refused, naming that Contact if
@@ -379,8 +379,8 @@ Two traps worth knowing before you write a test, both learned the hard way and r
 **Proven live in the QA org:** inbound webhook → storage → notification, the chat panel, outbound text, OA registration
 and settings from the admin page, automatic Contact creation, the daily Activity History sync and its scheduling, and
 one Contact shared across OAs under one Provider. **Built and tested in the scratch org, in Beta 8 but not yet tried
-live:** the TA review fixes (DEC-36–39), the 2-second refresh (DEC-40), the LINE Inbox with manual linking (DEC-34,
-DEC-41), QR invites (DEC-42), and customer and rep files and images (DEC-43).
+live:** the TA review fixes (DEC-36–39), the 2-second refresh (DEC-40), manual linking from the chat panel and stickers (DEC-34,
+DEC-44), QR invites (DEC-42), and customer and rep files and images (DEC-43).
 
 **Not built yet:** the remaining admin actions — rotate secret, reassign, deactivate, quota display, error log (M8),
 the retention and reassignment batches (M8, M10), hardening and release (M11, M12). `06-implementation-plan.md` is the

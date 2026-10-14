@@ -353,61 +353,33 @@
         <name>LINE_Admin_Jobs_Zone_Mismatch</name>
     </customLabels>
     <customLabels>
-        <label>กล่องข้อความ LINE</label>
-        <name>LINE_Inbox_Title</name>
-    </customLabels>
-    <customLabels>
-        <label>ยังไม่ได้อ่าน</label>
-        <name>LINE_Inbox_Unread</name>
-    </customLabels>
-    <customLabels>
-        <label>ยังไม่เชื่อมผู้ติดต่อ</label>
-        <name>LINE_Inbox_Unlinked</name>
-    </customLabels>
-    <customLabels>
-        <label>ทั้งหมด</label>
-        <name>LINE_Inbox_All</name>
-    </customLabels>
-    <customLabels>
-        <label>ไม่มีบทสนทนา</label>
-        <name>LINE_Inbox_Empty</name>
-    </customLabels>
-    <customLabels>
-        <label>เลือกบทสนทนาเพื่ออ่านและตอบกลับ</label>
-        <name>LINE_Inbox_Select</name>
-    </customLabels>
-    <customLabels>
-        <label>โหลดเพิ่ม</label>
-        <name>LINE_Inbox_Load_More</name>
-    </customLabels>
-    <customLabels>
-        <label>เชื่อมกับผู้ติดต่อ</label>
-        <name>LINE_Inbox_Link_Contact</name>
+        <label>เชื่อมแชทนี้กับผู้ติดต่อ</label>
+        <name>LINE_Link_Contact_Label</name>
     </customLabels>
     <customLabels>
         <label>เชื่อม</label>
-        <name>LINE_Inbox_Link</name>
+        <name>LINE_Link_Button</name>
     </customLabels>
     <customLabels>
         <label>ยกเลิกการเชื่อม</label>
-        <name>LINE_Inbox_Unlink</name>
+        <name>LINE_Unlink_Button</name>
     </customLabels>
     <customLabels>
         <label>เชื่อมกับ {0} แล้ว</label>
-        <name>LINE_Inbox_Linked</name>
+        <name>LINE_Link_Done</name>
     </customLabels>
     <customLabels>
         <label>ยกเลิกการเชื่อมบทสนทนาแล้ว</label>
-        <name>LINE_Inbox_Unlinked_Done</name>
+        <name>LINE_Unlink_Done</name>
     </customLabels>
     <customLabels>
         <label>ลบผู้ติดต่อชั่วคราวที่ LINE Connect สร้างไว้แล้ว</label>
-        <name>LINE_Inbox_Placeholder_Deleted</name>
+        <name>LINE_Link_Placeholder_Deleted</name>
     </customLabels>
     <customLabels>
         <label
     >ผู้ติดต่อที่ LINE Connect สร้างไว้มีข้อมูลอื่นอยู่ จึงไม่ได้ลบ หากซ้ำกันโปรดรวมรายการ</label>
-        <name>LINE_Inbox_Placeholder_Kept</name>
+        <name>LINE_Link_Placeholder_Kept</name>
     </customLabels>
     <customLabels>
         <label>ผู้ติดต่อนี้เชื่อมกับผู้ใช้ LINE คนอื่นแล้ว</label>
@@ -509,5 +481,21 @@
     <customLabels>
         <label>ส่งไฟล์</label>
         <name>LINE_Chat_Attach</name>
+    </customLabels>
+    <customLabels>
+        <label>เชื่อมกับผู้ติดต่ออื่น</label>
+        <name>LINE_Link_Action</name>
+    </customLabels>
+    <customLabels>
+        <label>ยกเลิก</label>
+        <name>LINE_Link_Cancel</name>
+    </customLabels>
+    <customLabels>
+        <label>ส่งรูปภาพ</label>
+        <name>LINE_Chat_Photo</name>
+    </customLabels>
+    <customLabels>
+        <label>สติกเกอร์</label>
+        <name>LINE_Chat_Stickers</name>
     </customLabels>
 </Translations>

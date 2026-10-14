@@ -1,5 +1,19 @@
 <template>
   <lightning-card title={labels.title} icon-name="standard:messaging_user">
+    <!-- Link to another Contact (DEC-44): hidden until the business wants it; the code behind it stays.
+    <template lwc:if={hasConversations}>
+      <lightning-button-icon
+        slot="actions"
+        icon-name="utility:link"
+        data-id="link-toggle"
+        alternative-text={labels.linkAction}
+        title={labels.linkAction}
+        onclick={handleToggleLink}
+      ></lightning-button-icon>
+    </template>
+    -->
+    <!-- Grey line under the card header; the header itself belongs to lightning-card and can't be styled -->
+    <div class="line-header-divider" data-id="header-divider"></div>
     <div class="slds-var-p-horizontal_small">
       <template lwc:if={isLoading}>
         <lightning-spinner
@@ -48,6 +62,42 @@
                 {conversation.oaName}
               </button>
             </template>
+          </div>
+        </template>
+
+        <!-- DEC-44: move this chat to another Contact (e.g. off the one LINE Connect created) -->
+        <template lwc:if={showLinkPanel}>
+          <div
+            class="slds-box slds-box_x-small slds-var-m-bottom_x-small"
+            data-id="link-panel"
+          >
+            <lightning-record-picker
+              label={labels.linkContact}
+              object-api-name="Contact"
+              value={pickedContactId}
+              onchange={handleContactPick}
+            ></lightning-record-picker>
+            <div class="slds-var-m-top_x-small">
+              <lightning-button
+                variant="brand"
+                label={labels.link}
+                disabled={isLinkDisabled}
+                onclick={handleLink}
+              ></lightning-button>
+              <lightning-button
+                class="slds-var-m-left_x-small"
+                label={labels.cancel}
+                onclick={handleToggleLink}
+              ></lightning-button>
+              <template lwc:if={canUnlink}>
+                <lightning-button
+                  class="slds-var-m-left_x-small"
+                  variant="destructive-text"
+                  label={labels.unlink}
+                  onclick={handleUnlink}
+                ></lightning-button>
+              </template>
+            </div>
           </div>
         </template>
 
@@ -183,7 +233,64 @@
           </template>
         </div>
 
+        <!-- Composer, laid out like LINE's (DEC-44): file, photo, text, sticker, send -->
         <div class="slds-var-m-top_x-small">
+          <template lwc:if={showUploadTray}>
+            <div
+              class="slds-box slds-box_x-small slds-var-m-bottom_x-small"
+              data-id="upload-tray"
+            >
+              <!-- M7: saved on the conversation, then sent as a picture or an expiring link (DEC-43) -->
+              <lightning-file-upload
+                label={uploadLabel}
+                name="lineFile"
+                record-id={selectedConversationId}
+                accept={uploadAccept}
+                disabled={isUploadDisabled}
+                onuploadfinished={handleUploadFinished}
+              ></lightning-file-upload>
+            </div>
+          </template>
+          <template lwc:if={showStickerTray}>
+            <div
+              class="slds-box slds-box_x-small slds-var-m-bottom_x-small"
+              data-id="sticker-tray"
+            >
+              <div class="slds-var-m-bottom_x-small">
+                <template for:each={stickerPacks} for:item="pack">
+                  <button
+                    key={pack.packageId}
+                    class={pack.tabClass}
+                    data-package={pack.packageId}
+                    title={labels.stickers}
+                    onclick={handleStickerPack}
+                  >
+                    <img class="line-sticker-tab" src={pack.coverUrl} alt="" />
+                  </button>
+                </template>
+              </div>
+              <div class="line-sticker-grid">
+                <template for:each={activeStickers} for:item="sticker">
+                  <button
+                    key={sticker.stickerId}
+                    class="slds-button line-sticker-choice"
+                    data-package={sticker.packageId}
+                    data-sticker={sticker.stickerId}
+                    title={labels.stickers}
+                    onclick={handleStickerSend}
+                  >
+                    <img
+                      class="line-sticker-option"
+                      src={sticker.url}
+                      alt={labels.sticker}
+                      loading="lazy"
+                    />
+                  </button>
+                </template>
+              </div>
+            </div>
+          </template>
+
           <lightning-textarea
             label={labels.inputPlaceholder}
             variant="label-hidden"
@@ -193,21 +300,54 @@
             onchange={handleDraftChange}
             onkeydown={handleKeyDown}
           ></lightning-textarea>
+          <!-- Below the message box: attach, photo and sticker on the left (grey, smaller), Send on the right -->
           <div
             class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center slds-var-m-top_xx-small"
           >
-            <span class="slds-text-body_small slds-text-color_weak"
-              >{labels.sendHint}</span
+            <div
+              class="slds-grid slds-grid_vertical-align-center"
+              data-id="composer-tools"
             >
-            <!-- M7: saved on the conversation, then sent as a picture or an expiring link (DEC-43) -->
-            <lightning-file-upload
-              label={labels.attach}
-              variant="label-hidden"
-              name="lineFile"
-              record-id={selectedConversationId}
-              disabled={isUploadDisabled}
-              onuploadfinished={handleUploadFinished}
-            ></lightning-file-upload>
+              <button
+                class="slds-button slds-button_icon line-tool"
+                title={labels.attach}
+                disabled={isUploadDisabled}
+                data-id="open-files"
+                onclick={handleOpenFiles}
+              >
+                <lightning-icon
+                  icon-name="utility:add"
+                  size="small"
+                  alternative-text={labels.attach}
+                ></lightning-icon>
+              </button>
+              <button
+                class="slds-button slds-button_icon line-tool"
+                title={labels.photo}
+                disabled={isUploadDisabled}
+                data-id="open-photos"
+                onclick={handleOpenPhotos}
+              >
+                <lightning-icon
+                  icon-name="utility:image"
+                  size="small"
+                  alternative-text={labels.photo}
+                ></lightning-icon>
+              </button>
+              <button
+                class="slds-button slds-button_icon line-tool"
+                title={labels.stickers}
+                disabled={isUploadDisabled}
+                data-id="open-stickers"
+                onclick={handleToggleStickers}
+              >
+                <lightning-icon
+                  icon-name="utility:smiley_and_people"
+                  size="small"
+                  alternative-text={labels.stickers}
+                ></lightning-icon>
+              </button>
+            </div>
             <lightning-button
               variant="brand"
               label={labels.send}
@@ -215,6 +355,11 @@
               onclick={handleSend}
             ></lightning-button>
           </div>
+          <p
+            class="slds-text-body_small slds-text-color_weak slds-var-m-top_xx-small"
+          >
+            {labels.sendHint}
+          </p>
         </div>
       </template>
     </div>

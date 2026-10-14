@@ -45,3 +45,61 @@
   max-height: 14rem;
   border-radius: 0.5rem;
 }
+
+/* Composer trays (DEC-44). */
+.line-sticker-pack {
+  padding: 0.125rem;
+  border-radius: 0.25rem;
+  margin-right: 0.25rem;
+}
+
+.line-sticker-pack_active {
+  background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+}
+
+.line-sticker-tab {
+  width: 2rem;
+  height: 2rem;
+  object-fit: contain;
+}
+
+.line-sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.5rem, 1fr));
+  gap: 0.25rem;
+  max-height: 14rem;
+  overflow-y: auto;
+}
+
+.line-sticker-option {
+  width: 4rem;
+  height: 4rem;
+  object-fit: contain;
+}
+
+/* Composer tools (DEC-44): grey like LINE's, 15% smaller than a 1.5rem icon. */
+.line-tool {
+  width: 1.5rem;
+  height: 1.5rem;
+  margin-right: 0.5rem;
+  transform: scale(0.85);
+  transform-origin: left center;
+  --slds-c-icon-color-foreground-default: var(
+    --slds-g-color-neutral-base-50,
+    #747474
+  );
+  --sds-c-icon-color-foreground-default: var(
+    --slds-g-color-neutral-base-50,
+    #747474
+  );
+}
+
+.line-tool:disabled {
+  opacity: 0.4;
+}
+
+/* Bottom border of the card header. */
+.line-header-divider {
+  border-bottom: 1px solid var(--slds-g-color-neutral-base-80, #c9c9c9);
+  margin-bottom: 0.75rem;
+}

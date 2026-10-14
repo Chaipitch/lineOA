@@ -238,10 +238,6 @@
         <viewAllRecords>false</viewAllRecords>
     </objectPermissions>
     <tabSettings>
-        <tab>LINE_Inbox</tab>
-        <visibility>Visible</visibility>
-    </tabSettings>
-    <tabSettings>
         <tab>LINE_Conversation__c</tab>
         <visibility>Visible</visibility>
     </tabSettings>

@@ -82,6 +82,21 @@ public inherited sharing class LineApiModels {
     public String originalContentUrl;
     public String previewImageUrl;
     public Integer duration;
+    public String packageId;
+    public String stickerId;
+  }
+
+  /**
+   * @param packageId sticker package ID (from LINE's list of stickers bots may send)
+   * @param stickerId sticker ID
+   * @return a sticker message
+   */
+  public static Message stickerMessage(String packageId, String stickerId) {
+    Message m = new Message();
+    m.type = 'sticker';
+    m.packageId = packageId;
+    m.stickerId = stickerId;
+    return m;
   }
 
   /**

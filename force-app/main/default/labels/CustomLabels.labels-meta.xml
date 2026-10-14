@@ -737,72 +737,15 @@
     >Your own time zone is different. Schedule uses yours, so the job would run at 01:00 in:</value>
     </labels>
     <labels>
-        <fullName>LINE_Inbox_Title</fullName>
-        <categories>LINE Connect</categories>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Inbox tab and card title</shortDescription>
-        <value>LINE Inbox</value>
-    </labels>
-    <labels>
-        <fullName>LINE_Inbox_Unread</fullName>
-        <categories>LINE Connect</categories>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Inbox filter: unread</shortDescription>
-        <value>Unread</value>
-    </labels>
-    <labels>
-        <fullName>LINE_Inbox_Unlinked</fullName>
-        <categories>LINE Connect</categories>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription
-    >Inbox filter and badge: no Contact linked</shortDescription>
-        <value>Not linked</value>
-    </labels>
-    <labels>
-        <fullName>LINE_Inbox_All</fullName>
-        <categories>LINE Connect</categories>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Inbox filter: all</shortDescription>
-        <value>All</value>
-    </labels>
-    <labels>
-        <fullName>LINE_Inbox_Empty</fullName>
-        <categories>LINE Connect</categories>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Inbox list is empty</shortDescription>
-        <value>No conversations here.</value>
-    </labels>
-    <labels>
-        <fullName>LINE_Inbox_Select</fullName>
-        <categories>LINE Connect</categories>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Inbox: nothing selected yet</shortDescription>
-        <value>Choose a conversation to read and reply.</value>
-    </labels>
-    <labels>
-        <fullName>LINE_Inbox_Load_More</fullName>
-        <categories>LINE Connect</categories>
-        <language>en_US</language>
-        <protected>false</protected>
-        <shortDescription>Inbox: load the next page</shortDescription>
-        <value>Load more</value>
-    </labels>
-    <labels>
-        <fullName>LINE_Inbox_Link_Contact</fullName>
+        <fullName>LINE_Link_Contact_Label</fullName>
         <categories>LINE Connect</categories>
         <language>en_US</language>
         <protected>false</protected>
         <shortDescription>Contact picker label for linking</shortDescription>
-        <value>Link to Contact</value>
+        <value>Link this chat to Contact</value>
     </labels>
     <labels>
-        <fullName>LINE_Inbox_Link</fullName>
+        <fullName>LINE_Link_Button</fullName>
         <categories>LINE Connect</categories>
         <language>en_US</language>
         <protected>false</protected>
@@ -810,7 +753,7 @@
         <value>Link</value>
     </labels>
     <labels>
-        <fullName>LINE_Inbox_Unlink</fullName>
+        <fullName>LINE_Unlink_Button</fullName>
         <categories>LINE Connect</categories>
         <language>en_US</language>
         <protected>false</protected>
@@ -818,7 +761,7 @@
         <value>Unlink</value>
     </labels>
     <labels>
-        <fullName>LINE_Inbox_Linked</fullName>
+        <fullName>LINE_Link_Done</fullName>
         <categories>LINE Connect</categories>
         <language>en_US</language>
         <protected>false</protected>
@@ -827,7 +770,7 @@
         <value>Linked to {0}.</value>
     </labels>
     <labels>
-        <fullName>LINE_Inbox_Unlinked_Done</fullName>
+        <fullName>LINE_Unlink_Done</fullName>
         <categories>LINE Connect</categories>
         <language>en_US</language>
         <protected>false</protected>
@@ -835,7 +778,7 @@
         <value>Conversation unlinked.</value>
     </labels>
     <labels>
-        <fullName>LINE_Inbox_Placeholder_Deleted</fullName>
+        <fullName>LINE_Link_Placeholder_Deleted</fullName>
         <categories>LINE Connect</categories>
         <language>en_US</language>
         <protected>false</protected>
@@ -845,7 +788,7 @@
     >The placeholder Contact that LINE Connect created was removed.</value>
     </labels>
     <labels>
-        <fullName>LINE_Inbox_Placeholder_Kept</fullName>
+        <fullName>LINE_Link_Placeholder_Kept</fullName>
         <categories>LINE Connect</categories>
         <language>en_US</language>
         <protected>false</protected>
@@ -1068,5 +1011,40 @@
         <shortDescription
     >Attach file button in the chat panel</shortDescription>
         <value>Send a file</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Link_Action</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Chat panel action that opens the link controls</shortDescription>
+        <value>Link to another Contact</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Link_Cancel</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription>Closes the link controls</shortDescription>
+        <value>Cancel</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Chat_Photo</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Chat panel button that sends a photo</shortDescription>
+        <value>Send a photo</value>
+    </labels>
+    <labels>
+        <fullName>LINE_Chat_Stickers</fullName>
+        <categories>LINE Connect</categories>
+        <language>en_US</language>
+        <protected>false</protected>
+        <shortDescription
+    >Chat panel button that opens the sticker picker</shortDescription>
+        <value>Stickers</value>
     </labels>
 </CustomLabels>

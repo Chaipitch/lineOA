@@ -720,146 +720,6 @@ private class LineChatControllerTest {
     Assert.isFalse(serialized.contains(LineTestFactory.CHANNEL_A));
   }
 
-  // ---------- inbox (M6) ----------
-
-  private static LINE_Conversation__c inboxConversation(
-    String lineUserId,
-    Id ownerId,
-    Decimal unread,
-    Id contactId,
-    Datetime lastMessageAt
-  ) {
-    LINE_OA_Configuration__c oa = [
-      SELECT Id
-      FROM LINE_OA_Configuration__c
-      WITH SYSTEM_MODE
-      LIMIT 1
-    ];
-    return new LINE_Conversation__c(
-      Name = lineUserId,
-      LINE_OA_Configuration__c = oa.Id,
-      LINE_User_Id__c = lineUserId,
-      Unique_Key__c = LineTestFactory.CHANNEL_A + ':' + lineUserId,
-      Status__c = 'Following',
-      OwnerId = ownerId,
-      Unread_Count__c = unread,
-      Contact__c = contactId,
-      Last_Message_At__c = lastMessageAt,
-      Last_Message_Preview__c = 'hi from ' + lineUserId
-    );
-  }
-
-  private static Set<Id> idsOf(LineChatController.InboxPage page) {
-    Set<Id> ids = new Set<Id>();
-    for (LineChatController.ConversationView v : page.conversations) {
-      ids.add(v.id);
-    }
-    return ids;
-  }
-
-  @IsTest
-  static void inboxFiltersTheRepsOwnConversations() {
-    LineTestFactory.ensurePackageAccess();
-    User rep = repA();
-    Contact contact = new Contact(LastName = 'Linked', OwnerId = rep.Id);
-    insert as system contact;
-    Datetime now = Datetime.now();
-    LINE_Conversation__c unreadLinked = inboxConversation(
-      'Uib1',
-      rep.Id,
-      2,
-      contact.Id,
-      now
-    );
-    LINE_Conversation__c readUnlinked = inboxConversation(
-      'Uib2',
-      rep.Id,
-      0,
-      null,
-      now.addMinutes(-1)
-    );
-    LINE_Conversation__c someoneElses = inboxConversation(
-      'Uib3',
-      repB().Id,
-      5,
-      null,
-      now
-    );
-    insert as system new List<LINE_Conversation__c>{
-      unreadLinked,
-      readUnlinked,
-      someoneElses
-    };
-
-    LineChatController.InboxPage unread;
-    LineChatController.InboxPage unlinked;
-    LineChatController.InboxPage all;
-    Test.startTest();
-    System.runAs(rep) {
-      unread = LineChatController.getInbox('unread', null, null);
-      unlinked = LineChatController.getInbox('unlinked', null, null);
-      all = LineChatController.getInbox('all', null, null);
-    }
-    Test.stopTest();
-
-    Assert.areEqual(new Set<Id>{ unreadLinked.Id }, idsOf(unread));
-    Assert.areEqual(new Set<Id>{ readUnlinked.Id }, idsOf(unlinked));
-    Assert.areEqual(
-      new Set<Id>{ unreadLinked.Id, readUnlinked.Id },
-      idsOf(all),
-      'Another rep\'s conversation never shows, and one with no message yet is left out'
-    );
-    Assert.areEqual(
-      unreadLinked.Id,
-      all.conversations[0].id,
-      'Most recent first'
-    );
-    LineChatController.ConversationView first = all.conversations[0];
-    Assert.areEqual(contact.Id, first.contactId);
-    Assert.areEqual('Linked', first.contactName);
-    Assert.areEqual('hi from Uib1', first.lastMessagePreview);
-    Assert.isTrue(first.canSend, 'Rep A is the OA\'s assigned rep');
-    Assert.isFalse(all.isAdmin);
-  }
-
-  @IsTest
-  static void inboxPagesWithoutOffset() {
-    LineTestFactory.ensurePackageAccess();
-    User rep = repA();
-    List<LINE_Conversation__c> many = new List<LINE_Conversation__c>();
-    Datetime base = Datetime.now();
-    Integer total = LineChatController.INBOX_PAGE_SIZE + 3;
-    for (Integer i = 0; i < total; i++) {
-      many.add(
-        inboxConversation('Upage' + i, rep.Id, 0, null, base.addMinutes(-i))
-      );
-    }
-    insert as system many;
-
-    LineChatController.InboxPage first;
-    LineChatController.InboxPage second;
-    Test.startTest();
-    System.runAs(rep) {
-      first = LineChatController.getInbox('all', null, null);
-      LineChatController.ConversationView last = first.conversations[
-        first.conversations.size() - 1
-      ];
-      second = LineChatController.getInbox('all', last.lastMessageAt, last.id);
-    }
-    Test.stopTest();
-
-    Assert.areEqual(
-      LineChatController.INBOX_PAGE_SIZE,
-      first.conversations.size()
-    );
-    Assert.isTrue(first.hasMore);
-    Assert.areEqual(3, second.conversations.size());
-    Assert.isFalse(second.hasMore);
-    Set<Id> overlap = idsOf(first);
-    overlap.retainAll(idsOf(second));
-    Assert.isTrue(overlap.isEmpty(), 'No row appears on two pages');
-  }
-
   @IsTest
   static void getConversationIsRefusedForAConversationTheUserCannotSee() {
     LineTestFactory.ensurePackageAccess();
@@ -896,6 +756,7 @@ private class LineChatControllerTest {
     Assert.areEqual('Real Somchai', view.conversation.contactName);
     Assert.isFalse(view.placeholderDeleted);
     Assert.isFalse(view.placeholderKept);
+    Assert.isFalse(view.conversation.canUnlink, 'Only admins may unlink');
   }
 
   @IsTest
@@ -1090,5 +951,42 @@ private class LineChatControllerTest {
     }
 
     Assert.areEqual(String.valueOf(v.Id), page.messages[0].contentVersionId);
+  }
+
+  // ---------- stickers (DEC-44) ----------
+
+  @IsTest
+  static void stickerCatalogCarriesPictures() {
+    List<LineChatController.StickerPackView> packs = LineChatController.getStickerCatalog();
+    Assert.isFalse(packs.isEmpty());
+    LineChatController.StickerView first = packs[0].stickers[0];
+    Assert.areEqual(LineApiClient.stickerImageUrl(first.stickerId), first.url);
+  }
+
+  @IsTest
+  static void onlyTheAssignedRepSendsStickers() {
+    LineTestFactory.ensurePackageAccess();
+    LineHttpMock mock = new LineHttpMock();
+    Test.setMock(HttpCalloutMock.class, mock);
+    Id conversationId = conversationId();
+
+    LineChatController.MessageView sent;
+    String refused;
+    Test.startTest();
+    System.runAs(repA()) {
+      sent = LineChatController.sendSticker(conversationId, '446', '1988');
+    }
+    System.runAs(repB()) {
+      try {
+        LineChatController.sendSticker(conversationId, '446', '1988');
+      } catch (AuraHandledException e) {
+        refused = e.getMessage();
+      }
+    }
+    Test.stopTest();
+
+    Assert.areEqual('sticker', sent.messageType);
+    Assert.isNotNull(sent.stickerUrl);
+    Assert.areEqual(System.Label.LINE_Error_No_Access, refused);
   }
 }

@@ -50,37 +50,12 @@ public without sharing class LineOutboundService {
       Sent_At__c = Datetime.now(),
       Sender__c = UserInfo.getUserId()
     );
-    try {
-      // 1. Callout
-      LineApiModels.PushResult result = LineApiClient.forChannel(
-          conversation.LINE_OA_Configuration__r.Channel_Id__c
-        )
-        .push(
-          conversation.LINE_User_Id__c,
-          new List<LineApiModels.Message>{ LineApiModels.textMessage(text) },
-          null
-        );
-      // 2. DML
-      message.Status__c = 'Sent';
-      if (!result.sentMessages.isEmpty()) {
-        message.Line_Message_Id__c = result.sentMessages[0].id;
-      }
-      insert as system message;
-      touchConversation(conversation, message);
-      return message;
-    } catch (LineApiException e) {
-      message.Status__c = 'Failed';
-      message.Error__c = truncate(e.userMessage(), ERROR_LENGTH);
-      insert as system message;
-      LineLogger.error(
-        'LineOutboundService.sendText',
-        e,
-        conversation.LINE_OA_Configuration__c,
-        conversation.Id
-      );
-      LineLogger.flush();
-      throw e;
-    }
+    return pushAndRecord(
+      conversation,
+      LineApiModels.textMessage(text),
+      message,
+      'sendText'
+    );
   }
 
   /** LINE's limit for an image's preview (04): our native images use the file itself as the preview. */
@@ -179,6 +154,84 @@ public without sharing class LineOutboundService {
       Content_Document_Id__c = contentDocumentId,
       Public_Url__c = link.DistributionPublicUrl
     );
+    return pushAndRecord(conversation, outgoing, message, 'sendFile');
+  }
+
+  /**
+   * Sticker packages LINE lets bots send (04, "stickers available for the Messaging API"), each as its first and last
+   * sticker ID. Pictures checked on LINE's sticker server 2026-10-14; sending is [VERIFY] live (DEC-44).
+   */
+  @TestVisible
+  static final Map<String, List<Long>> SENDABLE_STICKERS = new Map<String, List<Long>>{
+    '446' => new List<Long>{ 1988, 2027 },
+    '789' => new List<Long>{ 10855, 10894 },
+    '11537' => new List<Long>{ 52002734, 52002773 },
+    '11538' => new List<Long>{ 51626494, 51626533 },
+    '11539' => new List<Long>{ 52114110, 52114149 }
+  };
+
+  /**
+   * @return sticker IDs a rep may send, by package, in display order
+   */
+  public static Map<String, List<String>> sendableStickers() {
+    Map<String, List<String>> result = new Map<String, List<String>>();
+    for (String packageId : SENDABLE_STICKERS.keySet()) {
+      List<Long> range = SENDABLE_STICKERS.get(packageId);
+      List<String> ids = new List<String>();
+      for (Long id = range[0]; id <= range[1]; id++) {
+        ids.add(String.valueOf(id));
+      }
+      result.put(packageId, ids);
+    }
+    return result;
+  }
+
+  /**
+   * Sends a sticker from LINE's sendable set.
+   *
+   * @param conversationId the conversation to reply to
+   * @param packageId sticker package ID
+   * @param stickerId sticker ID
+   * @return the stored message
+   * @throws IllegalArgumentException for a sticker LINE doesn't let bots send
+   */
+  public static LINE_Message__c sendSticker(
+    Id conversationId,
+    String packageId,
+    String stickerId
+  ) {
+    List<Long> range = SENDABLE_STICKERS.get(packageId);
+    Long id = stickerId != null && stickerId.isNumeric()
+      ? Long.valueOf(stickerId)
+      : null;
+    if (range == null || id == null || id < range[0] || id > range[1]) {
+      throw new IllegalArgumentException(System.Label.LINE_Error_Generic);
+    }
+    LINE_Conversation__c conversation = load(conversationId);
+    LINE_Message__c message = new LINE_Message__c(
+      LINE_Conversation__c = conversation.Id,
+      Direction__c = 'Outbound',
+      Message_Type__c = 'sticker',
+      Sticker_Package_Id__c = packageId,
+      Sticker_Id__c = stickerId,
+      Sent_At__c = Datetime.now(),
+      Sender__c = UserInfo.getUserId()
+    );
+    return pushAndRecord(
+      conversation,
+      LineApiModels.stickerMessage(packageId, stickerId),
+      message,
+      'sendSticker'
+    );
+  }
+
+  // Callout first, then the record (hard rule 6). A refused push is still recorded, as Failed, and rethrown.
+  private static LINE_Message__c pushAndRecord(
+    LINE_Conversation__c conversation,
+    LineApiModels.Message outgoing,
+    LINE_Message__c message,
+    String source
+  ) {
     try {
       // 1. Callout
       LineApiModels.PushResult result = LineApiClient.forChannel(
@@ -202,7 +255,7 @@ public without sharing class LineOutboundService {
       message.Error__c = truncate(e.userMessage(), ERROR_LENGTH);
       insert as system message;
       LineLogger.error(
-        'LineOutboundService.sendFile',
+        'LineOutboundService.' + source,
         e,
         conversation.LINE_OA_Configuration__c,
         conversation.Id
@@ -270,12 +323,7 @@ public without sharing class LineOutboundService {
       new LINE_Conversation__c(
         Id = conversation.Id,
         Last_Message_At__c = message.Sent_At__c,
-        Last_Message_Preview__c = truncate(
-          message.Message_Type__c == 'text'
-            ? message.Text__c
-            : message.File_Name__c,
-          PREVIEW_LENGTH
-        )
+        Last_Message_Preview__c = truncate(previewOf(message), PREVIEW_LENGTH)
       ),
       false,
       AccessLevel.SYSTEM_MODE
@@ -289,6 +337,20 @@ public without sharing class LineOutboundService {
         conversation.Id
       );
       LineLogger.flush();
+    }
+  }
+
+  private static String previewOf(LINE_Message__c message) {
+    switch on message.Message_Type__c {
+      when 'text' {
+        return message.Text__c;
+      }
+      when 'sticker' {
+        return System.Label.LINE_Preview_Sticker;
+      }
+      when else {
+        return message.File_Name__c;
+      }
     }
   }
 
