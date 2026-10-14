@@ -94,7 +94,7 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
    - **Beta 7 built 2026-10-11** with all four (§1). Next: the QA reinstall (uninstall deletes LINE data,
      including `Contact.LINE_User_Id__c`, so existing Contacts would be duplicated on the next message).
    - **Decided 2026-10-14 (DEC-45):** R4 auto-create stays on; R6 reps reply only from Salesforce; S1 the chat panel stays.
-     **Still open:** R15 keep or drop `LINE_Error_Log__c` (before the first release); licence; the sizing sheet (M11 numbers).
+     **R15 decided: keep `LINE_Error_Log__c`.** **Still open:** licence; the sizing sheet (M11 numbers).
    - **QA org data (2026-10-11):** Account "Chaipitch (test)" created and Contact "Chaipitch" put under it by hand, so
      Rep Sales2 can open it. OAs: TS Chaipitch, TS SalesRep1 (other Provider), SalesRep2 (same Provider as TS Chaipitch).
 
