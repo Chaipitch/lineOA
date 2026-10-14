@@ -35,7 +35,7 @@ Claude Code does all of the implementation; its working rules are in [../CLAUDE.
 
 - Package **LINE Connect**, namespace `tsthlineoa`, Dev Hub `sf-line-dev`. Beta 5 (`0.1.0.5`) is installed in the QA org
   `chaipitch-devhub` and working end to end with a real LINE OA.
-- M0–M7 and M9 built (M6 and M7 awaiting their phone tests); M8 partly done. **Beta 9** (`0.1.0.9`, built 2026-10-14, waiting to be installed) carries everything since Beta 5:
+- M0–M7 and M9 built (M6 and M7 awaiting their phone tests); M8 partly done. **Beta 10** (`0.1.0.10`, built 2026-10-14, waiting to be installed; the release candidate) carries everything since Beta 5:
   TA review fixes, 2-second refresh, manual linking, QR invites, files and images and the LINE-style composer with stickers (DEC-44). The full picture is in
   [HANDOFF.md](HANDOFF.md).
 - TA review held 7 Oct 2026: no Required findings. R1, R3, R4 (default Account) and R8 are fixed; the rest are BA

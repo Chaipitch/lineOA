@@ -48,9 +48,14 @@ the LINE Inbox with manual linking and placeholder clean-up (DEC-34, DEC-41), QR
 
 **Beta 9 (`0.1.0.9`, `04tgL000000ZN8DQAW`) built 2026-10-14** from commit `8610719`: Beta 8 without the inbox tab, plus the
 LINE-style composer (files, photos, stickers), linking in the chat panel with its button hidden (DEC-44) and the header
-divider. **This is the one to install** (QA org, or a sandbox of the production org). Install link:
+divider. Superseded by Beta 10. Install link:
 `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZN8DQAW`. Release to the team's own production
 org is planned after it checks out (needs `sf package version promote`, the user's explicit go-ahead).
+
+**Beta 10 (`0.1.0.10`, `04tgL000000ZN9pQAG`) built 2026-10-14** from commit `a305bd5`: Beta 9 plus Rotate secret (DEC-45);
+R15 decided (error log kept). **This is the one to install** (QA org, or a sandbox of the production org) and, once its
+checks pass, the candidate to promote for the team's own production org (`sf package version promote`, the user's
+explicit go-ahead). Install link: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZN9pQAG`.
 
 ## 2. Orgs and access
 
