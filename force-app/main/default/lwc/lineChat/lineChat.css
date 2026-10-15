@@ -8,12 +8,15 @@
   border-radius: 0.75rem;
 }
 
+/* Fixed colours, not theme hooks: an org's theme can redefine a hook (one turned the rep's bubble dark green). */
 .line-bubble_inbound {
-  background-color: var(--slds-g-color-neutral-base-95, #f3f3f3);
+  background-color: #f3f3f3;
+  color: #181818;
 }
 
 .line-bubble_outbound {
-  background-color: var(--slds-g-color-success-container-1, #d4f2d8);
+  background-color: #d8ecff;
+  color: #181818;
 }
 
 /* Customer text can contain anything, including long links: wrap it, never let it overflow. */
