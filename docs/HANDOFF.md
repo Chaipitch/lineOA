@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-10-14**, after the **first release (0.1.0.10, DEC-46)**, verified on the dev5-ts sandbox. Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-15**, after release **0.2.0.1** (bubble colours, DEC-47). Production runs 0.1.0.10 (installed by the user 2026-10-14), upgrade pending. Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -63,6 +63,10 @@ explicit go-ahead). Install link: `https://login.salesforce.com/packaging/instal
 permanent** (09 §4). The next build is `0.2.0.NEXT` with `ancestorVersion: HIGHEST`; test every new version as an **upgrade**
 from this release (install the release, add data, upgrade, run the checks), e.g. in dev5-ts. Released versions upgrade in place:
 no more uninstalling.
+
+**✅ RELEASED: `0.2.0.1` (`04tgL000000ZV0vQAG`) promoted 2026-10-15 (DEC-47)**: fixed bubble colours (rep light blue).
+Built as an upgrade of 0.1.0.10. **The team's production org runs 0.1.0.10 and should upgrade to this** (in place, data
+kept): `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZV0vQAG`. The next build is `0.3.0.NEXT`.
 
 ## 2. Orgs and access
 

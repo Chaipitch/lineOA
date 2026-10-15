@@ -5,7 +5,7 @@
       "default": true,
       "package": "LINE Connect",
       "versionName": "MVP",
-      "versionNumber": "0.2.0.NEXT",
+      "versionNumber": "0.3.0.NEXT",
       "versionDescription": "Connects LINE Official Accounts to Salesforce: per-rep OA chat from the Contact page.",
       "definitionFile": "config/project-scratch-def.json",
       "ancestorVersion": "HIGHEST"
@@ -30,6 +30,7 @@
     "LINE Connect@0.1.0-7": "04tgL000000YbWbQAK",
     "LINE Connect@0.1.0-8": "04tgL000000Z5BJQA0",
     "LINE Connect@0.1.0-9": "04tgL000000ZN8DQAW",
-    "LINE Connect@0.1.0-10": "04tgL000000ZN9pQAG"
+    "LINE Connect@0.1.0-10": "04tgL000000ZN9pQAG",
+    "LINE Connect@0.2.0-1": "04tgL000000ZV0vQAG"
   }
 }
