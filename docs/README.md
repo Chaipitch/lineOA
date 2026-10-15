@@ -33,8 +33,8 @@ Claude Code does all of the implementation; its working rules are in [../CLAUDE.
 
 ## Status (2026-10-14)
 
-- Package **LINE Connect**, namespace `tsthlineoa`, Dev Hub `sf-line-dev`. **Released `0.1.0.10`** (2026-10-14, DEC-46) and **`0.2.0.1`** (2026-10-15, bubble colours,
-  DEC-47), for the team's own production org, not yet for clients. The next build is `0.3.0`.
+- Package **LINE Connect**, namespace `tsthlineoa`, Dev Hub `sf-line-dev`. **Released `0.1.0.10`** (2026-10-14, DEC-46), **`0.2.0.1`** (bubble colours, DEC-47) and **`0.3.0.1`**
+  (duplicate-rule fix, DEC-48), for the team's own production org, not yet for clients. The next build is `0.4.0`.
 - Built: M0–M7 and M9; M8 in part (registration, settings, nightly jobs, remove OA, rotate secret). Not built: OA
   reassignment (M8), retention (M10), load test (M11), install guide (M12). The full picture is in [HANDOFF.md](HANDOFF.md).
 - TA review held 7 Oct 2026: no Required findings. R1, R3, R4 (default Account) and R8 are fixed; the rest are BA

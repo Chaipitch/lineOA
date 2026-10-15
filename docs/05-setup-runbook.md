@@ -57,6 +57,14 @@ Every night the package checks each OA's credentials with LINE. An OA LINE **rej
 reissued) is shown in red on the LINE Admin page: register it again with the new secret, or **Remove** it. Registering requires ticking "same LINE Provider as all our
 other OAs" (DEC-39): OAs under different Providers can't share a Contact.
 
+**Before registering, in LINE Official Account Manager** → the OA → Settings → **Response settings**:
+- **Auto-response: Off.** New OAs start with it on, and LINE then answers every customer message with "this account can't
+  reply to messages" (in Thai: ขอบคุณที่ส่งข้อความถึงเรา … บัญชีนี้ไม่สามารถตอบข้อความใดๆ ได้), although the rep replies from
+  Salesforce. Found 2026-10-15 in production.
+- **Webhook: On** (without it messages never reach Salesforce).
+- **Chat: Off** (reps reply only from Salesforce, DEC-45; replies from OA Manager aren't recorded, L1).
+- Greeting message: optional; it is sent only when someone adds the OA as a friend.
+
 **Remove OA** (LINE Admin tab → OA row → Remove): deletes the channel secret; the OA and its conversations stay as
 inactive history. Do this whenever an OA is retired or deleted in LINE. It is the **only** way to delete a secret: the
 protected setting is invisible to subscriber admins (DEC-33).

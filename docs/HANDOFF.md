@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-10-15**, after release **0.2.0.1** (bubble colours, DEC-47). Production runs 0.1.0.10 (installed by the user 2026-10-14), upgrade pending. Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-15**, after release **0.3.0.1** (duplicate-rule fix, DEC-48). Production (`tsprod`) runs a released version; upgrade to 0.3.0.1 pending. Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -67,6 +67,14 @@ no more uninstalling.
 **✅ RELEASED: `0.2.0.1` (`04tgL000000ZV0vQAG`) promoted 2026-10-15 (DEC-47)**: fixed bubble colours (rep light blue).
 Built as an upgrade of 0.1.0.10. **The team's production org runs 0.1.0.10 and should upgrade to this** (in place, data
 kept): `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZV0vQAG`. The next build is `0.3.0.NEXT`.
+
+**✅ RELEASED: `0.3.0.1` (`04tgL000000ZV8zQAG`) promoted 2026-10-15 (DEC-48)**: auto-created Contacts no longer fail on
+"Allow, with alert" duplicate rules (production had none created for a new customer). Ancestor 0.2.0.1. **Production should
+upgrade to this**: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZV8zQAG`. Earth's conversation
+(Salesrep5) links on his next message. The next build is `0.4.0.NEXT`.
+Production org: alias **`tsprod`** (login `skeskaew@terrasky.co.th`, org `00D5i000004RMWgEAO`), Contact sharing Controlled by
+Parent, active Contact duplicate rules: *Standard Rule for Contacts with Duplicate Leads*, *Duplicate Rule for Email*. Read-only
+use from here: queries only, never deploy (released versions only).
 
 ## 2. Orgs and access
 
