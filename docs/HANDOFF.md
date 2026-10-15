@@ -143,6 +143,11 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
 
 ## 5. Traps already hit (don't rediscover these)
 
+**Subscriber orgs**
+- **Duplicate rules refuse code unless told otherwise.** "Allow, with alert" rules warn people but fail Apex DML with
+  `DUPLICATES_DETECTED` unless `DuplicateRuleHeader.allowSave` is set (DEC-48). Our test orgs have no active rules, so this only
+  showed up in production. Check `LINE_Error_Log__c` first when something "just doesn't happen".
+
 **Package build org**
 - **Tests in the package build org run as a user with none of the package permission sets.** Every test method calls
   `LineTestFactory.ensurePackageAccess()` first, **and every query or DML on a package object or field uses

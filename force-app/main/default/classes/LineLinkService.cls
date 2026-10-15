@@ -157,7 +157,12 @@ public without sharing class LineLinkService {
       if (target.LINE_OA_Configuration__c == null) {
         target.LINE_OA_Configuration__c = conversation.LINE_OA_Configuration__c;
       }
-      update as system target;
+      // Throws on failure, which the catch below rolls back; duplicate alerts alone don't stop it (DEC-48).
+      Database.update(
+        target,
+        saveDespiteDuplicateAlerts(true),
+        AccessLevel.SYSTEM_MODE
+      );
 
       Id placeholderId = placeholder?.Id;
       List<LINE_Conversation__c> moving = [
@@ -420,7 +425,7 @@ public without sharing class LineLinkService {
     }
     List<Database.SaveResult> results = Database.insert(
       toInsert,
-      false,
+      saveDespiteDuplicateAlerts(false),
       AccessLevel.SYSTEM_MODE
     );
     LineLogger.saveErrors('LineLinkService.createContacts', results, toInsert);
@@ -461,6 +466,22 @@ public without sharing class LineLinkService {
       return null;
     }
     return accountId;
+  }
+
+  /**
+   * DEC-48: a subscriber's duplicate rules set to "Allow, with alert" warn a person but refuse code unless the code
+   * accepts the alert up front. A LINE customer often already exists as a Lead or Contact, so without this the
+   * placeholder Contact was never created (found in production 2026-10-15). Rules set to "Block" still refuse; that
+   * failure is logged and the message stays stored (hard rule 7).
+   */
+  @TestVisible
+  private static Database.DMLOptions saveDespiteDuplicateAlerts(
+    Boolean allOrNone
+  ) {
+    Database.DMLOptions options = new Database.DMLOptions();
+    options.DuplicateRuleHeader.allowSave = true;
+    options.OptAllOrNone = allOrNone;
+    return options;
   }
 
   // LINE gives us a display name and nothing else, so it becomes the last name. Never blank: Contact requires one.

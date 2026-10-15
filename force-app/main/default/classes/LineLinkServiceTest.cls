@@ -747,4 +747,21 @@ private class LineLinkServiceTest {
     Assert.isNull(after.LINE_Invite_Expires_At__c);
     Assert.areEqual(invited.Id, conversationFor(USER_1).Contact__c);
   }
+
+  // ---------- duplicate rules (DEC-48) ----------
+
+  @IsTest
+  static void contactWritesAcceptDuplicateAlerts() {
+    Database.DMLOptions partial = LineLinkService.saveDespiteDuplicateAlerts(
+      false
+    );
+    Assert.isTrue(
+      partial.DuplicateRuleHeader.allowSave,
+      'A duplicate rule that only warns must not stop the Contact'
+    );
+    Assert.isFalse(partial.OptAllOrNone, 'Auto-create stays partial-success');
+    Assert.isTrue(
+      LineLinkService.saveDespiteDuplicateAlerts(true).OptAllOrNone
+    );
+  }
 }

@@ -45,6 +45,7 @@ Test.getEventBus().deliver();   // runs the PE trigger
 | Follow/unfollow | follow creates a conversation + a profile job; unfollow → Unfollowed; re-follow → Following |
 | Inactive OA | owner = fallback owner; no notification when the owner is a queue |
 | Send authorization (DEC-37) | assigned rep sends; a user who can see the conversation but isn't the rep gets `LINE_Chat_Not_Assigned_Rep`, no callout, panel read-only; inactive OA → fallback owner and fallback-queue member send, the former rep can't |
+| Duplicate rules (DEC-48) | Contact writes accept duplicate alerts (`allowSave`), auto-create stays partial-success; live check: a new LINE customer who matches a Lead gets a Contact in an org with the standard duplicate rules |
 | Rotate secret (DEC-45) | new secret checked with LINE (not a cached token) then stored, status Valid; a rejected secret leaves the old one; blank secret, removed OA and unknown OA refused before any callout; admins only |
 | Files (DEC-43) | image → File on conversation and Contact (incl. a Contact created in the same run); file over the limit never fetched; external media stays a placeholder; 404 → Download Failed; over limit after download → Too Large; video still transcoding → delayed retry; memory budget chains the rest; small JPEG sent as a LINE image, PDF as an expiring link; only a File on the conversation can be sent |
 | Default Account (DEC-36) | created Contact gets the default Account; deleted default → logged, Contact created without one; an existing Contact is never moved |
