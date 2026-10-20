@@ -21,6 +21,8 @@ Legend: **[HUMAN]** = a person has to do it in a UI or console. **[CLAUDE]** = C
 
 1. **[HUMAN]** The client creates a company **LINE Business ID** that owns all their OAs.
 2. **[HUMAN]** In the LINE Developers Console, create **one Provider** per client. All that client's rep OAs must be under it.
+   An OA's Provider **can't be changed later** (LINE), so an OA put under the wrong one must be recreated. One developer can
+   be Admin of at most 100 channels per Provider; for more than 100 OAs, confirm the setup with LINE first (08).
 3. For each rep OA:
    - **[HUMAN]** Create the OA under the Business ID (a generic name helps handover, e.g. "ABC Sales – Team 3").
    - **[HUMAN]** Settings → Messaging API → Enable → choose the client's Provider.
@@ -41,10 +43,11 @@ This is the install guide we give clients. Keep it this short: every extra step 
 | C3 | Site → Public Access Settings → guest user → assign permission set **LINE_Webhook_Guest** |
 | C4 | Assign **LINE_Admin** only to the one or two people who register OAs and manage secrets (it can register, rotate and remove OAs, and change settings); assign **LINE_Chat_User** to reps and managers. Changes to OAs are field-history tracked (R17). |
 | C4b | Setup → **Content Deliveries and Public Links**: make sure it is enabled (needed for reps to send files; on by default in most orgs). |
-| C5 | App Launcher → LINE Chat → **LINE Admin** tab → Settings: paste the site base URL, pick the fallback owner, **pick an Account for new Contacts** (create one such as "LINE Unassigned" first; required in practice when Contact sharing is *Controlled by Parent*, and the page warns if so, DEC-36), and review retention, invite expiry and daily sync. Then, on the same page, **Nightly jobs → Schedule** (01:00 in the admin's time zone). Without it no daily Events are created. |
+| C5 | App Launcher → LINE Chat → **LINE Admin** tab → Settings: paste the site base URL, pick the fallback owner, **pick an Account for new Contacts** (create one such as "LINE Unassigned" first; required in practice when Contact sharing is *Controlled by Parent*, and the page warns if so, DEC-36; if Account sharing is **Private**, share that Account with the reps, or they still can't see the Contacts under it), and review retention, invite expiry and daily sync. Then, on the same page, **Nightly jobs → Schedule** (01:00 in the admin's time zone). Without it no daily Events are created. |
 | C5b | Setup → **Duplicate Rules / Matching Rules** for Contact: LINE-created Contacts have a name only (no email or phone). If a matching rule has **Match blank fields** on, untick it, or every LINE Contact is flagged a duplicate of every other. A Contact rule set to **Block** stops auto-create (logged in the LINE Error Log). |
 | C6 | Lightning App Builder → Contact record page → add **lineChat** → activate. |
 | C7 | Optional: create a queue that supports LINE Conversation and use it as the fallback owner |
+| C8 | Optional (DEC-49): add *Connected Customers*, *Active Followers*, *Blocked Customers*, *Messages Exchanged* and *Stats Updated At* to the LINE OA Configuration page layout. The counts refresh nightly; after installing or upgrading, click **Sync today now** once. |
 
 ## Part D — Per rep OA (in the LINE Admin tab)
 

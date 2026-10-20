@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-10-20**. Production (`tsprod`) runs **0.3.0.1** (verified live 2026-10-15, DEC-48); **0.4.0.1** is released (DEC-50) and waits for the user to upgrade production. Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-20**. Production (`tsprod`) runs **0.4.0.1**, upgraded by the user and verified 2026-10-20 (DEC-50): no data lost, per-OA counts correct. Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -73,14 +73,15 @@ kept): `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL0000
 and verified 2026-10-15**: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZV8zQAG`. Earth's conversation
 (Salesrep5) links on his next message. The next build is `0.4.0.NEXT`.
 
-**✅ RELEASED: `0.4.0.1` (`04tgL000000aUsPQAU`) promoted 2026-10-20 (DEC-50)**: per-OA counts for per-rep dashboards
+**✅ RELEASED: `0.4.0.1` (`04tgL000000aUsPQAU`) promoted 2026-10-20 (DEC-50)**: per-OA counts
 (DEC-49): five read-only fields on `LINE_OA_Configuration__c` (Connected Customers, Active Followers, Blocked Customers,
 Messages Exchanged, Stats Updated At), filled nightly by `LineOAStatsBatch` and by *Sync today now*. Ancestor 0.3.0.1,
-coverage 93%. Tested as a **fresh install** in the QA org (counts correct, report "LINE Customers and Messages per Rep"
-built there); **no upgrade test** from 0.3.0.1 (no org with a released install), by the user's decision. **Production
-runs 0.3.0.1 and should upgrade to this** (in place, data kept):
-`https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000aUsPQAU`. After upgrading, click *Sync today
-now* once so the fields aren't blank until 01:00, and check the nightly job is scheduled. Open: the full
+coverage 93%. Tested as a **fresh install** in the QA org (counts correct); **no upgrade test** from 0.3.0.1 (no org with a released install), by the user's decision. **Production
+upgraded to it 2026-10-20** (installed by the user, in place):
+`https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000aUsPQAU`. Checked from here, read-only: record
+counts identical before and after (8 LINE Contacts, 8 conversations, 50 messages, 9 OAs, 8 daily Events), all 9 OAs
+*Valid*, nightly job still scheduled, no new error log entries; after *Sync today now* every OA's counts matched a direct
+count of its conversations and messages. Open: the full
 `./scripts/code-analyzer.sh` reports **46 High** findings in code already released in 0.3.0.1 (graph-engine FLS/sharing
 on `LineLinkService`, `LineChatController`, `LineDailyEventSyncBatch`; ESLint on the bundled `qrcode.js`): review before
 the next release. The next build is `0.5.0.NEXT`.
@@ -93,8 +94,9 @@ use from here: queries only, never deploy (released versions only).
 | Alias | What it is | Notes |
 |---|---|---|
 | `sf-line-dev` | **Dev Hub** (Enterprise Edition trial, expires 2027-09-22). Owns the package and the namespace link | Never deploy source here. Limits: 3 active scratch orgs, 6 package versions a day. |
-| `dev5-ts` | **Company sandbox** (`wchaipitch@terrasky.co.th`), a sandbox of the production org. **Beta 10 installed and verified by the user 2026-10-14**: messages, photos and PDFs both ways, stickers, QR invite, Rotate secret. Site `LineWebhook` at `https://terraskyth--dev5.sandbox.my.salesforce-sites.com/linewebhook`, created by hand (packages can't create Sites). | A LINE channel has one webhook URL: registering an OA here takes it away from the QA org until it's registered there again. |
-| `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **Beta 5 (0.1.0.5) installed**; Beta 6 not yet | Real LINE OA **TS Chaipitch** (`@803ctlbv`, channel `2011659553`) registered, webhook OK. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Org and admin time zone **Asia/Bangkok** (changed 2026-09-30). Nightly job **not scheduled** since the Beta 5 install (§4). Contact "Chaipitch" auto-created from a real message. |
+| `tsprod` | **Production**, the team's own org (`skeskaew@terrasky.co.th`). **0.4.0.1** since 2026-10-20. 9 OAs, all Valid: TS Chaipitch, Salesrep5 (Earth), TerraSky (Thailand) (Kuribayashi Yuta), and since 2026-10-20 Salesrep Roj, Salesrep Prem, Salesrep Wasin, Presales Kat, Presales Ton, Salesrep Chishiro. Default Account for new Contacts **set 2026-10-20**; 7 of the 8 LINE Contacts were created before that and still have **no Account**. Nightly job scheduled. | Released versions only, installed by the user. Read-only queries from here. Account sharing **Public Read/Write**, Contact sharing **Controlled by Parent**. |
+| `dev5-ts` | **Company sandbox** (`wchaipitch@terrasky.co.th`), a sandbox of the production org. Holds **0.1.0.10 installed while it was a beta**, so it **can't be upgraded** to a release (09 §2). **Beta 10 installed and verified by the user 2026-10-14**: messages, photos and PDFs both ways, stickers, QR invite, Rotate secret. Site `LineWebhook` at `https://terraskyth--dev5.sandbox.my.salesforce-sites.com/linewebhook`, created by hand (packages can't create Sites). | A LINE channel has one webhook URL: registering an OA here takes it away from the QA org until it's registered there again. |
+| `chaipitch-devhub` | **QA org** (Developer Edition, never expires). **0.4.0.1 installed fresh 2026-10-20** (Beta 7 uninstalled first, so its old data is gone). OAs: TS SalesRep1 (rep Chaipitch Rep), TS Test Sales Rep2 (Admin User). | Real LINE OA **TS Chaipitch** (`@803ctlbv`, channel `2011659553`) registered, webhook OK. Site `LineWebhook`: `https://orgfarm-8b3a291438-dev-ed.develop.my.salesforce-sites.com/linewebhook`. Org and admin time zone **Asia/Bangkok** (changed 2026-09-30). Nightly job **not scheduled** since the Beta 5 install (§4). Contact "Chaipitch" auto-created from a real message. |
 | `line-dev` | **The one scratch org** (namespaced `tsthlineoa`, user `test-e8dratclzthk@example.com`); the project default | Created **2026-10-11**, expires **2026-11-10**. Rebuild: `DEVHUB=sf-line-dev DAYS=30 ./scripts/setup-scratch.sh line-dev`, then `sf apex run --file scripts/apex/seed-daily-sync.apex`. Holds that seed data (OA "May Sales OA", Rep A, Somchai, Niran). Org time zone America/Los_Angeles (scratch default). The previous org (`test-egv3lqxcpg7t`) was deleted the same day. |
 
 The unknown scratch org `test-bdmfveozrgxg@example.com` had expired by 2026-10-11. Only `line-dev` is active now.
@@ -223,18 +225,23 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
 
 ## 7. Suggested next steps
 
-1. **Production (`tsprod`, on 0.3.0.1, verified 2026-10-15):** set **LINE Admin → Settings → Account for new Contacts**
-   (still blank; Contact sharing is Controlled by Parent, so LINE Contacts are private to their owner, DEC-36); untick
-   *Match blank fields* on the matching rule behind *Duplicate Rule for Email* (false duplicate pairs, DEC-48); turn
-   **Auto-response off** for every OA in LINE OA Manager (05 Part D).
-2. **M8 remainder**: reassign/deactivate with `LineReassignBatch` (TA R13, acceptance criterion 5), quota display (M8a),
-   error log viewer (the log is the first place to look, as the duplicate-rule bug showed).
-3. **M10** retention before any high-volume client; **M11** load test (sizing sheet: page views, storage, CPU) and hardening;
-   **M12** acceptance run, install guide (include the duplicate-rule and auto-response checks).
-5. **Code Analyzer Highs** (46, pre-existing, found 2026-10-20): fix or suppress with recorded reasons before 0.5.0 is promoted.
-6. **An upgrade-test org:** refresh a sandbox from production (it carries the released version), since dev5-ts and the QA
+1. **Production (`tsprod`, 0.4.0.1), for the user:**
+   - give the **7 LINE Contacts without an Account** an Account (Chaipitch, Earth🌎, Roj Ruangkere, Kat 💙 - Marvin (G2D),
+     Ｐｒｅｍ｜ペム, Nueng TerraSky, TonEsD): with Contact sharing *Controlled by Parent* they are private to their owner,
+     so a second rep's conversation can link to them and that rep can't open them (08);
+   - add the five count fields to the LINE OA Configuration page layout;
+   - untick *Match blank fields* on the matching rule behind *Duplicate Rule for Email* (DEC-48); turn **Auto-response
+     off** for every OA in LINE OA Manager (05 Part B).
+2. **Business answer pending** (08): whether the daily Event transcript and customer Files being visible to everyone who
+   can see the Contact is acceptable.
+3. **Code Analyzer Highs** (46, pre-existing, found 2026-10-20): fix or suppress with recorded reasons before 0.5.0 is promoted.
+4. **An upgrade-test org:** refresh a sandbox from production (it carries the released version), since dev5-ts and the QA
    org hold installs that can't be upgraded from.
-4. Each new version: build as `0.5.0`, test as an **upgrade** in a sandbox with the latest release, promote on the user's
+5. **M8 remainder**: reassign/deactivate with `LineReassignBatch` (TA R13, acceptance criterion 5), quota display (M8a),
+   error log viewer (the log is the first place to look, as the duplicate-rule bug showed).
+6. **M10** retention before any high-volume client; **M11** load test (sizing sheet: page views, storage, CPU) and hardening;
+   **M12** acceptance run, install guide (include the duplicate-rule, auto-response, default-Account sharing and Provider checks).
+7. Each new version: build as `0.5.0`, test as an **upgrade** in a sandbox with the latest release, promote on the user's
    go-ahead, then the user upgrades production.
 
 ## 8. Starting a new session

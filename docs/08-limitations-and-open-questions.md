@@ -43,6 +43,10 @@
 | **Subscriber duplicate rules (found in production 2026-10-15).** "Allow, with alert" rules refused every auto-created Contact until DEC-48 (`allowSave`, 0.3.0.1). A rule set to **Block** still refuses (logged, message kept). A matching rule with *Match blank fields* on treats all LINE-created Contacts (no email) as duplicates of each other: an org admin should untick it. Add a check to the install guide (M12). | M12 |
 | **OA counts vs retention (DEC-49).** `Messages_Exchanged__c` is recounted from the stored messages, so once message retention (M10) deletes old messages the "cumulative" count goes **down**. Production keeps everything today. If retention is enabled anywhere, switch the message count to adding each day's new messages to the stored total. | M10 |
 | **OA counts per chunk (DEC-49).** Each execute of `LineOAStatsBatch` counts the messages of 50 conversations in one aggregate, which must stay under 50,000 rows (avg 1,000 messages per conversation). Beyond that the chunk fails, nothing is saved that night (logged) and the previous numbers stay. Lower `BATCH_SIZE` if a client hits it; check in the M11 load test. | M11 |
+| **A second rep can't reach a shared customer whose Contact has no Account (found 2026-10-20).** Salesforce makes a Contact without an Account private to its owner and admins **whatever the org's sharing settings**; sharing rules don't apply (Salesforce help, *Contact sharing considerations*; role-hierarchy access not confirmed). When a customer adds a second rep's OA, that rep's conversation links to the first rep's Contact (D5), and the second rep can't open it; the chat panel is only on the Contact page, so the second rep can't reply from Salesforce either (the message is still stored and the notification opens the conversation record). Mitigation today: the default Account (DEC-36) for new Contacts, and Accounts given by hand to older ones. Possible fix: `lineChat` also on the LINE Conversation record page. | M12 / backlog |
+| **Default Account must be visible to reps (found 2026-10-20).** The default Account only helps if reps can see it: in an org whose Account sharing is **Private**, an admin-owned default Account hides every LINE Contact under it. The install guide (M12) must say: share that Account with the reps (sharing rule or ownership), or keep Account sharing public. | M12 |
+| **Daily Events and customer Files are visible through the Contact (found 2026-10-20).** The daily Event's Description holds the whole day's transcript, and customer Files are linked to the Contact as well as the conversation (DEC-43). With standard activity and file sharing, anyone who can see the Contact or its Account sees them, even without access to that rep's private conversation (01 §6 "Rep A can't see Rep B's conversations"). Business question 10. | Open |
+| **LINE Provider rules (checked 2026-10-20, DECISIONS §2).** An OA's Provider can't be changed after Messaging API is enabled, so an OA under the wrong Provider must be recreated. A developer can be Admin of at most 100 channels per Provider; whether a Provider can hold more than 100 through several admins is unconfirmed: ask LINE before a client plans more than 100 OAs. Splitting OAs across Providers duplicates Contacts. | Before a client > 100 reps |
 
 ## Open questions — business (via BA)
 
@@ -57,6 +61,13 @@
    document, 2.2. The package neither enforces nor depends on it.)
 9. Are Opportunity links wanted in a later phase? A daily Event's `WhatId` holds the Contact's Account (DEC-28), and
    nothing in the schema links a conversation to an Opportunity. (Raised by the TA review document, 3.3.)
+10. Is it acceptable that the daily Activity Event (with the day's transcript) and customer Files are visible to everyone
+    who can see the Contact, beyond the conversation's own sharing? Options: accept and document; shorten the Event
+    Description; or private Events (hard: activity sharing is org-wide). (Raised 2026-10-20.)
+11. Bulk-linking customers who were friends of an OA before it was connected: not supported. LINE's follower-ID list is
+    reportedly limited to verified/premium OAs [VERIFY] and carries no phone or email to match Contacts. Practical route: a
+    broadcast asking friends to reply, then manual linking (the link button is hidden, DEC-44). Wanted? (Raised 2026-10-20.)
+
 
 ## Open questions — ours
 

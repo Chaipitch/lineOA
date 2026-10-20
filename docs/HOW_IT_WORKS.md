@@ -289,14 +289,13 @@ unattended for years (DEC-30):
 
 ### 5.2 Per-OA counts — `LineOAStatsBatch`
 
-For dashboards per rep (DEC-49), the same nightly run (and *Sync today now*) stamps five numbers on each OA record:
+The same nightly run (DEC-49) (and *Sync today now*) stamps five numbers on each OA record:
 **Connected Customers** (conversations linked to a Contact), split into **Active Followers** and **Blocked Customers**
 by the conversation's status, **Messages Exchanged** (both directions, failed sends excluded, cumulative) and
 **Stats Updated At**. They are recounted from the stored records every time, so a rerun or a missed night never
 drifts them; an OA with nothing gets zeros. It is a batch over conversations, not one aggregate query, because every row
 an aggregate counts uses up the 50,000-row query limit. If any chunk fails, nothing is saved and the previous numbers
-stay. The counts only know what Salesforce has stored since the OA was connected; trends over time come from a
-Reporting Snapshot the subscriber sets up on these fields.
+stay. The counts only know what Salesforce has stored since the OA was connected.
 
 ---
 

@@ -65,7 +65,7 @@ OWD: **Public Read Only** (reps need the OA name in the UI). Owner: the admin wh
 Validation: `Is_Active__c && ISBLANK(Assigned_Rep__c)` → error.
 
 The five count fields (DEC-49) are read-only to everyone (both permission sets) and written only by the nightly job,
-for reports and dashboards per OA (= per rep). Connected = Active Followers + Blocked Customers.
+per OA (= per rep). Connected = Active Followers + Blocked Customers.
 
 Field history tracking: **on**, for `Assigned_Rep__c`, `Is_Active__c`, `Webhook_Status__c` (DECISIONS DEC-22) and
 `Credential_Status__c` (DEC-33).
