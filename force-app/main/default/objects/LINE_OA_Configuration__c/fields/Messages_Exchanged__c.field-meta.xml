@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Messages_Exchanged__c</fullName>
+    <description
+  >All messages of this OA in both directions, except failed sends, since it was connected. Recounted nightly from the stored messages. DEC-49.</description>
+    <externalId>false</externalId>
+    <label>Messages Exchanged</label>
+    <precision>12</precision>
+    <required>false</required>
+    <scale>0</scale>
+    <trackHistory>false</trackHistory>
+    <type>Number</type>
+    <unique>false</unique>
+</CustomField>

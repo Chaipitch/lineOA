@@ -18,5 +18,6 @@ M0: list the [HUMAN] steps for the Dev Hub and namespace, prepare everything els
 
 - `Continue with M<n> of docs/06-implementation-plan.md.`
 - `M<n> [HUMAN] steps are done: <details>. Run the done-criteria check.`
-- `Create the next beta and install it into chaipitch-devhub.` (Uninstalling the old beta first deletes its data there: Claude asks first.)
+- `Create the next beta.` Since the first release (0.1.0.10), test each beta as an **upgrade** in a sandbox that has the
+  latest release installed (e.g. dev5-ts or a fresh sandbox refreshed from production), then promote on the user's go-ahead.
 - `Write docs/QA_RESULTS_<version>.md from the E2E run.`

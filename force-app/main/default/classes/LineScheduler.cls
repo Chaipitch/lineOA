@@ -1,6 +1,7 @@
 /**
- * The package's one scheduled job (02 §2): every night it starts the daily LINE activity sync and checks every OA's
- * credentials with LINE (DEC-33); from M10 it starts the retention batch too. Scheduled, unscheduled and run from the
+ * The package's one scheduled job (02 §2): every night it starts the daily LINE activity sync, recounts each OA's
+ * customers and messages (DEC-49) and checks every OA's credentials with LINE (DEC-33); from M10 it starts the
+ * retention batch too. Scheduled, unscheduled and run from the
  * LINE Admin page (DEC-29), because a subscriber cannot schedule a non-global class from Setup or anonymous Apex.
  *
  * `with sharing`: it reads job metadata and, in system mode, the OA list for the credentials check; the batch and
@@ -14,8 +15,8 @@ public with sharing class LineScheduler implements Schedulable {
   public static final String CRON = '0 0 1 * * ?';
 
   /**
-   * Starts tonight's work: the daily sync (unless it's off in LINE Settings) and the credentials check, which always
-   * runs. Each is guarded on its own, so one failing never skips the other.
+   * Starts tonight's work: the daily sync (unless it's off in LINE Settings), the per-OA counts (DEC-49) and the
+   * credentials check, which always run. Each is guarded on its own, so one failing never skips another.
    * @param context schedulable context
    */
   public void execute(SchedulableContext context) {
@@ -28,6 +29,11 @@ public with sharing class LineScheduler implements Schedulable {
       }
     } catch (Exception e) {
       LineLogger.error('LineScheduler.execute', e);
+    }
+    try {
+      startOAStats();
+    } catch (Exception e) {
+      LineLogger.error('LineScheduler.startOAStats', e);
     }
     try {
       checkCredentials();
@@ -90,11 +96,24 @@ public with sharing class LineScheduler implements Schedulable {
   }
 
   /**
-   * Runs the daily sync now for today so far (07 §3 step 9). The nightly run rebuilds the same Event later with the
-   * full day, so this never leaves a partial Event behind.
+   * Recounts every OA's customers and messages (DEC-49).
    * @return the batch job Id
    */
+  @TestVisible
+  static Id startOAStats() {
+    return Database.executeBatch(
+      new LineOAStatsBatch(),
+      LineOAStatsBatch.BATCH_SIZE
+    );
+  }
+
+  /**
+   * Runs the daily sync now for today so far (07 §3 step 9), and refreshes the per-OA counts (DEC-49). The nightly
+   * run rebuilds the same Event later with the full day, so this never leaves a partial Event behind.
+   * @return the daily sync's batch job Id
+   */
   public static Id runDailySyncNow() {
+    startOAStats();
     return Database.executeBatch(
       new LineDailyEventSyncBatch(
         LineDailyEventSyncBatch.today(LineDailyEventSyncBatch.orgTimeZone())

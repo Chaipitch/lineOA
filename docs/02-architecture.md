@@ -25,7 +25,7 @@
                                                          │  → LineChatController / LineAdminController  │
                                                          │  → LineOutboundService → LineApiClient       │
                                                          └─────────────────────────────────────────────┘
-      Scheduled: LineDailyEventSyncBatch, LineRetentionBatch  (scheduled by LineScheduler from the admin UI)
+      Scheduled: LineDailyEventSyncBatch, LineOAStatsBatch, LineRetentionBatch  (scheduled by LineScheduler from the admin UI)
 ```
 
 ## 2. Apex classes
@@ -52,8 +52,9 @@ Only `LineWebhookResource` is `global`. Everything else is `public`. `@AuraEnabl
 | `LineOAConfigTriggerHandler` | `without sharing` | After delete: deletes the deleted OAs' channel secrets (DEC-33). M8: on rep or active change → start `LineReassignBatch`. |
 | `LineReassignBatch` | | Moves the owner of an OA's conversations; optionally Contact Owner. |
 | `LineDailyEventSyncBatch` | `without sharing` | One Event per conversation per day (03 §3 Event). Runs as whichever admin scheduled it, possibly for years; it must see every conversation whatever that admin's sharing is, or the sync would silently shrink. Nothing it reads is shown to a user (DEC-30). |
+| `LineOAStatsBatch` | `without sharing` | Per-OA counts (DEC-49): customers linked to a Contact (all, following, blocked) and messages exchanged, stamped on `LINE_OA_Configuration__c`. A batch over conversations so the message count never needs one 50,000-row aggregate; saves nothing if any execute failed. Runs as whichever admin scheduled it and must count every conversation whatever that admin's sharing is; writes counts only. |
 | `LineRetentionBatch` | | Deletes messages older than retention, and their files. |
-| `LineScheduler` | `with sharing` | One `Schedulable`, nightly at 01:00: the daily sync batch, the credentials check for every OA not *Removed* (DEC-33), and retention from M10. Scheduled, unscheduled or run now from the admin UI (DEC-29). |
+| `LineScheduler` | `with sharing` | One `Schedulable`, nightly at 01:00: the daily sync batch, the per-OA counts (DEC-49), the credentials check for every OA not *Removed* (DEC-33), and retention from M10. Scheduled, unscheduled or run now from the admin UI (DEC-29). |
 | `LineLogger` | – | Writes `LINE_Error_Log__c`; never throws. Buffers entries, and `flush()` runs at the end of each entry point. |
 | `LineTriggerHandler` (base) | – | Minimal virtual trigger handler with bypass. |
 

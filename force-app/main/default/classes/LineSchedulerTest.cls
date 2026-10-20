@@ -119,6 +119,14 @@ private class LineSchedulerTest {
       )
       .formatGmt('yyyy-MM-dd');
     Assert.areEqual(c.Id + ':' + today, e.LINE_Sync_Key__c, 'Today so far');
+    LINE_OA_Configuration__c counted = [
+      SELECT Connected_Customers__c, Messages_Exchanged__c
+      FROM LINE_OA_Configuration__c
+      WHERE Id = :oa.Id
+      WITH SYSTEM_MODE
+    ];
+    Assert.areEqual(1, counted.Connected_Customers__c, 'Counts refreshed too');
+    Assert.areEqual(1, counted.Messages_Exchanged__c);
   }
 
   @IsTest
@@ -185,6 +193,15 @@ private class LineSchedulerTest {
         WITH SYSTEM_MODE
       ]
       .Credential_Status__c
+    );
+    Assert.isNotNull(
+      [
+        SELECT Stats_Updated_At__c
+        FROM LINE_OA_Configuration__c
+        WITH SYSTEM_MODE
+      ]
+      .Stats_Updated_At__c,
+      'The per-OA counts run whatever the daily sync setting (DEC-49)'
     );
   }
 }

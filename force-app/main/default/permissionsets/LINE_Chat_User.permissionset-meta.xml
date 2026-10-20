@@ -162,6 +162,11 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>LINE_OA_Configuration__c.Active_Followers__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>LINE_OA_Configuration__c.Assigned_Rep__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -172,7 +177,17 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>LINE_OA_Configuration__c.Blocked_Customers__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>LINE_OA_Configuration__c.Bot_User_Id__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>LINE_OA_Configuration__c.Connected_Customers__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -197,7 +212,17 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
+        <field>LINE_OA_Configuration__c.Messages_Exchanged__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>LINE_OA_Configuration__c.Picture_Url__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>LINE_OA_Configuration__c.Stats_Updated_At__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>

@@ -56,8 +56,16 @@ OWD: **Public Read Only** (reps need the OA name in the UI). Owner: the admin wh
 | Last_Verified_At__c | DateTime | |
 | Credential_Status__c | Picklist: Valid, Rejected, Removed | Set by registration (Valid), the nightly credentials check (Valid/Rejected) and *Remove OA* (Removed). DEC-33 |
 | Credential_Checked_At__c | DateTime | When the nightly check last asked LINE. DEC-33 |
+| Connected_Customers__c | Number(9,0) | Conversations of this OA linked to a Contact, any status. Nightly, `LineOAStatsBatch`. DEC-49 |
+| Active_Followers__c | Number(9,0) | Of those, Status *Following*. DEC-49 |
+| Blocked_Customers__c | Number(9,0) | Of those, Status *Unfollowed* (the customer blocked the OA). DEC-49 |
+| Messages_Exchanged__c | Number(12,0) | All messages of this OA, both directions, Status ≠ *Failed*; cumulative, recounted from the stored messages. DEC-49 |
+| Stats_Updated_At__c | DateTime | When the counts were last saved. DEC-49 |
 
 Validation: `Is_Active__c && ISBLANK(Assigned_Rep__c)` → error.
+
+The five count fields (DEC-49) are read-only to everyone (both permission sets) and written only by the nightly job,
+for reports and dashboards per OA (= per rep). Connected = Active Followers + Blocked Customers.
 
 Field history tracking: **on**, for `Assigned_Rep__c`, `Is_Active__c`, `Webhook_Status__c` (DECISIONS DEC-22) and
 `Credential_Status__c` (DEC-33).

@@ -139,7 +139,8 @@ couldn't open it. We saw exactly this in the QA org.
 
 It runs *after* the profile callout precisely so the Contact is named "สมชาย" and not `U4a6a0e38…`.
 
-The insert is `Database.insert(…, false, SYSTEM_MODE)` and failures are logged, never thrown. If the subscriber has a
+The insert is `Database.insert(…, false, SYSTEM_MODE)` with duplicate-rule alerts accepted (`allowSave`, DEC-48: a
+rule that only warns would otherwise refuse code, as happened in production), and failures are logged, never thrown. If the subscriber has a
 validation rule we know nothing about — Account required, a custom field required — the Contact is refused, the
 conversation stays unlinked, and **the message is still stored**. That asymmetry is hard rule 7, and it is the single
 most important rule for surviving in an unknown org: *nothing about Contacts or Events may cost us a message.*
@@ -167,6 +168,7 @@ apply (100 queries, 150 DML statements, 100 callouts each):
 | Follow-up (`LineCalloutQueueable`) | New customer or first message only | 40 customers, then it chains | 1 callout each, then the writes |
 | Rep reply | Rep presses Send | 1 message | 2 callouts (token, push), then 2 writes |
 | Daily sync batch | Nightly | 20 conversations per execute | Fixed per execute |
+| OA counts batch (DEC-49) | Nightly | 50 conversations per execute | 1 aggregate query per execute; one update of the OA records at the end |
 
 So cost per transaction does not grow with volume, and there is no per-rep limit: the capacity is the org's, shared by
 all reps. LINE doesn't meter messages customers send. Measured once in the scratch org (2026-09-19): one inbound message
@@ -284,6 +286,17 @@ unattended for years (DEC-30):
   that admin's sharing is. Nothing it reads is shown to anyone.
 
 *Sync today now* runs the same batch for **today so far**; that night's run rebuilds the same Event with the whole day.
+
+### 5.2 Per-OA counts — `LineOAStatsBatch`
+
+For dashboards per rep (DEC-49), the same nightly run (and *Sync today now*) stamps five numbers on each OA record:
+**Connected Customers** (conversations linked to a Contact), split into **Active Followers** and **Blocked Customers**
+by the conversation's status, **Messages Exchanged** (both directions, failed sends excluded, cumulative) and
+**Stats Updated At**. They are recounted from the stored records every time, so a rerun or a missed night never
+drifts them; an OA with nothing gets zeros. It is a batch over conversations, not one aggregate query, because every row
+an aggregate counts uses up the 50,000-row query limit. If any chunk fails, nothing is saved and the previous numbers
+stay. The counts only know what Salesforce has stored since the OA was connected; trends over time come from a
+Reporting Snapshot the subscriber sets up on these fields.
 
 ---
 

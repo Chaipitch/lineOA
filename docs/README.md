@@ -24,6 +24,7 @@ Claude Code does all of the implementation; its working rules are in [../CLAUDE.
 | [07-testing.md](07-testing.md) | Apex/Jest cases, real-LINE end-to-end script, install/upgrade tests |
 | [08-limitations-and-open-questions.md](08-limitations-and-open-questions.md) | Limitations, technical risks, open questions |
 | [09-packaging.md](09-packaging.md) | Environments, project layout, commands, upgrade safety, subscriber realities, security review |
+| [PACKAGING_STEPS.md](PACKAGING_STEPS.md) | Step-by-step: build a beta, test it, promote, install, post-release housekeeping |
 | [HOW_IT_WORKS.md](HOW_IT_WORKS.md) | **Start here to understand the build**: what it does, how a message travels in each direction, and why the pieces are arranged that way |
 | [BA_TA_REVIEW_CORRECTIONS.md](BA_TA_REVIEW_CORRECTIONS.md) | Corrections to the BA's TA review document (7 Oct 2026) so it matches this specification |
 | [LINE_API_OA_MANAGER_LIMITATION.md](LINE_API_OA_MANAGER_LIMITATION.md) | Evidence for the BA that replies sent from the LINE OA Manager app cannot reach Salesforce, with the options |
@@ -31,10 +32,10 @@ Claude Code does all of the implementation; its working rules are in [../CLAUDE.
 | [KICKOFF_PROMPT.md](KICKOFF_PROMPT.md) | First prompt for a new Claude Code session |
 | `DECISIONS.md`, `SECURITY_NOTES.md` | Created in M0 and kept current during the build |
 
-## Status (2026-10-14)
+## Status (2026-10-19)
 
 - Package **LINE Connect**, namespace `tsthlineoa`, Dev Hub `sf-line-dev`. **Released `0.1.0.10`** (2026-10-14, DEC-46), **`0.2.0.1`** (bubble colours, DEC-47) and **`0.3.0.1`**
-  (duplicate-rule fix, DEC-48), for the team's own production org, not yet for clients. The next build is `0.4.0`.
+  (duplicate-rule fix, DEC-48), for the team's own production org (running 0.3.0.1), not yet for clients. The next build is `0.4.0`.
 - Built: M0–M7 and M9; M8 in part (registration, settings, nightly jobs, remove OA, rotate secret). Not built: OA
   reassignment (M8), retention (M10), load test (M11), install guide (M12). The full picture is in [HANDOFF.md](HANDOFF.md).
 - TA review held 7 Oct 2026: no Required findings. R1, R3, R4 (default Account) and R8 are fixed; the rest are BA

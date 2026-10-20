@@ -40,12 +40,17 @@ config/project-scratch-def.json
 }
 ```
 After the first release, add `"ancestorVersion": "HIGHEST"` so upgrades are validated against the last released version.
-**Done 2026-10-14:** 0.1.0.10 released (DEC-46); the project now builds `0.2.0.NEXT` with `ancestorVersion: HIGHEST`.
+**Done 2026-10-14:** 0.1.0.10 released (DEC-46). Since then: 0.2.0.1 (bubble colours, DEC-47) and 0.3.0.1 (duplicate-rule
+fix, DEC-48), each built as an upgrade of the previous release. The project now builds `0.4.0.NEXT` (`ancestorVersion: HIGHEST`).
+An org that installed a version **while it was still a beta** (dev5-ts got 0.1.0.10 that way) can't be upgraded from it;
+for upgrade tests use a sandbox that has a *released* install, e.g. one refreshed from production.
 
 Scratch definition: Developer edition, `hasSampleData: false`. Add features/settings as needed: e.g. enable Sites, and
 `lightningExperienceSettings`. [VERIFY which scratch features Sites needs.] Keep the definition in `config/project-scratch-def.json`.
 
 ## 3. Everyday commands
+
+The full release procedure, step by step, is in [PACKAGING_STEPS.md](PACKAGING_STEPS.md).
 
 ```bash
 # new scratch org (namespaced automatically from sfdx-project.json)

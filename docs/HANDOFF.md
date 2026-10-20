@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-10-15**, after release **0.3.0.1** (duplicate-rule fix, DEC-48). Production (`tsprod`) runs a released version; upgrade to 0.3.0.1 pending. Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-20**. Production (`tsprod`) runs **0.3.0.1**, verified live 2026-10-15 (a new customer's Contact was created after the duplicate-rule fix, DEC-48). Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -69,9 +69,16 @@ Built as an upgrade of 0.1.0.10. **The team's production org runs 0.1.0.10 and s
 kept): `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZV0vQAG`. The next build is `0.3.0.NEXT`.
 
 **✅ RELEASED: `0.3.0.1` (`04tgL000000ZV8zQAG`) promoted 2026-10-15 (DEC-48)**: auto-created Contacts no longer fail on
-"Allow, with alert" duplicate rules (production had none created for a new customer). Ancestor 0.2.0.1. **Production should
-upgrade to this**: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZV8zQAG`. Earth's conversation
+"Allow, with alert" duplicate rules (production had none created for a new customer). Ancestor 0.2.0.1. **Installed in production
+and verified 2026-10-15**: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZV8zQAG`. Earth's conversation
 (Salesrep5) links on his next message. The next build is `0.4.0.NEXT`.
+
+**In progress: 0.4.0 (scratch only, 2026-10-20).** Per-OA counts for the business's per-rep dashboards (DEC-49): five
+read-only fields on `LINE_OA_Configuration__c` (Connected Customers, Active Followers, Blocked Customers, Messages
+Exchanged, Stats Updated At), filled nightly by `LineOAStatsBatch` and by *Sync today now*. Deployed to `line-dev`;
+272/272 Apex tests, 93% org-wide. Next: beta, upgrade test from 0.3.0.1 on dev5-ts, then promote (user's go-ahead) and
+install in `tsprod`, where Earth builds the dashboard. After installing, click *Sync today now* once so the fields aren't
+blank until 01:00.
 Production org: alias **`tsprod`** (login `skeskaew@terrasky.co.th`, org `00D5i000004RMWgEAO`), Contact sharing Controlled by
 Parent, active Contact duplicate rules: *Standard Rule for Contacts with Duplicate Leads*, *Duplicate Rule for Email*. Read-only
 use from here: queries only, never deploy (released versions only).
@@ -211,15 +218,16 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
 
 ## 7. Suggested next steps
 
-1. **Install Beta 8 in the QA org** (reinstall checklist: §1 and §5; uninstalling clears `Contact.LINE_User_Id__c`, so
-   delete or note the test Contacts first). Set the default Account, register the OAs (tick the Provider box), schedule
-   the nightly job.
-2. **Phone tests** (the open [VERIFY]s in 08): QR invite on iOS and Android, friend and non-friend; a photo and a PDF
-   from the phone appear as Files; a picture and a PDF sent from Salesforce arrive; the read-only panel for a
-   non-assigned rep; 401 for an unknown OA. Record the results in DECISIONS §2.
-3. **M8 remainder**: reassign/deactivate with `LineReassignBatch` (TA R13, acceptance criterion 5), quota display (M8a), error log viewer.
-4. **M10** retention before any high-volume client; **M11** load tests (2,000-event batch, Site limits) and hardening;
-   **M12** acceptance run, upgrade test, install guide.
+1. **Production (`tsprod`, on 0.3.0.1, verified 2026-10-15):** set **LINE Admin → Settings → Account for new Contacts**
+   (still blank; Contact sharing is Controlled by Parent, so LINE Contacts are private to their owner, DEC-36); untick
+   *Match blank fields* on the matching rule behind *Duplicate Rule for Email* (false duplicate pairs, DEC-48); turn
+   **Auto-response off** for every OA in LINE OA Manager (05 Part D).
+2. **M8 remainder**: reassign/deactivate with `LineReassignBatch` (TA R13, acceptance criterion 5), quota display (M8a),
+   error log viewer (the log is the first place to look, as the duplicate-rule bug showed).
+3. **M10** retention before any high-volume client; **M11** load test (sizing sheet: page views, storage, CPU) and hardening;
+   **M12** acceptance run, install guide (include the duplicate-rule and auto-response checks).
+4. Each new version: build as `0.4.0`, test as an **upgrade** in a sandbox with the latest release, promote on the user's
+   go-ahead, then the user upgrades production.
 
 ## 8. Starting a new session
 

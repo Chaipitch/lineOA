@@ -105,6 +105,7 @@ From 02 §2. Each class carries a justification comment in code. Filled in as ea
 | `LineLinkService` | Links and creates Contacts from the inbound path (Automated Process). Manual link: `LineChatController.linkToContact` first checks, as the user, read on the conversation and Edit on the chosen Contact (`UserRecordAccess`); the service then moves the LINE user ID off an **auto-created** placeholder (never off a Contact a person linked) and deletes that placeholder only if nothing else is attached (DEC-34), which the rep may not own. Unlink is admin-only (`LINE_Admin`). | ✅ M6 (auto-link, auto-create, manual link, unlink; DEC-27, DEC-34, DEC-41) |
 | `LineOAConfigTriggerHandler` | Deletes the protected secrets of deleted OAs for whoever deleted them; the setting is reachable only from package code | ✅ Beta 6 (DEC-33) |
 | `LineDailyEventSyncBatch` | Runs as whichever admin scheduled it, possibly for years; must see every conversation whatever that admin's sharing is. Writes Events owned by reps; nothing is shown to a user | ✅ M9 (DEC-30; queries `WITH SYSTEM_MODE`, DML `AccessLevel.SYSTEM_MODE`, partial success) |
+| `LineOAStatsBatch` | Runs as whichever admin scheduled the nightly job; must count every conversation whatever that admin's sharing is. Writes only counts on OA records; reads no message content (aggregate `COUNT` only) | ✅ 0.4.0 (DEC-49; queries `WITH SYSTEM_MODE`, update `AccessLevel.SYSTEM_MODE` partial-success and logged) |
 | Send authorization (DEC-37) | `LineChatController.assertCanSend`: seeing a conversation is not enough; only the OA's assigned rep (inactive OA: fallback owner or fallback-queue member) may send. OA routing fields read in system mode so OA sharing can't widen who may send | ✅ |
 | `LineOutboundService` | Called after the controller checks access in user mode; writes the message record | ✅ M4 (class-wide `sfge` suppression with reason, DEC-20) |
 | `LineOAConfigTriggerHandler` | Starts the reassignment batch | M8 |
@@ -159,6 +160,7 @@ Run: `npm run scan` (Recommended + Security + AppExchange rules, fails on High/C
 
 | Date | Scope | Critical/High | Notes |
 |---|---|---|---|
+| 2026-10-15 | `force-app` classes + LWC (M6 invite and linking, M7 files, stickers, rotate secret, duplicate-rule fix; releases 0.1.0.10–0.3.0.1) | 0 | ~90 Moderate, ~300 Low: same categories (complexity, ApexDoc, naming); one High (CRUD on `UserRecordAccess`) fixed with `WITH USER_MODE` |
 | 2026-10-03 | `force-app` (secret cleanup, credentials check, Event rounding, Beta 6) | 0 | 57 Moderate, 237 Low: no new categories |
 | 2026-09-30 | Sticker pictures (`LineApiClient`, `LineChatController`, `lineChat`, CSP Trusted Site) | 0 | No new categories |
 | 2026-09-29 | `force-app` (M9 daily sync, nightly jobs) | 0 | 58 Moderate, 212 Low. New Moderate: complexity on `LineDailyEventSyncBatch` and `LineAdminController`, justified in DECISIONS §3 |
