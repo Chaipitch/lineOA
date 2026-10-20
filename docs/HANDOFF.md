@@ -76,8 +76,13 @@ and verified 2026-10-15**: `https://login.salesforce.com/packaging/installPackag
 **In progress: 0.4.0 (scratch only, 2026-10-20).** Per-OA counts for the business's per-rep dashboards (DEC-49): five
 read-only fields on `LINE_OA_Configuration__c` (Connected Customers, Active Followers, Blocked Customers, Messages
 Exchanged, Stats Updated At), filled nightly by `LineOAStatsBatch` and by *Sync today now*. Deployed to `line-dev`;
-272/272 Apex tests, 93% org-wide. Next: beta, upgrade test from 0.3.0.1 on dev5-ts, then promote (user's go-ahead) and
-install in `tsprod`, where Earth builds the dashboard. After installing, click *Sync today now* once so the fields aren't
+272/272 Apex tests, 93% org-wide. **Beta `0.4.0-1` (`04tgL000000aUsPQAU`) built 2026-10-20** from `a18b171`, ancestor
+0.3.0.1, coverage 93%, validation not skipped. Install link (sandbox: `test.salesforce.com`):
+`https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000aUsPQAU`. Next: upgrade test from 0.3.0.1
+(dev5-ts and the QA org both hold old **betas**, which can't be upgraded), then promote (user's go-ahead) and install in
+`tsprod`, where Earth builds the dashboard. Before promoting: the full `./scripts/code-analyzer.sh` now reports 46 High
+findings, none in this change (graph-engine FLS/sharing on `LineLinkService`, `LineChatController`,
+`LineDailyEventSyncBatch`; ESLint on the bundled `qrcode.js`); review them first. After installing, click *Sync today now* once so the fields aren't
 blank until 01:00.
 Production org: alias **`tsprod`** (login `skeskaew@terrasky.co.th`, org `00D5i000004RMWgEAO`), Contact sharing Controlled by
 Parent, active Contact duplicate rules: *Standard Rule for Contacts with Duplicate Leads*, *Duplicate Rule for Email*. Read-only
