@@ -17,7 +17,7 @@ The spec is in `docs/`. Start at `docs/README.md`.
   - **Company sandbox** alias `dev5-ts`: installed versions only; good for upgrade tests.
   - **Production** alias `tsprod` (the team's own org): **released versions only**, installed by the user. From here only
     read-only queries for diagnosis; never deploy, never change data or setup.
-- **Released versions:** 0.1.0.10, 0.2.0.1, 0.3.0.1 (DEC-46–48). The project builds `0.4.0.NEXT` with `ancestorVersion: HIGHEST`;
+- **Released versions:** 0.1.0.10, 0.2.0.1, 0.3.0.1, 0.4.0.1 (DEC-46–48, DEC-50). The project builds `0.5.0.NEXT` with `ancestorVersion: HIGHEST`;
   everything in a released version is permanent (09 §4). Never promote without the user's explicit go-ahead.
 - `force-app/` = everything that ships in the package. `unpackaged/` = org setup for scratch/QA only.
 - Git remotes: `origin` = `git@github.com:Chaipitch/lineOA.git` (SSH) and `scratchorg` =

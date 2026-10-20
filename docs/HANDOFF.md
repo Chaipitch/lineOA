@@ -1,6 +1,6 @@
 # Handoff — state of the build
 
-Last updated: **2026-10-20**. Production (`tsprod`) runs **0.3.0.1**, verified live 2026-10-15 (a new customer's Contact was created after the duplicate-rule fix, DEC-48). Read `README.md` first, then this file, then `DECISIONS.md`.
+Last updated: **2026-10-20**. Production (`tsprod`) runs **0.3.0.1** (verified live 2026-10-15, DEC-48); **0.4.0.1** is released (DEC-50) and waits for the user to upgrade production. Read `README.md` first, then this file, then `DECISIONS.md`.
 This file says where the work stands, what's open, and which traps already cost time. Keep it current at the end of each
 milestone. For how the system works, read `HOW_IT_WORKS.md`.
 
@@ -73,17 +73,17 @@ kept): `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL0000
 and verified 2026-10-15**: `https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000ZV8zQAG`. Earth's conversation
 (Salesrep5) links on his next message. The next build is `0.4.0.NEXT`.
 
-**In progress: 0.4.0 (scratch only, 2026-10-20).** Per-OA counts for the business's per-rep dashboards (DEC-49): five
-read-only fields on `LINE_OA_Configuration__c` (Connected Customers, Active Followers, Blocked Customers, Messages
-Exchanged, Stats Updated At), filled nightly by `LineOAStatsBatch` and by *Sync today now*. Deployed to `line-dev`;
-272/272 Apex tests, 93% org-wide. **Beta `0.4.0-1` (`04tgL000000aUsPQAU`) built 2026-10-20** from `a18b171`, ancestor
-0.3.0.1, coverage 93%, validation not skipped. Install link (sandbox: `test.salesforce.com`):
-`https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000aUsPQAU`. Next: upgrade test from 0.3.0.1
-(dev5-ts and the QA org both hold old **betas**, which can't be upgraded), then promote (user's go-ahead) and install in
-`tsprod`, where Earth builds the dashboard. Before promoting: the full `./scripts/code-analyzer.sh` now reports 46 High
-findings, none in this change (graph-engine FLS/sharing on `LineLinkService`, `LineChatController`,
-`LineDailyEventSyncBatch`; ESLint on the bundled `qrcode.js`); review them first. After installing, click *Sync today now* once so the fields aren't
-blank until 01:00.
+**✅ RELEASED: `0.4.0.1` (`04tgL000000aUsPQAU`) promoted 2026-10-20 (DEC-50)**: per-OA counts for per-rep dashboards
+(DEC-49): five read-only fields on `LINE_OA_Configuration__c` (Connected Customers, Active Followers, Blocked Customers,
+Messages Exchanged, Stats Updated At), filled nightly by `LineOAStatsBatch` and by *Sync today now*. Ancestor 0.3.0.1,
+coverage 93%. Tested as a **fresh install** in the QA org (counts correct, report "LINE Customers and Messages per Rep"
+built there); **no upgrade test** from 0.3.0.1 (no org with a released install), by the user's decision. **Production
+runs 0.3.0.1 and should upgrade to this** (in place, data kept):
+`https://login.salesforce.com/packaging/installPackage.apexp?p0=04tgL000000aUsPQAU`. After upgrading, click *Sync today
+now* once so the fields aren't blank until 01:00, and check the nightly job is scheduled. Open: the full
+`./scripts/code-analyzer.sh` reports **46 High** findings in code already released in 0.3.0.1 (graph-engine FLS/sharing
+on `LineLinkService`, `LineChatController`, `LineDailyEventSyncBatch`; ESLint on the bundled `qrcode.js`): review before
+the next release. The next build is `0.5.0.NEXT`.
 Production org: alias **`tsprod`** (login `skeskaew@terrasky.co.th`, org `00D5i000004RMWgEAO`), Contact sharing Controlled by
 Parent, active Contact duplicate rules: *Standard Rule for Contacts with Duplicate Leads*, *Duplicate Rule for Email*. Read-only
 use from here: queries only, never deploy (released versions only).
@@ -231,7 +231,10 @@ and `scratchorg` = `https://github.com/wchaipitch-ts/sf-line-dev-scratchorg.git`
    error log viewer (the log is the first place to look, as the duplicate-rule bug showed).
 3. **M10** retention before any high-volume client; **M11** load test (sizing sheet: page views, storage, CPU) and hardening;
    **M12** acceptance run, install guide (include the duplicate-rule and auto-response checks).
-4. Each new version: build as `0.4.0`, test as an **upgrade** in a sandbox with the latest release, promote on the user's
+5. **Code Analyzer Highs** (46, pre-existing, found 2026-10-20): fix or suppress with recorded reasons before 0.5.0 is promoted.
+6. **An upgrade-test org:** refresh a sandbox from production (it carries the released version), since dev5-ts and the QA
+   org hold installs that can't be upgraded from.
+4. Each new version: build as `0.5.0`, test as an **upgrade** in a sandbox with the latest release, promote on the user's
    go-ahead, then the user upgrades production.
 
 ## 8. Starting a new session

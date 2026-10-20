@@ -40,8 +40,9 @@ config/project-scratch-def.json
 }
 ```
 After the first release, add `"ancestorVersion": "HIGHEST"` so upgrades are validated against the last released version.
-**Done 2026-10-14:** 0.1.0.10 released (DEC-46). Since then: 0.2.0.1 (bubble colours, DEC-47) and 0.3.0.1 (duplicate-rule
-fix, DEC-48), each built as an upgrade of the previous release. The project now builds `0.4.0.NEXT` (`ancestorVersion: HIGHEST`).
+**Done 2026-10-14:** 0.1.0.10 released (DEC-46). Since then: 0.2.0.1 (bubble colours, DEC-47) 0.3.0.1 (duplicate-rule
+fix, DEC-48) and 0.4.0.1 (per-OA counts, DEC-50), each built as an upgrade of the previous release. The project now builds
+`0.5.0.NEXT` (`ancestorVersion: HIGHEST`).
 An org that installed a version **while it was still a beta** (dev5-ts got 0.1.0.10 that way) can't be upgraded from it;
 for upgrade tests use a sandbox that has a *released* install, e.g. one refreshed from production.
 

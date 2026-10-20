@@ -160,4 +160,4 @@ git push origin main && git push scratchorg main
 | What's installed in an org | `sf package installed list --target-org <alias>` |
 | Build status if `--wait` timed out | `sf package version create report --package-create-request-id 08c... --target-dev-hub sf-line-dev` |
 
-Released so far: `0.1.0.10`, `0.2.0.1`, `0.3.0.1` (see `packageAliases` and HANDOFF §1 for the `04t` Ids).
+Released so far: `0.1.0.10`, `0.2.0.1`, `0.3.0.1`, `0.4.0.1` (see `packageAliases` and HANDOFF §1 for the `04t` Ids).

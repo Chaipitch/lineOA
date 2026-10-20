@@ -160,6 +160,7 @@ Run: `npm run scan` (Recommended + Security + AppExchange rules, fails on High/C
 
 | Date | Scope | Critical/High | Notes |
 |---|---|---|---|
+| 2026-10-20 | `force-app`, full `./scripts/code-analyzer.sh` (0.4.0: per-OA counts, DEC-49) | **46 High, open** | None in the changed files (new class: Low only). Pre-existing, first seen in this full scripted run: 19 `sfge:ApexFlsViolation` (`LineLinkService`, `LineChatController`), 18 `sfge:DatabaseOperationsMustUseWithSharing` (`LineLinkService`, `LineDailyEventSyncBatch`), 9 ESLint in the bundled `qrcode.js`. Released anyway by the user's decision (DEC-50); review before 0.5.0 |
 | 2026-10-15 | `force-app` classes + LWC (M6 invite and linking, M7 files, stickers, rotate secret, duplicate-rule fix; releases 0.1.0.10–0.3.0.1) | 0 | ~90 Moderate, ~300 Low: same categories (complexity, ApexDoc, naming); one High (CRUD on `UserRecordAccess`) fixed with `WITH USER_MODE` |
 | 2026-10-03 | `force-app` (secret cleanup, credentials check, Event rounding, Beta 6) | 0 | 57 Moderate, 237 Low: no new categories |
 | 2026-09-30 | Sticker pictures (`LineApiClient`, `LineChatController`, `lineChat`, CSP Trusted Site) | 0 | No new categories |
